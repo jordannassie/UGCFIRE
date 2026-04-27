@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { statusColor } from '@/lib/data'
 import { isDemoMode, DEMO_COMPANIES } from '@/lib/demoData'
+import { FolderOpen } from 'lucide-react'
 
 interface ClientRow {
   id: string
@@ -150,12 +151,20 @@ export default function AdminClientsPage() {
                       {client.last_activity ? new Date(client.last_activity).toLocaleDateString() : '—'}
                     </td>
                     <td className="py-3 border-b border-white/5 px-6">
-                      <button
-                        onClick={() => router.push(`/admin/clients/${client.id}`)}
-                        className="border border-white/10 text-white/60 px-4 py-2 rounded-lg hover:border-[#FF3B1A] hover:text-white transition text-sm"
-                      >
-                        View
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => router.push(`/admin/clients/${client.id}/studio`)}
+                          className="flex items-center gap-1.5 bg-[#FF3B1A] hover:bg-[#e02e10] text-white px-3 py-2 rounded-lg transition text-xs font-semibold"
+                        >
+                          <FolderOpen size={13} /> Studio Drive
+                        </button>
+                        <button
+                          onClick={() => router.push(`/admin/clients/${client.id}`)}
+                          className="border border-white/10 text-white/60 px-3 py-2 rounded-lg hover:border-white/30 hover:text-white transition text-xs"
+                        >
+                          Profile
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

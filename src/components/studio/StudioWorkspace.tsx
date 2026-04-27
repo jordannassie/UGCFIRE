@@ -81,6 +81,7 @@ interface Company {
 export interface StudioWorkspaceProps {
   role: Role
   companyId?: string
+  initialClientId?: string   // admin: pre-select a specific client on mount
   demoMode?: boolean
   initialView?: string
   initialPanel?: string
@@ -1041,7 +1042,7 @@ function AdminClientPanel({
 // ─── Main StudioWorkspace ─────────────────────────────────────────────────────
 
 export default function StudioWorkspace({
-  role, companyId: initialCompanyId, demoMode, initialView, initialPanel, initialMode,
+  role, companyId: initialCompanyId, initialClientId, demoMode, initialView, initialPanel, initialMode,
 }: StudioWorkspaceProps) {
   const demo = demoMode ?? checkDemoMode()
 
@@ -1053,7 +1054,7 @@ export default function StudioWorkspace({
   const [companyId, setCompanyId]       = useState<string | null>(initialCompanyId ?? null)
 
   // Filters
-  const [selectedCompany, setSelectedCompany] = useState<string>('all')  // admin only
+  const [selectedCompany, setSelectedCompany] = useState<string>(initialClientId ?? 'all')  // admin only
   const [statusFilter, setStatusFilter] = useState<string>(VIEW_TO_STATUS[initialView ?? ''] ?? 'all')
   const [mediaFilter, setMediaFilter]   = useState<string>('all')
   const [weekFilter, setWeekFilter]     = useState<string>('all')
