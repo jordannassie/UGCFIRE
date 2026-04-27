@@ -20,6 +20,23 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface FireCreatorProfile {
+  displayName: string   // e.g. "UGC Fire Team"
+  title: string         // e.g. "Fire Creator"
+  bio?: string
+  avatarUrl?: string
+}
+
+const DEFAULT_FC_PROFILE: FireCreatorProfile = {
+  displayName: 'UGC Fire Team',
+  title: 'Fire Creator',
+  bio: 'Your UGC Fire creator helping produce and deliver your monthly content.',
+}
+
+function fcInitials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
 export type Role = 'client' | 'admin'
 type Status = 'in_production' | 'ready_for_review' | 'revision_requested' | 'approved' | 'delivered' | 'archived'
 type MediaType = 'photo' | 'video' | 'graphic' | 'carousel' | 'other'
@@ -54,6 +71,7 @@ export interface ContentComment {
   company_id?: string
   sender_user_id?: string | null
   sender_role: 'client' | 'admin'
+  sender_name?: string        // "UGC Fire Team" | client company/display name
   message: string
   is_internal: boolean
   created_at: string
@@ -81,7 +99,8 @@ interface Company {
 export interface StudioWorkspaceProps {
   role: Role
   companyId?: string
-  initialClientId?: string   // admin: pre-select a specific client on mount
+  initialClientId?: string        // admin: pre-select a specific client on mount
+  fireCreatorProfile?: FireCreatorProfile
   demoMode?: boolean
   initialView?: string
   initialPanel?: string
@@ -437,10 +456,11 @@ function BulkUploadModal({ companies, onClose, onUploaded }: {
 // ─── Chat Panel ───────────────────────────────────────────────────────────────
 
 function ChatPanel({
-  comments, role, onSend, onClose,
+  comments, role, fcProfile, onSend, onClose,
 }: {
   comments: ContentComment[]
   role: Role
+  fcProfile: FireCreatorProfile
   onSend: (msg: string, internal: boolean) => void
   onClose: () => void
 }) {
@@ -475,21 +495,43 @@ function ChatPanel({
             <p className="text-xs">No messages yet. Start the conversation.</p>
           </div>
         )}
-        {comments.map(c => (
-          <div key={c.id} className={`flex gap-2 ${c.sender_role === role ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${c.sender_role === 'admin' ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-blue-500/20 text-blue-300'}`}>
-              {c.sender_role === 'admin' ? 'A' : 'C'}
+        {comments.map(c => {
+          const isFC = c.sender_role === 'admin'
+          const isMine = c.sender_role === role
+          const label = isFC
+            ? (c.sender_name ?? fcProfile.displayName)
+            : (c.sender_name ?? 'Client')
+          const initials = isFC
+            ? (c.sender_name ? fcInitials(c.sender_name) : fcInitials(fcProfile.displayName))
+            : (c.sender_name ? c.sender_name.slice(0, 2).toUpperCase() : 'CL')
+          return (
+            <div key={c.id} className={`flex gap-2 ${isMine ? 'flex-row-reverse' : ''}`}>
+              {isFC && fcProfile.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fcProfile.avatarUrl} alt={label} className="w-7 h-7 rounded-full object-cover shrink-0" />
+              ) : (
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isFC ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-blue-500/20 text-blue-300'}`}>
+                  {initials}
+                </div>
+              )}
+              <div className={`max-w-[75%] space-y-0.5 ${isMine ? 'items-end flex flex-col' : ''}`}>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-semibold text-white/60">{label}</span>
+                  {isFC && <span className="text-[8px] bg-[#FF3B1A]/20 text-[#FF3B1A] px-1.5 py-0.5 rounded-full font-bold">{fcProfile.title}</span>}
+                  {c.is_internal && <span className="text-[8px] bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded-full">internal</span>}
+                </div>
+                <div className={`px-3 py-2 rounded-xl text-xs ${
+                  c.is_internal ? 'bg-yellow-500/8 border border-yellow-500/20 text-yellow-200' :
+                  isMine ? 'bg-[#FF3B1A]/15 border border-[#FF3B1A]/20 text-white' :
+                  'bg-white/5 border border-white/8 text-white/80'
+                }`}>
+                  <p>{c.message}</p>
+                  <p className="text-[9px] mt-1 opacity-40">{fmtRelative(c.created_at)}</p>
+                </div>
+              </div>
             </div>
-            <div className={`max-w-[75%] px-3 py-2 rounded-xl text-xs ${
-              c.is_internal ? 'bg-yellow-500/8 border border-yellow-500/20 text-yellow-200' :
-              c.sender_role === role ? 'bg-[#FF3B1A]/15 border border-[#FF3B1A]/20 text-white' :
-              'bg-white/5 border border-white/8 text-white/80'
-            }`}>
-              <p>{c.message}</p>
-              <p className="text-[9px] mt-1 opacity-40">{fmtRelative(c.created_at)}{c.is_internal ? ' · internal' : ''}</p>
-            </div>
-          </div>
-        ))}
+          )
+        })}
         <div ref={bottomRef} />
       </div>
 
@@ -524,10 +566,11 @@ function ChatPanel({
 type DrawerTab = 'details' | 'comments' | 'notes' | 'versions'
 
 function DetailDrawer({
-  item, role, comments, onClose, onStatusChange, onToast,
+  item, role, fcProfile, comments, onClose, onStatusChange, onToast,
 }: {
   item: ContentItem
   role: Role
+  fcProfile: FireCreatorProfile
   comments: ContentComment[]
   onClose: () => void
   onStatusChange: (id: string, status: Status) => void
@@ -563,6 +606,7 @@ function DetailDrawer({
       id: `c-${Date.now()}`,
       content_item_id: item.id,
       sender_role: role,
+      sender_name: role === 'admin' ? fcProfile.displayName : undefined,
       message: message.trim(),
       is_internal: isInternal,
       created_at: new Date().toISOString(),
@@ -753,21 +797,42 @@ function DetailDrawer({
               {publicComments.length === 0 && (
                 <p className="text-white/20 text-xs pt-4 text-center">No comments yet.</p>
               )}
-              {publicComments.map(c => (
-                <div key={c.id} className={`flex gap-2 ${c.sender_role === role ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${c.sender_role === 'admin' ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-blue-500/20 text-blue-300'}`}>
-                    {c.sender_role === 'admin' ? 'A' : 'C'}
+              {publicComments.map(c => {
+                const isFC = c.sender_role === 'admin'
+                const isMine = c.sender_role === role
+                const label = isFC
+                  ? (c.sender_name ?? fcProfile.displayName)
+                  : (c.sender_name ?? 'Client')
+                const initials = isFC
+                  ? (c.sender_name ? fcInitials(c.sender_name) : fcInitials(fcProfile.displayName))
+                  : (c.sender_name ? c.sender_name.slice(0, 2).toUpperCase() : 'CL')
+                return (
+                  <div key={c.id} className={`flex gap-2 ${isMine ? 'flex-row-reverse' : ''}`}>
+                    {isFC && fcProfile.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={fcProfile.avatarUrl} alt={label} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 ${isFC ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-blue-500/20 text-blue-300'}`}>
+                        {initials}
+                      </div>
+                    )}
+                    <div className={`max-w-[78%] space-y-0.5 ${isMine ? 'items-end flex flex-col' : ''}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-semibold text-white/55">{label}</span>
+                        {isFC && <span className="text-[7px] bg-[#FF3B1A]/20 text-[#FF3B1A] px-1 py-0.5 rounded-full font-bold">{fcProfile.title}</span>}
+                      </div>
+                      <div className={`px-3 py-2 rounded-xl text-xs ${
+                        isMine
+                          ? 'bg-[#FF3B1A]/10 border border-[#FF3B1A]/15 text-white/90'
+                          : 'bg-white/5 border border-white/8 text-white/80'
+                      }`}>
+                        <p>{c.message}</p>
+                        <p className="text-[9px] mt-1 opacity-40">{fmtRelative(c.created_at)}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
-                    c.sender_role === role
-                      ? 'bg-[#FF3B1A]/10 border border-[#FF3B1A]/15 text-white/90'
-                      : 'bg-white/5 border border-white/8 text-white/80'
-                  }`}>
-                    <p>{c.message}</p>
-                    <p className="text-[9px] mt-1 opacity-40">{fmtRelative(c.created_at)}</p>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
               <div ref={bottomRef} />
             </div>
             <div className="p-4 border-t border-white/8 flex gap-2 shrink-0">
@@ -1042,8 +1107,11 @@ function AdminClientPanel({
 // ─── Main StudioWorkspace ─────────────────────────────────────────────────────
 
 export default function StudioWorkspace({
-  role, companyId: initialCompanyId, initialClientId, demoMode, initialView, initialPanel, initialMode,
+  role, companyId: initialCompanyId, initialClientId,
+  fireCreatorProfile: fcProfileProp,
+  demoMode, initialView, initialPanel, initialMode,
 }: StudioWorkspaceProps) {
+  const fcProfile: FireCreatorProfile = fcProfileProp ?? DEFAULT_FC_PROFILE
   const demo = demoMode ?? checkDemoMode()
 
   // Data
@@ -1187,10 +1255,12 @@ export default function StudioWorkspace({
   }
 
   function sendComment(msg: string, isInternal: boolean, contentItemId: string | null = null) {
+    const senderName = role === 'admin' ? fcProfile.displayName : undefined
     const newC: ContentComment = {
       id: `c-${Date.now()}`,
       content_item_id: contentItemId,
       sender_role: role,
+      sender_name: senderName,
       message: msg,
       is_internal: isInternal,
       created_at: new Date().toISOString(),
@@ -1203,6 +1273,7 @@ export default function StudioWorkspace({
         content_item_id: contentItemId,
         company_id: companyId,
         sender_role: role,
+        sender_name: senderName,
         message: msg,
         is_internal: isInternal,
       }).then(() => {})
@@ -1237,6 +1308,7 @@ export default function StudioWorkspace({
         <ChatPanel
           comments={generalChat}
           role={role}
+          fcProfile={fcProfile}
           onSend={(msg, internal) => sendComment(msg, internal, null)}
           onClose={() => setChatOpen(false)}
         />
@@ -1247,6 +1319,7 @@ export default function StudioWorkspace({
         <DetailDrawer
           item={activeItem}
           role={role}
+          fcProfile={fcProfile}
           comments={itemComments(activeItem.id)}
           onClose={() => setActiveItem(null)}
           onStatusChange={updateStatus}
