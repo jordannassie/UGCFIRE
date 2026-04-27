@@ -402,8 +402,13 @@ export default function Home() {
 
   // Calendar booking state
   interface CalSlot { iso: string; label: string }
+  const todayDate = new Date();
+  const [calYear, setCalYear] = useState(todayDate.getFullYear());
+  const [calMonth, setCalMonth] = useState(todayDate.getMonth()); // 0-indexed
+  const [calDay, setCalDay] = useState<number | null>(null);
   const [calSlots, setCalSlots] = useState<CalSlot[]>([]);
-  const [calLoading, setCalLoading] = useState(true);
+  const [calLoading, setCalLoading] = useState(false);
+  const [calApiError, setCalApiError] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<CalSlot | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [bookName, setBookName] = useState("");
@@ -425,27 +430,23 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Load real availability from Supabase Edge Function
-  useEffect(() => {
-    const today = new Date();
-    // Default to the next weekday for demo
-    const next = new Date(today);
-    if (next.getDay() === 0) next.setDate(next.getDate() + 1);
-    if (next.getDay() === 6) next.setDate(next.getDate() + 2);
-    const iso = next.toISOString().split("T")[0];
-
+  // Fetch real slots from Edge Function for a given date string (YYYY-MM-DD)
+  function fetchSlotsForDate(year: number, month: number, day: number) {
+    const mm = String(month + 1).padStart(2, "0");
+    const dd = String(day).padStart(2, "0");
+    const dateStr = `${year}-${mm}-${dd}`;
     setCalLoading(true);
-    fetch(`${SUPABASE_URL}/functions/v1/calendar-availability?date=${iso}`)
+    setCalSlots([]);
+    setCalApiError(false);
+    fetch(`${SUPABASE_URL}/functions/v1/calendar-availability?date=${dateStr}`)
       .then((r) => r.json())
       .then((data) => {
-        setCalSlots(data.slots ?? []);
+        if (data.error) { setCalApiError(true); setCalSlots([]); }
+        else setCalSlots(data.slots ?? []);
         setCalLoading(false);
       })
-      .catch(() => {
-        setCalSlots([]);
-        setCalLoading(false);
-      });
-  }, []);
+      .catch(() => { setCalApiError(true); setCalSlots([]); setCalLoading(false); });
+  }
 
   async function handleBookSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1259,106 +1260,169 @@ export default function Home() {
             </a>
           </div>
 
-          {/* Right: custom calendar UI */}
-          <div className="booking-right" style={{
-            flex: "1 1 320px",
-            maxWidth: 420,
-            background: "rgba(14,14,14,0.98)",
-            border: "1px solid rgba(255,255,255,0.09)",
-            borderRadius: 20,
-            padding: "28px 24px 24px",
-            boxShadow: "0 0 48px rgba(255,59,26,0.06)",
-          }}>
-            {/* Month header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>May 2026</span>
-              <div style={{ display: "flex", gap: 12 }}>
-                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 18, cursor: "pointer", userSelect: "none" }}>‹</span>
-                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 18, cursor: "pointer", userSelect: "none" }}>›</span>
-              </div>
-            </div>
+          {/* Right: interactive calendar UI */}
+          {(() => {
+            const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
+            const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+            const todayY = todayDate.getFullYear();
+            const todayM = todayDate.getMonth();
+            const todayD = todayDate.getDate();
 
-            {/* Day labels */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 6 }}>
-              {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
-                <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 600, paddingBottom: 4 }}>{d}</div>
-              ))}
-            </div>
+            const cells: (number | null)[] = [
+              ...Array(firstDayOfWeek).fill(null),
+              ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+            ];
 
-            {/* Date grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 20 }}>
-              {([...Array(4).fill(null), 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31] as (number|null)[]).map((d, i) => (
-                <div key={i} style={{
-                  textAlign: "center",
-                  fontSize: 13,
-                  padding: "7px 0",
-                  borderRadius: 7,
-                  color: d === 14 ? "#fff" : d === null ? "transparent" : "rgba(255,255,255,0.35)",
-                  background: d === 14 ? "#FF3B1A" : d !== null && [7,8,9,12,13,15,16].includes(d as number) ? "rgba(255,255,255,0.04)" : "transparent",
-                  fontWeight: d === 14 ? 700 : 400,
-                  cursor: d !== null ? "pointer" : "default",
-                }}>
-                  {d ?? ""}
+            function isSelectable(d: number) {
+              const dow = new Date(calYear, calMonth, d).getDay();
+              const isWeekend = dow === 0 || dow === 6;
+              const isPast = calYear < todayY || (calYear === todayY && calMonth < todayM) || (calYear === todayY && calMonth === todayM && d < todayD);
+              return !isWeekend && !isPast;
+            }
+
+            function isToday(d: number) {
+              return calYear === todayY && calMonth === todayM && d === todayD;
+            }
+
+            function prevMonth() {
+              if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
+              else setCalMonth(m => m - 1);
+              setCalDay(null); setCalSlots([]); setCalApiError(false);
+            }
+            function nextMonth() {
+              if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
+              else setCalMonth(m => m + 1);
+              setCalDay(null); setCalSlots([]); setCalApiError(false);
+            }
+            function selectDay(d: number) {
+              setCalDay(d);
+              fetchSlotsForDate(calYear, calMonth, d);
+            }
+
+            const dayLabel = calDay
+              ? new Date(calYear, calMonth, calDay).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+              : null;
+
+            return (
+              <div className="booking-right" style={{
+                flex: "1 1 320px",
+                maxWidth: 420,
+                background: "rgba(14,14,14,0.98)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: 20,
+                padding: "28px 24px 24px",
+                boxShadow: "0 0 48px rgba(255,59,26,0.06)",
+              }}>
+                {/* Month header */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>
+                    {MONTH_NAMES[calMonth]} {calYear}
+                  </span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button onClick={prevMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "rgba(255,255,255,0.5)", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>‹</button>
+                    <button onClick={nextMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "rgba(255,255,255,0.5)", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>›</button>
+                  </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Time slot label */}
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
-              {calLoading ? "Loading availability…" : calSlots.length > 0 ? "Available Times" : "No slots — pick another day"}
-            </div>
+                {/* Day labels */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 6 }}>
+                  {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
+                    <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 600, paddingBottom: 4 }}>{d}</div>
+                  ))}
+                </div>
 
-            {/* Dynamic time slots from Edge Function */}
-            {calLoading ? (
-              <div style={{ textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Checking calendar…</div>
-            ) : calSlots.length > 0 ? (
-              calSlots.map((slot) => (
-                <button
-                  key={slot.iso}
-                  onClick={() => { setSelectedSlot(slot); setShowModal(true); setBookStatus("idle"); setBookName(""); setBookEmail(""); setBookBrand(""); setBookMeetLink(null); setBookError(null); }}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "11px 14px",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 10,
-                    marginBottom: 8,
-                    fontSize: 14,
-                    color: "rgba(255,255,255,0.7)",
-                    textAlign: "center",
-                    background: "transparent",
-                    cursor: "pointer",
-                    transition: "border-color 0.2s, background 0.2s, color 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,59,26,0.5)";
-                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.08)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "#fff";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)";
-                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
-                  }}
-                >
-                  {slot.label}
-                </button>
-              ))
-            ) : (
-              <a
-                href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "block", padding: "11px 14px", border: "1px solid rgba(255,59,26,0.3)", borderRadius: 10, marginBottom: 8, fontSize: 14, color: "#FF3B1A", textAlign: "center", textDecoration: "none" }}
-              >
-                Open Google Calendar →
-              </a>
-            )}
+                {/* Date grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 20 }}>
+                  {cells.map((d, i) => {
+                    if (d === null) return <div key={i} />;
+                    const selectable = isSelectable(d);
+                    const selected = d === calDay;
+                    const today = isToday(d);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => selectable && selectDay(d)}
+                        style={{
+                          textAlign: "center",
+                          fontSize: 13,
+                          padding: "7px 0",
+                          borderRadius: 7,
+                          border: today && !selected ? "1px solid rgba(255,59,26,0.4)" : "1px solid transparent",
+                          color: selected ? "#fff" : selectable ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.18)",
+                          background: selected ? "#FF3B1A" : selectable ? "rgba(255,255,255,0.04)" : "transparent",
+                          fontWeight: selected ? 700 : 400,
+                          cursor: selectable ? "pointer" : "default",
+                          transition: "background 0.15s, color 0.15s",
+                        }}
+                        onMouseEnter={(e) => { if (selectable && !selected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.15)"; }}
+                        onMouseLeave={(e) => { if (selectable && !selected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)"; }}
+                      >
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
 
-            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
-              Select a time to confirm your discovery call.
-            </p>
-          </div>
+                {/* Time slots area */}
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+                    {!calDay
+                      ? "Pick a date above"
+                      : calLoading
+                      ? `Loading ${dayLabel}…`
+                      : calApiError
+                      ? "Calendar unavailable"
+                      : calSlots.length > 0
+                      ? `Available — ${dayLabel}`
+                      : `No slots — ${dayLabel}`}
+                  </div>
+
+                  {!calDay && (
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "16px 0" }}>
+                      Select a weekday to see open times.
+                    </p>
+                  )}
+
+                  {calDay && calLoading && (
+                    <div style={{ textAlign: "center", padding: "16px 0", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+                      Checking calendar…
+                    </div>
+                  )}
+
+                  {calDay && !calLoading && calApiError && (
+                    <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
+                      style={{ display: "block", padding: "11px 14px", border: "1px solid rgba(255,59,26,0.35)", borderRadius: 10, marginBottom: 8, fontSize: 14, color: "#FF3B1A", textAlign: "center", textDecoration: "none" }}>
+                      Book via Google Calendar →
+                    </a>
+                  )}
+
+                  {calDay && !calLoading && !calApiError && calSlots.length === 0 && (
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "10px 0" }}>
+                      No open slots this day. Try another.
+                    </p>
+                  )}
+
+                  {calDay && !calLoading && !calApiError && calSlots.map((slot) => (
+                    <button
+                      key={slot.iso}
+                      onClick={() => { setSelectedSlot(slot); setShowModal(true); setBookStatus("idle"); setBookName(""); setBookEmail(""); setBookBrand(""); setBookMeetLink(null); setBookError(null); }}
+                      style={{
+                        display: "block", width: "100%", padding: "11px 14px",
+                        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, marginBottom: 8,
+                        fontSize: 14, color: "rgba(255,255,255,0.7)", textAlign: "center",
+                        background: "transparent", cursor: "pointer", transition: "border-color 0.2s, background 0.2s, color 0.2s",
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,59,26,0.5)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.08)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)"; }}
+                    >
+                      {slot.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 
