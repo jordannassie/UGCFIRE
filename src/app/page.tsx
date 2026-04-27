@@ -1448,10 +1448,37 @@ export default function Home() {
               <div className="booking-right" style={{
                 flex: "1 1 320px",
                 maxWidth: 420,
+                position: "relative",
+                paddingTop: 48, // space for avatar overflow
+              }}>
+                {/* Profile avatar — half outside the card top edge */}
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 10,
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "3px solid #FF3B1A",
+                  boxShadow: "0 0 20px rgba(255,59,26,0.4)",
+                }}>
+                  <Image
+                    src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/Profile%20Jordan.jpg"
+                    alt="Jordan"
+                    width={80}
+                    height={80}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    unoptimized
+                  />
+                </div>
+              <div style={{
                 background: "rgba(14,14,14,0.98)",
                 border: "1px solid rgba(255,255,255,0.09)",
                 borderRadius: 20,
-                padding: "28px 24px 24px",
+                padding: "52px 24px 24px",
                 boxShadow: "0 0 48px rgba(255,59,26,0.06)",
               }}>
                 {/* Month header */}
@@ -1560,6 +1587,7 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
+              </div>
               </div>
             );
           })()}
