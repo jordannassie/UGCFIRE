@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY } from '@/lib/demoData'
 import {
   LayoutDashboard, Users, UploadCloud, Film, FolderOpen,
   RefreshCcw, MessageCircle, CreditCard, FileText, Activity,
@@ -38,10 +39,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     let cancelled = false
 
     async function check() {
+      // ── Demo mode: allow instantly without Supabase ──────────────────────
+      if (isDemoMode() && getDemoRole() === 'admin') {
+        if (!cancelled) {
+          setUserEmail(localStorage.getItem(DEMO_EMAIL_KEY) ?? 'admin@ugcfire.com')
+          setChecking(false)
+        }
+        return
+      }
+
+      // ── Real Supabase auth ────────────────────────────────────────────────
       const supabase = createClient()
 
-      // Wait for a valid session — retry up to 3× with 400 ms gaps
-      // (handles the brief window right after signInWithPassword + window.location.href)
       let user = null
       for (let i = 0; i < 3; i++) {
         const { data } = await supabase.auth.getUser()
@@ -55,7 +64,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return
       }
 
-      // Fetch profile — retry once if null (trigger might still be running)
       let profile = null
       for (let i = 0; i < 2; i++) {
         const { data } = await supabase.from('profiles').select('role, email').eq('id', user.id).maybeSingle()
@@ -64,9 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         await new Promise(r => setTimeout(r, 600))
       }
 
-      if (!cancelled) {
-        console.debug('[admin] session exists:', true, '| profile found:', !!profile, '| role:', profile?.role)
-      }
+      console.debug('[admin] session:', !!user, '| profile:', !!profile, '| role:', profile?.role)
 
       if (!profile || profile.role !== 'admin') {
         if (!cancelled) setDenied(true)
@@ -84,9 +90,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [router])
 
   async function signOut() {
+    exitDemoMode()
     const supabase = createClient()
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = '/login'
   }
 
   if (denied) {

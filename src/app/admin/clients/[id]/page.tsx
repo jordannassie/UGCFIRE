@@ -1,7 +1,8 @@
 'use client'
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { statusColor, logActivity } from '@/lib/data'
+import { Check, X, Send, ExternalLink } from 'lucide-react'
 import type {
   Company, Profile, Plan, BrandBrief, ContentItem, ClientUpload,
   Message, BillingRecord, Agreement, ActivityLog, ContentStatus, BillingStatus
@@ -12,6 +13,13 @@ type Tab = typeof TABS[number]
 
 const CONTENT_STATUSES: ContentStatus[] = ['in_production', 'ready_for_review', 'revision_requested', 'approved', 'delivered', 'archived']
 const BILLING_STATUSES: BillingStatus[] = ['inactive', 'active_mock', 'past_due_mock', 'canceled_mock']
+
+const BILLING_STATUS_LABELS: Record<BillingStatus, string> = {
+  inactive: 'Inactive',
+  active_mock: 'Active',
+  past_due_mock: 'Past Due',
+  canceled_mock: 'Canceled',
+}
 
 export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -32,10 +40,15 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [replyText, setReplyText] = useState('')
   const [sendingReply, setSendingReply] = useState(false)
   const [adminUserId, setAdminUserId] = useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadAll()
   }, [id])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, tab])
 
   async function loadAll() {
     const supabase = createClient()
@@ -145,6 +158,13 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     return <div className="text-white/40 py-20 text-center">Client not found.</div>
   }
 
+  const contentStats = {
+    total: content.length,
+    inProduction: content.filter(c => c.status === 'in_production').length,
+    readyForReview: content.filter(c => c.status === 'ready_for_review').length,
+    delivered: content.filter(c => c.status === 'delivered').length,
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -154,10 +174,10 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             <h1 className="text-2xl font-bold text-white">{company.name}</h1>
             <span className={`text-xs px-2 py-1 rounded-full ${statusColor(company.billing_status)}`}>{company.billing_status}</span>
           </div>
-          <p className="text-white/40 text-sm mt-1">{profile?.email}</p>
+          <p className="text-white/40 text-sm mt-1">{profile?.email ?? 'No email on record'}</p>
         </div>
         <a href="/admin/clients" className="border border-white/10 text-white/60 px-4 py-2 rounded-lg hover:border-[#FF3B1A] hover:text-white transition text-sm">
-          ← Back to Clients
+          Back to Clients
         </a>
       </div>
 
@@ -170,36 +190,76 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition ${tab === t ? 'border-[#FF3B1A] text-white' : 'border-transparent text-white/40 hover:text-white/70'}`}
           >
             {t}
+            {t === 'Content' && content.length > 0 && (
+              <span className="ml-1.5 text-xs text-white/30">({content.length})</span>
+            )}
+            {t === 'Messages' && messages.filter(m => m.sender_role === 'client' && !m.read_at).length > 0 && (
+              <span className="ml-1.5 bg-[#FF3B1A] text-white text-xs px-1.5 py-0.5 rounded-full">
+                {messages.filter(m => m.sender_role === 'client' && !m.read_at).length}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {/* Overview */}
       {tab === 'Overview' && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="bg-[#111] border border-white/10 rounded-xl p-6 space-y-4">
-            <h3 className="text-white font-semibold">Company Info</h3>
-            <InfoRow label="Name" value={company.name} />
-            <InfoRow label="Website" value={company.website ?? '—'} />
-            <InfoRow label="Plan" value={plan?.name ?? 'No Plan'} />
-            <InfoRow label="Onboarding" value={company.onboarding_status} />
-            <InfoRow label="Created" value={new Date(company.created_at).toLocaleDateString()} />
-            <div className="flex items-center justify-between">
-              <span className="text-white/40 text-sm">Showcase Permission</span>
-              <button
-                onClick={() => toggleShowcase(company.showcase_permission)}
-                className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${company.showcase_permission ? 'bg-[#FF3B1A]' : 'bg-white/20'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform mt-0.5 ${company.showcase_permission ? 'translate-x-4' : 'translate-x-0.5'}`} />
-              </button>
+        <div className="space-y-4">
+          {/* Mini stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-[#111] border border-white/10 rounded-xl p-4">
+              <p className="text-white/40 text-xs uppercase font-semibold tracking-wider mb-1">Total Content</p>
+              <p className="text-2xl font-bold text-white">{contentStats.total}</p>
+            </div>
+            <div className="bg-[#111] border border-white/10 rounded-xl p-4 border-l-4 border-l-[#FF3B1A]">
+              <p className="text-white/40 text-xs uppercase font-semibold tracking-wider mb-1">In Production</p>
+              <p className="text-2xl font-bold text-yellow-300">{contentStats.inProduction}</p>
+            </div>
+            <div className="bg-[#111] border border-white/10 rounded-xl p-4">
+              <p className="text-white/40 text-xs uppercase font-semibold tracking-wider mb-1">Ready for Review</p>
+              <p className="text-2xl font-bold text-blue-300">{contentStats.readyForReview}</p>
+            </div>
+            <div className="bg-[#111] border border-white/10 rounded-xl p-4">
+              <p className="text-white/40 text-xs uppercase font-semibold tracking-wider mb-1">Delivered</p>
+              <p className="text-2xl font-bold text-green-300">{contentStats.delivered}</p>
             </div>
           </div>
-          <div className="bg-[#111] border border-white/10 rounded-xl p-6 space-y-4">
-            <h3 className="text-white font-semibold">Owner Info</h3>
-            <InfoRow label="Email" value={profile?.email ?? '—'} />
-            <InfoRow label="Full Name" value={profile?.full_name ?? '—'} />
-            <InfoRow label="Role" value={profile?.role ?? '—'} />
-            <InfoRow label="Joined" value={profile ? new Date(profile.created_at).toLocaleDateString() : '—'} />
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-[#111] border border-white/10 rounded-xl p-6 space-y-4">
+              <h3 className="text-white font-semibold">Company Info</h3>
+              <InfoRow label="Name" value={company.name} />
+              <InfoRow label="Website" value={company.website ?? '—'} />
+              <InfoRow label="Plan" value={plan?.name ?? 'No Plan'} />
+              <InfoRow label="Plan Price" value={plan?.price_monthly ? `$${plan.price_monthly.toLocaleString()}/mo` : '—'} />
+              <InfoRow label="Onboarding" value={company.onboarding_status.replace(/_/g, ' ')} />
+              <InfoRow label="Billing Status" value={company.billing_status.replace(/_/g, ' ')} />
+              <InfoRow label="Created" value={new Date(company.created_at).toLocaleDateString()} />
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-white/40 text-sm">Showcase Permission</span>
+                <button
+                  onClick={() => toggleShowcase(company.showcase_permission)}
+                  className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${company.showcase_permission ? 'bg-[#FF3B1A]' : 'bg-white/20'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform mt-0.5 ${company.showcase_permission ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+            </div>
+            <div className="bg-[#111] border border-white/10 rounded-xl p-6 space-y-4">
+              <h3 className="text-white font-semibold">Owner Info</h3>
+              <InfoRow label="Email" value={profile?.email ?? '—'} />
+              <InfoRow label="Full Name" value={profile?.full_name ?? '—'} />
+              <InfoRow label="Role" value={profile?.role ?? '—'} />
+              <InfoRow label="Joined" value={profile ? new Date(profile.created_at).toLocaleDateString() : '—'} />
+              <div className="pt-2 space-y-2">
+                <p className="text-white/40 text-xs uppercase font-semibold tracking-wider">Quick Stats</p>
+                <div className="flex gap-3 flex-wrap text-xs">
+                  <span className="bg-white/5 px-3 py-1.5 rounded-lg text-white/60">{clientUploads.length} uploads</span>
+                  <span className="bg-white/5 px-3 py-1.5 rounded-lg text-white/60">{messages.length} messages</span>
+                  <span className="bg-white/5 px-3 py-1.5 rounded-lg text-white/60">{activityLogs.length} events</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -208,26 +268,32 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       {tab === 'Brand Brief' && (
         <div className="bg-[#111] border border-white/10 rounded-xl p-6">
           {!brief ? (
-            <p className="text-white/40 text-sm">Brand brief not completed yet.</p>
+            <div className="py-8 text-center">
+              <p className="text-white/40 text-sm">Brand brief not completed yet.</p>
+              <p className="text-white/20 text-xs mt-1">The client hasn&apos;t filled out their brand brief.</p>
+            </div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {[
-                ['Company Name', brief.company_name],
-                ['Website', brief.website ?? '—'],
-                ['Offer', brief.offer ?? '—'],
-                ['Target Customer', brief.target_customer ?? '—'],
-                ['Brand Voice', brief.brand_voice ?? '—'],
-                ['Video Styles', brief.video_styles ?? '—'],
-                ['Examples', brief.examples ?? '—'],
-                ['Notes', brief.notes ?? '—'],
-                ['Assets URL', brief.assets_url ?? '—'],
-                ['Completed', brief.completed_at ? new Date(brief.completed_at).toLocaleDateString() : 'No'],
-              ].map(([label, value]) => (
-                <div key={label} className="space-y-1">
-                  <p className="text-white/40 text-xs uppercase font-semibold tracking-wider">{label}</p>
-                  <p className="text-white/80 text-sm break-words">{value}</p>
-                </div>
-              ))}
+            <div className="space-y-4">
+              <h3 className="text-white font-semibold mb-4">Brand Brief</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                {[
+                  ['Company Name', brief.company_name],
+                  ['Website', brief.website ?? '—'],
+                  ['Offer', brief.offer ?? '—'],
+                  ['Target Customer', brief.target_customer ?? '—'],
+                  ['Brand Voice', brief.brand_voice ?? '—'],
+                  ['Video Styles', brief.video_styles ?? '—'],
+                  ['Examples', brief.examples ?? '—'],
+                  ['Notes', brief.notes ?? '—'],
+                  ['Assets URL', brief.assets_url ?? '—'],
+                  ['Completed', brief.completed_at ? new Date(brief.completed_at).toLocaleDateString() : 'Not completed'],
+                ].map(([label, value]) => (
+                  <div key={label} className="space-y-1 bg-white/[0.02] rounded-lg p-3">
+                    <p className="text-white/40 text-xs uppercase font-semibold tracking-wider">{label}</p>
+                    <p className="text-white/80 text-sm break-words">{value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -236,106 +302,125 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       {/* Content */}
       {tab === 'Content' && (
         <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Title</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Type</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Week</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Status</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Uploaded</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {content.length === 0 && (
-                  <tr><td colSpan={6} className="py-8 text-center text-white/30">No content yet</td></tr>
-                )}
-                {content.map(item => (
-                  <tr key={item.id}>
-                    <td className="py-3 border-b border-white/5 text-white font-medium px-6 max-w-xs truncate">{item.title}</td>
-                    <td className="py-3 border-b border-white/5 text-white/60 px-4">{item.media_type}</td>
-                    <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">{item.week_label ?? '—'}</td>
-                    <td className="py-3 border-b border-white/5 px-4">
-                      <select
-                        value={item.status}
-                        onChange={e => updateContentStatus(item.id, e.target.value as ContentStatus)}
-                        className="bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs focus:border-[#FF3B1A] focus:outline-none"
-                      >
-                        {CONTENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </td>
-                    <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs whitespace-nowrap">{new Date(item.uploaded_at).toLocaleDateString()}</td>
-                    <td className="py-3 border-b border-white/5 px-6">
-                      <button onClick={() => archiveContent(item.id)} className="text-xs text-red-400 hover:text-red-300 transition">Archive</button>
-                    </td>
+          {content.length === 0 ? (
+            <div className="p-12 text-center text-white/30 text-sm">No content uploaded for this client yet</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Title</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Type</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Week</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Status</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Uploaded</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {content.map(item => (
+                    <tr key={item.id} className="hover:bg-white/[0.02]">
+                      <td className="py-3 border-b border-white/5 text-white font-medium px-6 max-w-xs truncate">{item.title}</td>
+                      <td className="py-3 border-b border-white/5 px-4">
+                        <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded-full">{item.media_type}</span>
+                      </td>
+                      <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">{item.week_label ?? '—'}</td>
+                      <td className="py-3 border-b border-white/5 px-4">
+                        <select
+                          value={item.status}
+                          onChange={e => updateContentStatus(item.id, e.target.value as ContentStatus)}
+                          className="bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs focus:border-[#FF3B1A] focus:outline-none"
+                        >
+                          {CONTENT_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </td>
+                      <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs whitespace-nowrap">{new Date(item.uploaded_at).toLocaleDateString()}</td>
+                      <td className="py-3 border-b border-white/5 px-6 flex gap-3 items-center">
+                        {item.file_url && (
+                          <a href={item.file_url} target="_blank" rel="noreferrer"
+                            className="text-[#FF3B1A] hover:text-[#e02e10] transition flex items-center gap-1 text-xs">
+                            <ExternalLink size={12} />
+                            View
+                          </a>
+                        )}
+                        <button onClick={() => archiveContent(item.id)} className="text-xs text-red-400 hover:text-red-300 transition">Archive</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
       {/* Client Uploads */}
       {tab === 'Client Uploads' && (
         <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Title</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Category</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">File</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Status</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Date</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clientUploads.length === 0 && (
-                  <tr><td colSpan={6} className="py-8 text-center text-white/30">No client uploads</td></tr>
-                )}
-                {clientUploads.map(u => (
-                  <tr key={u.id}>
-                    <td className="py-3 border-b border-white/5 text-white px-6">{u.title}</td>
-                    <td className="py-3 border-b border-white/5 text-white/60 px-4">{u.upload_category}</td>
-                    <td className="py-3 border-b border-white/5 px-4">
-                      <a href={u.file_url} target="_blank" rel="noreferrer" className="text-[#FF3B1A] hover:underline text-xs">View File</a>
-                    </td>
-                    <td className="py-3 border-b border-white/5 px-4">
-                      <span className={`text-xs px-2 py-1 rounded-full ${statusColor(u.status)}`}>{u.status}</span>
-                    </td>
-                    <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
-                    <td className="py-3 border-b border-white/5 px-6 flex gap-2">
-                      <button onClick={() => updateUploadStatus(u.id, 'reviewed')} className="text-xs border border-white/10 px-2 py-1 rounded text-white/60 hover:text-white hover:border-[#FF3B1A] transition">Reviewed</button>
-                      <button onClick={() => updateUploadStatus(u.id, 'used')} className="text-xs border border-white/10 px-2 py-1 rounded text-white/60 hover:text-white hover:border-[#FF3B1A] transition">Used</button>
-                      <button onClick={() => updateUploadStatus(u.id, 'archived')} className="text-xs text-red-400 hover:text-red-300 transition px-2 py-1">Archive</button>
-                    </td>
+          {clientUploads.length === 0 ? (
+            <div className="p-12 text-center text-white/30 text-sm">No client uploads for this client</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Title</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Category</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">File</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Status</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Date</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {clientUploads.map(u => (
+                    <tr key={u.id} className="hover:bg-white/[0.02]">
+                      <td className="py-3 border-b border-white/5 text-white px-6">{u.title}</td>
+                      <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">{u.upload_category}</td>
+                      <td className="py-3 border-b border-white/5 px-4">
+                        <a href={u.file_url} target="_blank" rel="noreferrer" className="text-[#FF3B1A] hover:underline text-xs flex items-center gap-1">
+                          <ExternalLink size={10} />
+                          View
+                        </a>
+                      </td>
+                      <td className="py-3 border-b border-white/5 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor(u.status)}`}>{u.status}</span>
+                      </td>
+                      <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
+                      <td className="py-3 border-b border-white/5 px-6 flex gap-2">
+                        <button onClick={() => updateUploadStatus(u.id, 'reviewed')} className="text-xs border border-white/10 px-2 py-1 rounded text-white/60 hover:text-white hover:border-[#FF3B1A] transition">Reviewed</button>
+                        <button onClick={() => updateUploadStatus(u.id, 'used')} className="text-xs border border-white/10 px-2 py-1 rounded text-white/60 hover:text-white hover:border-[#FF3B1A] transition">Used</button>
+                        <button onClick={() => updateUploadStatus(u.id, 'archived')} className="text-xs text-red-400 hover:text-red-300 transition px-2 py-1">Archive</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
       {/* Messages */}
       {tab === 'Messages' && (
         <div className="bg-[#111] border border-white/10 rounded-xl p-6 space-y-4">
-          <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-            {messages.length === 0 && <p className="text-white/30 text-sm text-center py-8">No messages yet</p>}
+          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+            {messages.length === 0 && (
+              <div className="py-8 text-center text-white/30 text-sm">No messages yet — start the conversation below</div>
+            )}
             {messages.map(msg => (
               <div key={msg.id} className={`flex ${msg.sender_role === 'admin' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-md px-4 py-3 rounded-xl text-sm ${msg.sender_role === 'admin' ? 'bg-[#FF3B1A]/20 text-white' : 'bg-white/5 text-white/80'}`}>
                   <p className={`text-xs mb-1 font-medium ${msg.sender_role === 'admin' ? 'text-[#FF3B1A]' : 'text-white/40'}`}>
-                    {msg.sender_role === 'admin' ? 'Admin' : 'Client'} · {new Date(msg.created_at).toLocaleTimeString()}
+                    {msg.sender_role === 'admin' ? 'Admin' : company.name}
+                    {' · '}
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
-                  {msg.message}
+                  <p className="leading-relaxed">{msg.message}</p>
                 </div>
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
           <div className="flex gap-3 pt-2 border-t border-white/10">
             <input
@@ -343,15 +428,16 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
               placeholder="Type a reply..."
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendReply()}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendReply()}
               className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none"
             />
             <button
               onClick={sendReply}
               disabled={sendingReply || !replyText.trim()}
-              className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-50"
+              className="bg-[#FF3B1A] text-white font-bold px-5 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-50 flex items-center gap-2"
             >
-              Send
+              <Send size={14} />
+              {sendingReply ? 'Sending...' : 'Send'}
             </button>
           </div>
         </div>
@@ -361,16 +447,20 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       {tab === 'Billing' && (
         <div className="bg-[#111] border border-white/10 rounded-xl p-6 space-y-4">
           {!billing ? (
-            <p className="text-white/40 text-sm">No billing record found.</p>
+            <div className="py-8 text-center text-white/40 text-sm">No billing record found for this client.</div>
           ) : (
             <>
-              <InfoRow label="Billing Status" value={billing.billing_status} />
-              <InfoRow label="Subscription Status" value={billing.subscription_status} />
-              <InfoRow label="Mock Mode" value={billing.mock_mode ? 'Yes' : 'No'} />
-              <InfoRow label="Period Start" value={billing.current_period_start ? new Date(billing.current_period_start).toLocaleDateString() : '—'} />
-              <InfoRow label="Period End" value={billing.current_period_end ? new Date(billing.current_period_end).toLocaleDateString() : '—'} />
-              <div className="pt-2">
-                <label className="text-white/40 text-sm block mb-2">Change Billing Status</label>
+              <div className="grid md:grid-cols-2 gap-4">
+                <InfoRow label="Plan" value={plan?.name ?? 'No Plan'} />
+                <InfoRow label="Plan Price" value={plan?.price_monthly ? `$${plan.price_monthly.toLocaleString()}/mo` : '—'} />
+                <InfoRow label="Billing Status" value={billing.billing_status.replace(/_/g, ' ')} />
+                <InfoRow label="Subscription Status" value={billing.subscription_status} />
+                <InfoRow label="Mock Mode" value={billing.mock_mode ? 'Yes' : 'No'} />
+                <InfoRow label="Period Start" value={billing.current_period_start ? new Date(billing.current_period_start).toLocaleDateString() : '—'} />
+                <InfoRow label="Period End" value={billing.current_period_end ? new Date(billing.current_period_end).toLocaleDateString() : '—'} />
+              </div>
+              <div className="pt-2 border-t border-white/10">
+                <label className="text-white/40 text-sm block mb-3">Change Billing Status</label>
                 <div className="flex gap-2 flex-wrap">
                   {BILLING_STATUSES.map(s => (
                     <button
@@ -378,7 +468,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                       onClick={() => updateBillingStatus(s)}
                       className={`text-xs px-3 py-2 rounded-lg border transition ${billing.billing_status === s ? 'border-[#FF3B1A] text-white bg-[#FF3B1A]/10' : 'border-white/10 text-white/60 hover:border-[#FF3B1A] hover:text-white'}`}
                     >
-                      {s}
+                      {BILLING_STATUS_LABELS[s]}
                     </button>
                   ))}
                 </div>
@@ -392,7 +482,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       {tab === 'Agreement' && (
         <div className="bg-[#111] border border-white/10 rounded-xl p-6">
           {!agreement ? (
-            <p className="text-white/40 text-sm">No signed agreement found.</p>
+            <div className="py-8 text-center text-white/40 text-sm">No signed agreement found for this client.</div>
           ) : (
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
@@ -400,13 +490,29 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 <InfoRow label="Signed Email" value={agreement.signed_email} />
                 <InfoRow label="Signed At" value={new Date(agreement.signed_at).toLocaleString()} />
                 <InfoRow label="Agreement Version" value={agreement.agreement_version} />
-                <InfoRow label="Accepted Terms" value={agreement.accepted_checkbox ? '✅ Yes' : '❌ No'} />
-                <InfoRow label="Showcase Rights" value={agreement.showcase_rights_checkbox ? '✅ Yes' : '❌ No'} />
+              </div>
+              <div className="flex gap-4 flex-wrap pt-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-white/40">Accepted Terms:</span>
+                  {agreement.accepted_checkbox ? (
+                    <span className="flex items-center gap-1 text-green-400 text-xs font-medium"><Check size={12} /> Yes</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-red-400 text-xs"><X size={12} /> No</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-white/40">Showcase Rights:</span>
+                  {agreement.showcase_rights_checkbox ? (
+                    <span className="flex items-center gap-1 bg-green-500/20 text-green-300 text-xs px-2 py-0.5 rounded-full font-medium"><Check size={10} /> Showcase Granted</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-red-400 text-xs"><X size={12} /> Not granted</span>
+                  )}
+                </div>
               </div>
               {agreement.contract_body && (
-                <div className="mt-4">
-                  <p className="text-white/40 text-xs uppercase font-semibold tracking-wider mb-2">Contract Text</p>
-                  <div className="bg-white/5 rounded-lg p-4 text-white/60 text-xs leading-relaxed max-h-64 overflow-y-auto whitespace-pre-wrap">
+                <div className="mt-2">
+                  <p className="text-white/40 text-xs uppercase font-semibold tracking-wider mb-2">{agreement.contract_title || 'Contract Text'}</p>
+                  <div className="bg-[#080808] rounded-lg p-4 text-white/60 text-xs leading-relaxed max-h-64 overflow-y-auto whitespace-pre-wrap border border-white/5">
                     {agreement.contract_body}
                   </div>
                 </div>
@@ -419,33 +525,38 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       {/* Activity Log */}
       {tab === 'Activity Log' && (
         <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Date</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Actor</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Event</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Message</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activityLogs.length === 0 && (
-                  <tr><td colSpan={4} className="py-8 text-center text-white/30">No activity yet</td></tr>
-                )}
-                {activityLogs.map(log => (
-                  <tr key={log.id}>
-                    <td className="py-3 border-b border-white/5 text-white/40 px-6 text-xs whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
-                    <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">{log.actor_role ?? '—'}</td>
-                    <td className="py-3 border-b border-white/5 px-4">
-                      <span className={`text-xs px-2 py-1 rounded-full ${statusColor(log.event_type)}`}>{log.event_type}</span>
-                    </td>
-                    <td className="py-3 border-b border-white/5 text-white/70 px-6">{log.event_message}</td>
+          {activityLogs.length === 0 ? (
+            <div className="p-12 text-center text-white/30 text-sm">No activity recorded for this client yet</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Date</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Actor</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Event</th>
+                    <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Message</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {activityLogs.map(log => (
+                    <tr key={log.id} className="hover:bg-white/[0.02]">
+                      <td className="py-3 border-b border-white/5 text-white/40 px-6 text-xs whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                      <td className="py-3 border-b border-white/5 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full ${log.actor_role === 'admin' ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-blue-500/20 text-blue-300'}`}>
+                          {log.actor_role ?? 'system'}
+                        </span>
+                      </td>
+                      <td className="py-3 border-b border-white/5 px-4">
+                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor(log.event_type)}`}>{log.event_type}</span>
+                      </td>
+                      <td className="py-3 border-b border-white/5 text-white/70 px-6">{log.event_message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

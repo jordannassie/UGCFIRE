@@ -1,19 +1,17 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { enterDemoMode } from '@/lib/demoData'
 
 export default function SignupPage() {
-  const router = useRouter()
-  const [tab, setTab] = useState<'signup' | 'login'>('signup')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [tab, setTab]           = useState<'signup' | 'login'>('signup')
+  const [name, setName]         = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [demoStatus, setDemoStatus] = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -21,7 +19,7 @@ export default function SignupPage() {
     const supabase = createClient()
     const { data, error: err } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: name, role: 'client' } }
+      options: { data: { full_name: name, role: 'client' } },
     })
     if (err) { setError(err.message); setLoading(false); return }
     if (data.user) {
@@ -37,7 +35,7 @@ export default function SignupPage() {
         event_type: 'user_signed_up',
         event_message: `${name} signed up.`,
       })
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     }
     setLoading(false)
   }
@@ -48,41 +46,13 @@ export default function SignupPage() {
     const supabase = createClient()
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) { setError(err.message); setLoading(false); return }
-    router.push('/dashboard')
-    setLoading(false)
+    window.location.href = '/dashboard'
   }
 
-  async function handleDemoLogin(role: 'admin' | 'client') {
-    setLoading(true); setError('')
-    setDemoStatus(role === 'admin' ? 'Preparing admin demo…' : 'Preparing demo…')
-
-    // Auto-seed demo data via server-side API route (uses service role key safely)
-    const seedRes = await fetch('/api/demo/seed', { method: 'POST' })
-    const seedJson = await seedRes.json()
-    if (!seedRes.ok || !seedJson.success) {
-      const debug = seedJson.debug
-      const debugMsg = debug
-        ? ` (hasURL:${debug.hasSupabaseUrl} hasKey:${debug.hasServiceRoleKey} keyLen:${debug.serviceRoleKeyLength})`
-        : ''
-      setError(`Demo setup failed: ${seedJson.error ?? 'Unknown error.'}${debugMsg}`)
-      setDemoStatus('')
-      setLoading(false)
-      return
-    }
-
-    setDemoStatus(role === 'admin' ? 'Signing in as admin…' : 'Signing in as demo client…')
-    const supabase = createClient()
-    const demoEmail = role === 'admin' ? 'admin@ugcfire.com' : 'demo@ugcfire.com'
-    const demoPassword = role === 'admin' ? 'admin123456' : 'demo123456'
-    const { error: err } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPassword })
-    if (err) {
-      setError('Demo setup completed but login failed. Check Supabase connection or email confirmation settings.')
-      setDemoStatus('')
-      setLoading(false)
-      return
-    }
-    // Use full page navigation so session cookies are established before middleware runs
-    setDemoStatus('Loading workspace…')
+  function handleDemoLogin(role: 'admin' | 'client') {
+    // No passwords, no Supabase, no service role key required.
+    // Sets demo cookies + localStorage then redirects immediately.
+    enterDemoMode(role)
     window.location.href = role === 'admin' ? '/admin' : '/dashboard'
   }
 
@@ -94,45 +64,85 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/">
-            <Image src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png" alt="UGCFire" width={140} height={56} className="mx-auto" unoptimized />
+            <Image
+              src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
+              alt="UGCFire"
+              width={140}
+              height={56}
+              className="mx-auto"
+              unoptimized
+            />
           </Link>
           <p className="text-white/40 text-sm mt-2">Monthly AI-assisted UGC content</p>
         </div>
 
         <div className="bg-[#111] border border-white/10 rounded-2xl p-8">
+          {/* Tabs */}
           <div className="flex gap-1 mb-6 bg-white/5 rounded-lg p-1">
             {(['signup', 'login'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 rounded-md text-sm font-medium transition ${tab === t ? 'bg-[#FF3B1A] text-white' : 'text-white/50 hover:text-white'}`}>
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
+                  tab === t ? 'bg-[#FF3B1A] text-white' : 'text-white/50 hover:text-white'
+                }`}
+              >
                 {t === 'signup' ? 'Sign Up' : 'Log In'}
               </button>
             ))}
           </div>
 
-          {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-lg mb-4">{error}</div>}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-lg mb-4">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={tab === 'signup' ? handleSignup : handleLogin} className="space-y-4">
             {tab === 'signup' && (
-              <input className={inputStyle} placeholder="Your name" value={name} onChange={e => setName(e.target.value)} required />
+              <input
+                className={inputStyle}
+                placeholder="Your name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+              />
             )}
-            <input className={inputStyle} type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} required />
-            <input className={inputStyle} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+            <input
+              className={inputStyle}
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            <input
+              className={inputStyle}
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
             <button type="submit" disabled={loading} className={btnPrimary}>
               {loading ? 'Loading…' : tab === 'signup' ? 'Create Account' : 'Log In'}
             </button>
           </form>
 
+          {/* Demo access — no passwords, no seeds, instant redirect */}
           <div className="mt-6 pt-6 border-t border-white/10 space-y-2">
-            <p className="text-center text-white/30 text-xs mb-3">Demo Access</p>
-            {demoStatus && (
-              <div className="bg-[#FF3B1A]/10 border border-[#FF3B1A]/20 text-[#FF3B1A] text-xs px-3 py-2 rounded-lg text-center animate-pulse">
-                {demoStatus}
-              </div>
-            )}
-            <button onClick={() => handleDemoLogin('client')} disabled={loading} className="w-full border border-white/10 text-white/60 py-2 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition disabled:opacity-40">
-              {loading && demoStatus.includes('demo…') ? demoStatus : 'Demo Client Login'}
+            <p className="text-center text-white/30 text-xs mb-3">Try the demo</p>
+            <button
+              onClick={() => handleDemoLogin('client')}
+              className="w-full border border-white/10 text-white/60 py-2.5 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition"
+            >
+              Demo Client Login
             </button>
-            <button onClick={() => handleDemoLogin('admin')} disabled={loading} className="w-full border border-white/10 text-white/60 py-2 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition disabled:opacity-40">
-              {loading && demoStatus.includes('admin') ? demoStatus : 'Demo Admin Login'}
+            <button
+              onClick={() => handleDemoLogin('admin')}
+              className="w-full border border-white/10 text-white/60 py-2.5 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition"
+            >
+              Demo Admin Login
             </button>
           </div>
         </div>

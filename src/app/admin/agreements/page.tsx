@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Check, X, ChevronDown, ChevronRight } from 'lucide-react'
 
 interface AgreementRow {
   id: string
@@ -63,16 +64,27 @@ export default function AdminAgreementsPage() {
     load()
   }, [])
 
+  const showcaseGrantedCount = agreements.filter(a => a.showcase_rights_checkbox).length
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Agreements</h1>
-        <p className="text-white/40 text-sm mt-1">{agreements.length} signed agreements</p>
+        <div className="flex gap-4 mt-2">
+          <p className="text-white/40 text-sm">{agreements.length} signed agreements</p>
+          {showcaseGrantedCount > 0 && (
+            <span className="bg-green-500/20 text-green-300 text-xs px-2 py-0.5 rounded-full font-medium">
+              {showcaseGrantedCount} showcase granted
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-white/40 text-sm">Loading agreements...</div>
+        ) : agreements.length === 0 ? (
+          <div className="p-12 text-center text-white/30 text-sm">No signed agreements found</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -82,45 +94,65 @@ export default function AdminAgreementsPage() {
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Plan</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Signed Name</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Signed Email</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Signed Date</th>
+                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Date</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Version</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-center px-4 pt-5">Showcase</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Contract</th>
                 </tr>
               </thead>
               <tbody>
-                {agreements.length === 0 && (
-                  <tr><td colSpan={8} className="py-8 text-center text-white/30">No agreements found</td></tr>
-                )}
                 {agreements.map(a => (
                   <>
-                    <tr key={a.id} className="hover:bg-white/2 cursor-pointer" onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}>
+                    <tr key={a.id} className="hover:bg-white/[0.02] cursor-pointer" onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}>
                       <td className="py-3 border-b border-white/5 text-white font-medium px-6">{a.company_name}</td>
-                      <td className="py-3 border-b border-white/5 text-white/70 px-4">{a.plan_name}</td>
+                      <td className="py-3 border-b border-white/5 text-white/70 px-4 text-xs">
+                        <span className="bg-white/10 px-2 py-0.5 rounded-full">{a.plan_name}</span>
+                      </td>
                       <td className="py-3 border-b border-white/5 text-white/70 px-4">{a.signed_name}</td>
                       <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">{a.signed_email}</td>
                       <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs whitespace-nowrap">{new Date(a.signed_at).toLocaleDateString()}</td>
                       <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs">{a.agreement_version}</td>
                       <td className="py-3 border-b border-white/5 px-4 text-center">
                         {a.showcase_rights_checkbox ? (
-                          <span className="text-green-400">✓</span>
+                          <span className="inline-flex items-center gap-1 bg-green-500/20 text-green-300 text-xs px-2 py-0.5 rounded-full font-medium">
+                            <Check size={10} />
+                            Granted
+                          </span>
                         ) : (
-                          <span className="text-red-400">✗</span>
+                          <span className="inline-flex items-center gap-1 bg-white/10 text-white/40 text-xs px-2 py-0.5 rounded-full">
+                            <X size={10} />
+                            No
+                          </span>
                         )}
                       </td>
                       <td className="py-3 border-b border-white/5 px-6">
-                        <button className="text-xs text-[#FF3B1A] hover:underline">
-                          {expandedId === a.id ? 'Collapse ↑' : 'View ↓'}
+                        <button className="text-xs text-[#FF3B1A] hover:underline flex items-center gap-1" onClick={e => { e.stopPropagation(); setExpandedId(expandedId === a.id ? null : a.id) }}>
+                          {expandedId === a.id ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                          {expandedId === a.id ? 'Collapse' : 'View'}
                         </button>
                       </td>
                     </tr>
                     {expandedId === a.id && (
                       <tr key={`${a.id}-expanded`}>
-                        <td colSpan={8} className="px-6 py-4 bg-white/5 border-b border-white/5">
-                          <div className="space-y-3">
+                        <td colSpan={8} className="px-6 py-4 bg-white/[0.02] border-b border-white/5">
+                          <div className="space-y-4">
                             <div className="flex gap-6 flex-wrap text-xs">
-                              <span className="text-white/40">Accepted Terms: <span className={a.accepted_checkbox ? 'text-green-400' : 'text-red-400'}>{a.accepted_checkbox ? '✓ Yes' : '✗ No'}</span></span>
-                              <span className="text-white/40">Showcase Rights: <span className={a.showcase_rights_checkbox ? 'text-green-400' : 'text-red-400'}>{a.showcase_rights_checkbox ? '✓ Yes' : '✗ No'}</span></span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-white/40">Accepted Terms:</span>
+                                {a.accepted_checkbox ? (
+                                  <span className="flex items-center gap-1 text-green-400"><Check size={12} /> Yes</span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-red-400"><X size={12} /> No</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-white/40">Showcase Rights:</span>
+                                {a.showcase_rights_checkbox ? (
+                                  <span className="flex items-center gap-1 text-green-400"><Check size={12} /> Granted</span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-red-400"><X size={12} /> Not granted</span>
+                                )}
+                              </div>
                             </div>
                             {a.contract_body && (
                               <>

@@ -1,0 +1,836 @@
+// ─── Demo Mode Utilities ────────────────────────────────────────────────────
+
+export const DEMO_VIDEO_URL =
+  'https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128_httpss.mj.runVArsopscz9I_slow_motion_pers_c2fb5354-bceb-4ae0-8069-d65e46035d16_1.mp4'
+
+export const DEMO_PHOTO_URL =
+  'https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/1a75fdad-d79b-4df6-a855-d10aa65335c7.png'
+
+export const DEMO_COOKIE_NAME  = 'ugcfire_demo_mode'
+export const DEMO_ROLE_COOKIE  = 'ugcfire_demo_role'
+export const DEMO_EMAIL_KEY    = 'ugcfire_demo_user_email'
+export const DEMO_COMPANY_KEY  = 'ugcfire_demo_company'
+
+export function isDemoMode(): boolean {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem(DEMO_COOKIE_NAME) === 'true'
+}
+
+export function getDemoRole(): 'client' | 'admin' | null {
+  if (typeof window === 'undefined') return null
+  const role = localStorage.getItem(DEMO_ROLE_COOKIE)
+  if (role === 'admin' || role === 'client') return role
+  return null
+}
+
+export function enterDemoMode(role: 'client' | 'admin') {
+  const email  = role === 'admin' ? 'admin@ugcfire.com' : 'demo@ugcfire.com'
+  const company = role === 'admin' ? 'UGCFire Admin' : 'Demo Brand'
+
+  localStorage.setItem(DEMO_COOKIE_NAME,  'true')
+  localStorage.setItem(DEMO_ROLE_COOKIE,  role)
+  localStorage.setItem(DEMO_EMAIL_KEY,    email)
+  localStorage.setItem(DEMO_COMPANY_KEY,  company)
+
+  // Also set cookies so middleware can read them for SSR route guard
+  const maxAge = 60 * 60 * 8 // 8 hours
+  document.cookie = `${DEMO_COOKIE_NAME}=true; path=/; max-age=${maxAge}; SameSite=Lax`
+  document.cookie = `${DEMO_ROLE_COOKIE}=${role}; path=/; max-age=${maxAge}; SameSite=Lax`
+}
+
+export function exitDemoMode() {
+  localStorage.removeItem(DEMO_COOKIE_NAME)
+  localStorage.removeItem(DEMO_ROLE_COOKIE)
+  localStorage.removeItem(DEMO_EMAIL_KEY)
+  localStorage.removeItem(DEMO_COMPANY_KEY)
+
+  const expired = 'expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/'
+  document.cookie = `${DEMO_COOKIE_NAME}=; ${expired}`
+  document.cookie = `${DEMO_ROLE_COOKIE}=; ${expired}`
+}
+
+// ─── Demo Plans ──────────────────────────────────────────────────────────────
+
+export const DEMO_PLANS = [
+  {
+    id: 'plan-growth-demo',
+    name: 'Growth',
+    slug: 'growth',
+    price_monthly: 1497,
+    videos_per_month: 8,
+    description: '8 content deliverables per month',
+    is_active: true,
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'plan-scale-demo',
+    name: 'Scale',
+    slug: 'scale',
+    price_monthly: 2497,
+    videos_per_month: 16,
+    description: '16 content deliverables per month',
+    is_active: true,
+    created_at: '2026-01-01T00:00:00Z',
+  },
+]
+
+// ─── Demo Company ────────────────────────────────────────────────────────────
+
+export const DEMO_COMPANY = {
+  id: 'company-demo-brand',
+  name: 'Demo Brand',
+  owner_user_id: 'user-demo-client',
+  plan_id: 'plan-scale-demo',
+  onboarding_status: 'completed',
+  billing_status: 'active_mock',
+  subscription_status: 'active_mock',
+  showcase_permission: true,
+  is_demo: true,
+  created_at: '2026-04-01T00:00:00Z',
+}
+
+// ─── Demo Companies (Admin view) ─────────────────────────────────────────────
+
+export const DEMO_COMPANIES = [
+  {
+    id: 'company-demo-brand',
+    name: 'Demo Brand',
+    owner_user_id: 'user-demo-client',
+    plan_id: 'plan-scale-demo',
+    plan_name: 'Scale',
+    owner_email: 'demo@ugcfire.com',
+    onboarding_status: 'completed',
+    billing_status: 'active_mock',
+    subscription_status: 'active_mock',
+    showcase_permission: true,
+    content_this_month: 8,
+    last_activity: '2026-04-27T10:00:00Z',
+  },
+  {
+    id: 'company-apex-fitness',
+    name: 'Apex Fitness Co.',
+    owner_user_id: 'user-apex',
+    plan_id: 'plan-growth-demo',
+    plan_name: 'Growth',
+    owner_email: 'apex@apexfitness.com',
+    onboarding_status: 'completed',
+    billing_status: 'active_mock',
+    subscription_status: 'active_mock',
+    showcase_permission: true,
+    content_this_month: 6,
+    last_activity: '2026-04-26T14:00:00Z',
+  },
+  {
+    id: 'company-glow-skin',
+    name: 'Glow Skin Studio',
+    owner_user_id: 'user-glow',
+    plan_id: 'plan-scale-demo',
+    plan_name: 'Scale',
+    owner_email: 'hello@glowskinstudio.com',
+    onboarding_status: 'completed',
+    billing_status: 'active_mock',
+    subscription_status: 'active_mock',
+    showcase_permission: true,
+    content_this_month: 5,
+    last_activity: '2026-04-25T09:00:00Z',
+  },
+  {
+    id: 'company-northstar',
+    name: 'NorthStar Roofing',
+    owner_user_id: 'user-northstar',
+    plan_id: 'plan-growth-demo',
+    plan_name: 'Growth',
+    owner_email: 'info@northstarroofing.com',
+    onboarding_status: 'completed',
+    billing_status: 'past_due_mock',
+    subscription_status: 'past_due_mock',
+    showcase_permission: false,
+    content_this_month: 3,
+    last_activity: '2026-04-22T11:00:00Z',
+  },
+]
+
+// ─── Demo Brand Brief ─────────────────────────────────────────────────────────
+
+export const DEMO_BRAND_BRIEF = {
+  id: 'brief-demo-brand',
+  company_id: 'company-demo-brand',
+  company_name: 'Demo Brand',
+  website: 'https://demobrand.com',
+  offer: 'Premium skincare products that transform your skin in 30 days',
+  target_customer: 'Women 25-45, health-conscious, willing to invest in self-care',
+  brand_voice: 'Confident, authentic, results-focused, warm',
+  video_styles: 'Founder-style talking head, lifestyle B-roll, before/after reveals',
+  examples: 'https://instagram.com/p/example1, https://tiktok.com/example2',
+  notes: 'Avoid competitor mentions. Always show product in natural light.',
+  assets_url: DEMO_PHOTO_URL,
+  completed_at: '2026-04-01T00:00:00Z',
+  created_at: '2026-04-01T00:00:00Z',
+}
+
+// ─── Demo Agreement ───────────────────────────────────────────────────────────
+
+export const DEMO_AGREEMENT = {
+  id: 'agreement-demo-brand',
+  company_id: 'company-demo-brand',
+  user_id: 'user-demo-client',
+  plan_id: 'plan-scale-demo',
+  agreement_version: 'v1.0',
+  contract_title: 'UGCFire Service Agreement',
+  contract_body: `This agreement is entered into between UGCFire ("Agency") and Demo Brand ("Client") effective April 1, 2026.
+
+SERVICES
+UGCFire will produce monthly photo and video content deliverables as specified in the selected plan. The Scale plan includes up to 16 content deliverables per month, including short-form videos, lifestyle photos, and ad creatives.
+
+CONTENT OWNERSHIP
+All finalized content delivered to Client is owned by Client upon delivery. UGCFire retains the right to use delivered content for portfolio, case study, and marketing purposes unless explicitly restricted in writing.
+
+REVISIONS
+Each content item includes up to 2 revision rounds. Additional revisions may incur extra fees.
+
+BILLING
+Subscription is billed monthly. Cancellation requires 14 days notice before the next billing cycle.
+
+SHOWCASE RIGHTS
+Client grants UGCFire permission to showcase delivered content in marketing materials, social media, and website with showcase rights accepted.
+
+CONFIDENTIALITY
+Both parties agree to keep business information confidential.
+
+By signing, Client agrees to these terms.`,
+  signed_name: 'Demo User',
+  signed_email: 'demo@ugcfire.com',
+  signed_at: '2026-04-01T10:00:00Z',
+  accepted_checkbox: true,
+  showcase_rights_checkbox: true,
+  ip_address: '127.0.0.1',
+  user_agent: 'Demo Mode',
+  created_at: '2026-04-01T10:00:00Z',
+}
+
+// ─── Demo Billing ─────────────────────────────────────────────────────────────
+
+export const DEMO_BILLING = {
+  id: 'billing-demo-brand',
+  company_id: 'company-demo-brand',
+  plan_id: 'plan-scale-demo',
+  billing_status: 'active_mock',
+  subscription_status: 'active_mock',
+  mock_mode: true,
+  current_period_start: '2026-04-01T00:00:00Z',
+  current_period_end: '2026-05-01T00:00:00Z',
+  created_at: '2026-04-01T00:00:00Z',
+}
+
+// ─── Demo Content Items ───────────────────────────────────────────────────────
+
+export const DEMO_CONTENT_ITEMS = [
+  {
+    id: 'content-1',
+    company_id: 'company-demo-brand',
+    title: 'Founder-style UGC Video',
+    description: 'Direct-to-camera founder talking head ad with product demonstration',
+    media_type: 'video',
+    status: 'ready_for_review',
+    week_label: 'Week 1 - May 2026',
+    content_type: 'Talking Head',
+    file_url: DEMO_VIDEO_URL,
+    thumbnail_url: null,
+    can_showcase: true,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-27T08:00:00Z',
+    approved_at: null,
+    delivered_at: null,
+    deleted_at: null,
+    created_at: '2026-04-27T08:00:00Z',
+  },
+  {
+    id: 'content-2',
+    company_id: 'company-demo-brand',
+    title: 'Product Demo Video',
+    description: 'Hands-on product demonstration showing key benefits',
+    media_type: 'video',
+    status: 'approved',
+    week_label: 'Week 1 - May 2026',
+    content_type: 'Product Demo',
+    file_url: DEMO_VIDEO_URL,
+    thumbnail_url: null,
+    can_showcase: true,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-25T08:00:00Z',
+    approved_at: '2026-04-26T14:00:00Z',
+    delivered_at: null,
+    deleted_at: null,
+    created_at: '2026-04-25T08:00:00Z',
+  },
+  {
+    id: 'content-3',
+    company_id: 'company-demo-brand',
+    title: 'Problem / Solution Short',
+    description: 'Hook-driven problem/solution format short-form ad',
+    media_type: 'video',
+    status: 'delivered',
+    week_label: 'Week 2 - May 2026',
+    content_type: 'Hook / Problem',
+    file_url: DEMO_VIDEO_URL,
+    thumbnail_url: null,
+    can_showcase: true,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-20T08:00:00Z',
+    approved_at: '2026-04-21T10:00:00Z',
+    delivered_at: '2026-04-22T08:00:00Z',
+    deleted_at: null,
+    created_at: '2026-04-20T08:00:00Z',
+  },
+  {
+    id: 'content-4',
+    company_id: 'company-demo-brand',
+    title: 'Product Lifestyle Photo',
+    description: 'High-quality lifestyle product photography for social ads',
+    media_type: 'photo',
+    status: 'ready_for_review',
+    week_label: 'Week 2 - May 2026',
+    content_type: 'Lifestyle',
+    file_url: DEMO_PHOTO_URL,
+    thumbnail_url: null,
+    can_showcase: true,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-27T09:00:00Z',
+    approved_at: null,
+    delivered_at: null,
+    deleted_at: null,
+    created_at: '2026-04-27T09:00:00Z',
+  },
+  {
+    id: 'content-5',
+    company_id: 'company-demo-brand',
+    title: 'Social Ad Photo Creative',
+    description: 'Static image ad creative optimized for Facebook and Instagram',
+    media_type: 'photo',
+    status: 'approved',
+    week_label: 'Week 3 - May 2026',
+    content_type: 'Ad Creative',
+    file_url: DEMO_PHOTO_URL,
+    thumbnail_url: null,
+    can_showcase: true,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-18T08:00:00Z',
+    approved_at: '2026-04-19T12:00:00Z',
+    delivered_at: null,
+    deleted_at: null,
+    created_at: '2026-04-18T08:00:00Z',
+  },
+  {
+    id: 'content-6',
+    company_id: 'company-demo-brand',
+    title: 'Offer CTA Video',
+    description: 'Direct response video with clear offer and call to action',
+    media_type: 'video',
+    status: 'in_production',
+    week_label: 'Week 4 - May 2026',
+    content_type: 'Direct Response',
+    file_url: null,
+    thumbnail_url: null,
+    can_showcase: true,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-27T10:00:00Z',
+    approved_at: null,
+    delivered_at: null,
+    deleted_at: null,
+    created_at: '2026-04-27T10:00:00Z',
+  },
+  {
+    id: 'content-7',
+    company_id: 'company-demo-brand',
+    title: 'Testimonial Graphic',
+    description: 'Social proof graphic with customer quote and product image',
+    media_type: 'graphic',
+    status: 'delivered',
+    week_label: 'Week 3 - May 2026',
+    content_type: 'Social Proof',
+    file_url: DEMO_PHOTO_URL,
+    thumbnail_url: null,
+    can_showcase: true,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-15T08:00:00Z',
+    approved_at: '2026-04-16T09:00:00Z',
+    delivered_at: '2026-04-17T08:00:00Z',
+    deleted_at: null,
+    created_at: '2026-04-15T08:00:00Z',
+  },
+  {
+    id: 'content-8',
+    company_id: 'company-demo-brand',
+    title: 'Carousel Image Set',
+    description: '4-slide carousel for Instagram and Facebook ads',
+    media_type: 'carousel',
+    status: 'ready_for_review',
+    week_label: 'Week 4 - May 2026',
+    content_type: 'Carousel',
+    file_url: DEMO_PHOTO_URL,
+    thumbnail_url: null,
+    can_showcase: false,
+    uploaded_by: 'user-admin',
+    uploaded_at: '2026-04-27T11:00:00Z',
+    approved_at: null,
+    delivered_at: null,
+    deleted_at: null,
+    created_at: '2026-04-27T11:00:00Z',
+  },
+]
+
+// ─── Demo Client Uploads ──────────────────────────────────────────────────────
+
+export const DEMO_CLIENT_UPLOADS = [
+  {
+    id: 'upload-1',
+    company_id: 'company-demo-brand',
+    uploaded_by: 'user-demo-client',
+    file_url: DEMO_PHOTO_URL,
+    file_name: 'demo-brand-logo.png',
+    file_type: 'image/png',
+    upload_category: 'Logo/Brand Asset',
+    title: 'Demo Brand Logo',
+    notes: 'Primary logo with transparent background, all variants included.',
+    status: 'reviewed',
+    created_at: '2026-04-01T10:00:00Z',
+  },
+  {
+    id: 'upload-2',
+    company_id: 'company-demo-brand',
+    uploaded_by: 'user-demo-client',
+    file_url: DEMO_PHOTO_URL,
+    file_name: 'hero-product-photo.jpg',
+    file_type: 'image/jpeg',
+    upload_category: 'Product Photo',
+    title: 'Hero Product Photo',
+    notes: 'Main hero shot of the serum bottle on white background.',
+    status: 'used',
+    created_at: '2026-04-02T10:00:00Z',
+  },
+  {
+    id: 'upload-3',
+    company_id: 'company-demo-brand',
+    uploaded_by: 'user-demo-client',
+    file_url: DEMO_VIDEO_URL,
+    file_name: 'raw-founder-clip.mp4',
+    file_type: 'video/mp4',
+    upload_category: 'Raw Video',
+    title: 'Raw Founder Clip',
+    notes: 'Unedited phone footage of founder talking about the product origin story.',
+    status: 'submitted',
+    created_at: '2026-04-05T10:00:00Z',
+  },
+  {
+    id: 'upload-4',
+    company_id: 'company-demo-brand',
+    uploaded_by: 'user-demo-client',
+    file_url: DEMO_VIDEO_URL,
+    file_name: 'competitor-ad-reference.mp4',
+    file_type: 'video/mp4',
+    upload_category: 'Reference Video',
+    title: 'Competitor Ad Reference',
+    notes: 'Skincare brand ad we want to beat in performance. Note the hook structure.',
+    status: 'submitted',
+    created_at: '2026-04-06T10:00:00Z',
+  },
+  {
+    id: 'upload-5',
+    company_id: 'company-demo-brand',
+    uploaded_by: 'user-demo-client',
+    file_url: DEMO_VIDEO_URL,
+    file_name: 'winning-ad-example.mp4',
+    file_type: 'video/mp4',
+    upload_category: 'Ad Example',
+    title: 'Winning Ad Example',
+    notes: 'Our best performing ad from last quarter. Keep the same energy.',
+    status: 'reviewed',
+    created_at: '2026-04-07T10:00:00Z',
+  },
+]
+
+// ─── Demo Messages ────────────────────────────────────────────────────────────
+
+export const DEMO_MESSAGES = [
+  {
+    id: 'msg-1',
+    company_id: 'company-demo-brand',
+    content_item_id: null,
+    sender_user_id: 'user-admin',
+    sender_role: 'admin',
+    message: 'Welcome to UGCFire. We will use this chat for content direction, updates, and revisions.',
+    read_at: '2026-04-01T10:05:00Z',
+    created_at: '2026-04-01T10:00:00Z',
+  },
+  {
+    id: 'msg-2',
+    company_id: 'company-demo-brand',
+    content_item_id: null,
+    sender_user_id: 'user-demo-client',
+    sender_role: 'client',
+    message: 'Can we make next week\'s content more direct-response focused?',
+    read_at: '2026-04-15T09:05:00Z',
+    created_at: '2026-04-15T09:00:00Z',
+  },
+  {
+    id: 'msg-3',
+    company_id: 'company-demo-brand',
+    content_item_id: null,
+    sender_user_id: 'user-admin',
+    sender_role: 'admin',
+    message: 'Yes. We will strengthen the hooks, show more product close-ups, and add clearer CTAs.',
+    read_at: '2026-04-15T10:05:00Z',
+    created_at: '2026-04-15T10:00:00Z',
+  },
+  {
+    id: 'msg-4',
+    company_id: 'company-demo-brand',
+    content_item_id: null,
+    sender_user_id: 'user-demo-client',
+    sender_role: 'client',
+    message: 'Can we include more lifestyle photo content too?',
+    read_at: null,
+    created_at: '2026-04-20T14:00:00Z',
+  },
+  {
+    id: 'msg-5',
+    company_id: 'company-demo-brand',
+    content_item_id: null,
+    sender_user_id: 'user-admin',
+    sender_role: 'admin',
+    message: 'Absolutely. Upload any product photos or reference examples in My Uploads and we will use them.',
+    read_at: null,
+    created_at: '2026-04-20T15:00:00Z',
+  },
+]
+
+// ─── Demo Revisions ───────────────────────────────────────────────────────────
+
+export const DEMO_REVISIONS = [
+  {
+    id: 'revision-1',
+    content_item_id: 'content-1',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    content_title: 'Founder-style UGC Video',
+    requested_by: 'user-demo-client',
+    revision_note: 'Can you make the first 3 seconds stronger and add a clearer CTA at the end? The hook feels a bit slow to get into the product.',
+    status: 'open',
+    created_at: '2026-04-27T09:00:00Z',
+  },
+  {
+    id: 'revision-2',
+    content_item_id: 'content-northstar-1',
+    company_id: 'company-northstar',
+    company_name: 'NorthStar Roofing',
+    content_title: 'Customer Testimonial Video',
+    requested_by: 'user-northstar',
+    revision_note: 'Audio quality is low. Can we re-edit with background music removed and re-record the testimonial with better audio?',
+    status: 'open',
+    created_at: '2026-04-22T11:00:00Z',
+  },
+]
+
+// ─── Demo Activity Logs ───────────────────────────────────────────────────────
+
+export const DEMO_ACTIVITY_LOGS = [
+  {
+    id: 'log-1',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    actor_user_id: 'user-demo-client',
+    actor_role: 'client',
+    event_type: 'agreement_signed',
+    event_message: 'Demo Brand signed the service agreement.',
+    metadata: {},
+    created_at: '2026-04-01T10:00:00Z',
+  },
+  {
+    id: 'log-2',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    actor_user_id: 'user-demo-client',
+    actor_role: 'client',
+    event_type: 'mock_payment_completed',
+    event_message: 'Mock payment activated — Scale plan ($2,497/mo).',
+    metadata: {},
+    created_at: '2026-04-01T10:30:00Z',
+  },
+  {
+    id: 'log-3',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    actor_user_id: 'user-demo-client',
+    actor_role: 'client',
+    event_type: 'onboarding_completed',
+    event_message: 'Demo Brand completed onboarding.',
+    metadata: {},
+    created_at: '2026-04-01T11:00:00Z',
+  },
+  {
+    id: 'log-4',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    actor_user_id: 'user-admin',
+    actor_role: 'admin',
+    event_type: 'content_uploaded',
+    event_message: 'Week 1 content uploaded for Demo Brand (2 videos).',
+    metadata: {},
+    created_at: '2026-04-25T08:00:00Z',
+  },
+  {
+    id: 'log-5',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    actor_user_id: 'user-demo-client',
+    actor_role: 'client',
+    event_type: 'client_approved_video',
+    event_message: 'Client approved: Product Demo Video.',
+    metadata: {},
+    created_at: '2026-04-26T14:00:00Z',
+  },
+  {
+    id: 'log-6',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    actor_user_id: 'user-demo-client',
+    actor_role: 'client',
+    event_type: 'client_requested_revision',
+    event_message: 'Revision requested on Founder-style UGC Video.',
+    metadata: {},
+    created_at: '2026-04-27T09:00:00Z',
+  },
+  {
+    id: 'log-7',
+    company_id: 'company-apex-fitness',
+    company_name: 'Apex Fitness Co.',
+    actor_user_id: 'user-admin',
+    actor_role: 'admin',
+    event_type: 'content_uploaded',
+    event_message: 'Week 1 content uploaded for Apex Fitness Co.',
+    metadata: {},
+    created_at: '2026-04-24T08:00:00Z',
+  },
+  {
+    id: 'log-8',
+    company_id: 'company-glow-skin',
+    company_name: 'Glow Skin Studio',
+    actor_user_id: 'user-admin',
+    actor_role: 'admin',
+    event_type: 'content_uploaded',
+    event_message: 'Week 2 content uploaded for Glow Skin Studio.',
+    metadata: {},
+    created_at: '2026-04-25T09:00:00Z',
+  },
+  {
+    id: 'log-9',
+    company_id: 'company-northstar',
+    company_name: 'NorthStar Roofing',
+    actor_user_id: 'user-northstar',
+    actor_role: 'client',
+    event_type: 'client_requested_revision',
+    event_message: 'NorthStar Roofing requested revision on testimonial video.',
+    metadata: {},
+    created_at: '2026-04-22T11:00:00Z',
+  },
+]
+
+// ─── Demo Admin Stats ─────────────────────────────────────────────────────────
+
+export const DEMO_ADMIN_STATS = {
+  totalClients: 4,
+  activeSubscriptions: 3,
+  mockMrr: 2497 + 1497 + 2497, // Scale + Growth + Scale
+  readyForReview: 3,
+  openRevisions: 2,
+  clientUploadsWaiting: 2,
+  unreadMessages: 2,
+  deliveredThisMonth: 2,
+}
+
+// ─── Demo Billing Records (Admin view) ───────────────────────────────────────
+
+export const DEMO_BILLING_RECORDS = [
+  {
+    id: 'billing-demo-brand',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    plan_id: 'plan-scale-demo',
+    plan_name: 'Scale',
+    price_monthly: 2497,
+    billing_status: 'active_mock',
+    subscription_status: 'active_mock',
+    mock_mode: true,
+    current_period_start: '2026-04-01T00:00:00Z',
+    current_period_end: '2026-05-01T00:00:00Z',
+  },
+  {
+    id: 'billing-apex',
+    company_id: 'company-apex-fitness',
+    company_name: 'Apex Fitness Co.',
+    plan_id: 'plan-growth-demo',
+    plan_name: 'Growth',
+    price_monthly: 1497,
+    billing_status: 'active_mock',
+    subscription_status: 'active_mock',
+    mock_mode: true,
+    current_period_start: '2026-04-01T00:00:00Z',
+    current_period_end: '2026-05-01T00:00:00Z',
+  },
+  {
+    id: 'billing-glow',
+    company_id: 'company-glow-skin',
+    company_name: 'Glow Skin Studio',
+    plan_id: 'plan-scale-demo',
+    plan_name: 'Scale',
+    price_monthly: 2497,
+    billing_status: 'active_mock',
+    subscription_status: 'active_mock',
+    mock_mode: true,
+    current_period_start: '2026-04-01T00:00:00Z',
+    current_period_end: '2026-05-01T00:00:00Z',
+  },
+  {
+    id: 'billing-northstar',
+    company_id: 'company-northstar',
+    company_name: 'NorthStar Roofing',
+    plan_id: 'plan-growth-demo',
+    plan_name: 'Growth',
+    price_monthly: 1497,
+    billing_status: 'past_due_mock',
+    subscription_status: 'past_due_mock',
+    mock_mode: true,
+    current_period_start: '2026-03-01T00:00:00Z',
+    current_period_end: '2026-04-01T00:00:00Z',
+  },
+]
+
+// ─── Demo Agreements (Admin view) ────────────────────────────────────────────
+
+export const DEMO_AGREEMENTS = [
+  {
+    id: 'agreement-demo-brand',
+    company_id: 'company-demo-brand',
+    company_name: 'Demo Brand',
+    plan_name: 'Scale',
+    signed_name: 'Demo User',
+    signed_email: 'demo@ugcfire.com',
+    signed_at: '2026-04-01T10:00:00Z',
+    agreement_version: 'v1.0',
+    showcase_rights_checkbox: true,
+    contract_title: 'UGCFire Service Agreement',
+    contract_body: DEMO_AGREEMENT.contract_body,
+  },
+  {
+    id: 'agreement-apex',
+    company_id: 'company-apex-fitness',
+    company_name: 'Apex Fitness Co.',
+    plan_name: 'Growth',
+    signed_name: 'Alex Apex',
+    signed_email: 'apex@apexfitness.com',
+    signed_at: '2026-03-15T10:00:00Z',
+    agreement_version: 'v1.0',
+    showcase_rights_checkbox: true,
+    contract_title: 'UGCFire Service Agreement',
+    contract_body: DEMO_AGREEMENT.contract_body,
+  },
+  {
+    id: 'agreement-glow',
+    company_id: 'company-glow-skin',
+    company_name: 'Glow Skin Studio',
+    plan_name: 'Scale',
+    signed_name: 'Grace Glow',
+    signed_email: 'hello@glowskinstudio.com',
+    signed_at: '2026-03-10T10:00:00Z',
+    agreement_version: 'v1.0',
+    showcase_rights_checkbox: true,
+    contract_title: 'UGCFire Service Agreement',
+    contract_body: DEMO_AGREEMENT.contract_body,
+  },
+]
+
+// ─── Admin Content Items (all companies) ─────────────────────────────────────
+
+export const DEMO_ALL_CONTENT = [
+  ...DEMO_CONTENT_ITEMS,
+  {
+    id: 'content-apex-1',
+    company_id: 'company-apex-fitness',
+    company_name: 'Apex Fitness Co.',
+    title: 'Transformation Story Video',
+    media_type: 'video',
+    status: 'delivered',
+    week_label: 'Week 1 - May 2026',
+    content_type: 'Testimonial',
+    file_url: DEMO_VIDEO_URL,
+    can_showcase: true,
+    uploaded_at: '2026-04-20T08:00:00Z',
+    approved_at: '2026-04-21T10:00:00Z',
+    delivered_at: '2026-04-22T08:00:00Z',
+    deleted_at: null,
+  },
+  {
+    id: 'content-apex-2',
+    company_id: 'company-apex-fitness',
+    company_name: 'Apex Fitness Co.',
+    title: 'Workout Highlights Reel',
+    media_type: 'video',
+    status: 'ready_for_review',
+    week_label: 'Week 2 - May 2026',
+    content_type: 'Lifestyle',
+    file_url: DEMO_VIDEO_URL,
+    can_showcase: true,
+    uploaded_at: '2026-04-27T08:00:00Z',
+    approved_at: null,
+    delivered_at: null,
+    deleted_at: null,
+  },
+  {
+    id: 'content-glow-1',
+    company_id: 'company-glow-skin',
+    company_name: 'Glow Skin Studio',
+    title: 'Facial Treatment ASMR Video',
+    media_type: 'video',
+    status: 'approved',
+    week_label: 'Week 1 - May 2026',
+    content_type: 'ASMR / Process',
+    file_url: DEMO_VIDEO_URL,
+    can_showcase: true,
+    uploaded_at: '2026-04-22T08:00:00Z',
+    approved_at: '2026-04-23T10:00:00Z',
+    delivered_at: null,
+    deleted_at: null,
+  },
+  {
+    id: 'content-glow-2',
+    company_id: 'company-glow-skin',
+    company_name: 'Glow Skin Studio',
+    title: 'Product Close-Up Photo Set',
+    media_type: 'photo',
+    status: 'ready_for_review',
+    week_label: 'Week 2 - May 2026',
+    content_type: 'Product Shot',
+    file_url: DEMO_PHOTO_URL,
+    can_showcase: true,
+    uploaded_at: '2026-04-27T09:00:00Z',
+    approved_at: null,
+    delivered_at: null,
+    deleted_at: null,
+  },
+  {
+    id: 'content-northstar-1',
+    company_id: 'company-northstar',
+    company_name: 'NorthStar Roofing',
+    title: 'Before / After Roof Reveal',
+    media_type: 'video',
+    status: 'delivered',
+    week_label: 'Week 1 - May 2026',
+    content_type: 'Before / After',
+    file_url: DEMO_VIDEO_URL,
+    can_showcase: false,
+    uploaded_at: '2026-04-15T08:00:00Z',
+    approved_at: '2026-04-16T10:00:00Z',
+    delivered_at: '2026-04-17T08:00:00Z',
+    deleted_at: null,
+  },
+]

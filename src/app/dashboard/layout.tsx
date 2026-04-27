@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany } from '@/lib/data'
+import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY, DEMO_COMPANY } from '@/lib/demoData'
 import type { Company } from '@/lib/types'
 import {
   Home, CreditCard, FileCheck, ShoppingCart, Target,
@@ -34,6 +35,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
+    // Demo mode: skip Supabase entirely
+    if (isDemoMode() && getDemoRole() === 'client') {
+      setUserEmail(localStorage.getItem(DEMO_EMAIL_KEY) ?? 'demo@ugcfire.com')
+      setCompany(DEMO_COMPANY as unknown as Company)
+      return
+    }
+
+    // Real auth
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/signup'); return }
@@ -43,9 +52,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router])
 
   async function signOut() {
+    exitDemoMode()
     const supabase = createClient()
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.href = '/login'
   }
 
   return (
