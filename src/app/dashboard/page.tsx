@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity, getOnboardingNext } from '@/lib/data'
 import type { Company, ActivityLog } from '@/lib/types'
+import { isDemoMode, DEMO_COMPANY, DEMO_CONTENT_ITEMS, DEMO_ACTIVITY_LOGS } from '@/lib/demoData'
 
 const ONBOARDING_STEPS = [
   { key: 'needs_plan', label: 'Choose Plan', href: '/dashboard/plan', description: 'Select a monthly content plan' },
@@ -35,6 +36,20 @@ export default function DashboardHome() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        const items = DEMO_CONTENT_ITEMS
+        setContentStats({
+          total: items.length,
+          approved: items.filter(i => i.status === 'approved' || i.status === 'delivered').length,
+          in_review: items.filter(i => i.status === 'ready_for_review').length,
+          revisions: items.filter(i => i.status === 'revision_requested').length,
+        })
+        setActivityLogs(DEMO_ACTIVITY_LOGS.filter(l => l.company_id === 'company-demo-brand') as ActivityLog[])
+        setLoading(false)
+        return
+      }
+
       const co = await getMyCompany()
       setCompany(co)
 

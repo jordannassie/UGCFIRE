@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity } from '@/lib/data'
 import type { Company, Plan } from '@/lib/types'
+import { isDemoMode, DEMO_PLANS, DEMO_COMPANY } from '@/lib/demoData'
 import { Zap, CheckCircle, ArrowRight, Star } from 'lucide-react'
 
 const PLAN_DETAILS: Record<string, { deliverables: number; features: string[] }> = {
@@ -42,6 +43,16 @@ export default function PlanPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        const allPlans = DEMO_PLANS as Plan[]
+        setPlans(allPlans)
+        setCompany(DEMO_COMPANY as Company)
+        const found = allPlans.find(p => p.id === DEMO_COMPANY.plan_id) ?? null
+        setCurrentPlan(found)
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const co = await getMyCompany()
       setCompany(co)

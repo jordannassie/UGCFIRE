@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity } from '@/lib/data'
 import type { Company, Plan } from '@/lib/types'
+import { isDemoMode, DEMO_BILLING, DEMO_COMPANY, DEMO_PLANS } from '@/lib/demoData'
 import { CreditCard, CheckCircle, Zap, Lock, ArrowRight, Package } from 'lucide-react'
 
 const PLAN_FEATURES: Record<string, string[]> = {
@@ -42,6 +43,19 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        const scalePlan = DEMO_PLANS.find(p => p.id === DEMO_COMPANY.plan_id)
+        if (scalePlan) setPlan(scalePlan as Plan)
+        setBillingRecord({
+          billing_status: DEMO_BILLING.billing_status,
+          current_period_start: DEMO_BILLING.current_period_start,
+          current_period_end: DEMO_BILLING.current_period_end,
+        })
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const co = await getMyCompany()
       setCompany(co)

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity, statusColor } from '@/lib/data'
 import type { MediaType, ContentStatus } from '@/lib/types'
+import { isDemoMode, DEMO_ALL_CONTENT, DEMO_COMPANIES } from '@/lib/demoData'
 
 const DEMO_VIDEO_URL = 'https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128_httpss.mj.runVArsopscz9I_slow_motion_pers_c2fb5354-bceb-4ae0-8069-d65e46035d16_1.mp4'
 
@@ -62,6 +63,21 @@ export default function AdminUploadsPage() {
   }, [])
 
   async function loadData() {
+    if (isDemoMode()) {
+      setCompanies(DEMO_COMPANIES.map(c => ({ id: c.id, name: c.name })))
+      setRecentUploads(DEMO_ALL_CONTENT.slice(0, 10).map(u => ({
+        id: u.id,
+        title: u.title,
+        status: u.status as ContentStatus,
+        media_type: u.media_type as MediaType,
+        content_type: (u as { content_type?: string | null }).content_type ?? null,
+        uploaded_at: u.uploaded_at,
+        company_name: (u as { company_name?: string }).company_name ??
+          (DEMO_COMPANIES.find(c => c.id === u.company_id)?.name ?? '—'),
+      })))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const [{ data: comps }, { data: uploads }] = await Promise.all([
       supabase.from('companies').select('id, name').order('name'),
@@ -84,6 +100,37 @@ export default function AdminUploadsPage() {
     e.preventDefault()
     if (!form.company_id || !form.title || !form.file_url) return
     setSubmitting(true)
+
+    if (isDemoMode()) {
+      const companyName = DEMO_COMPANIES.find(c => c.id === form.company_id)?.name ?? '—'
+      const newItem: RecentUpload = {
+        id: `demo-upload-${Date.now()}`,
+        title: form.title,
+        status: form.status,
+        media_type: form.media_type,
+        content_type: form.content_type || null,
+        uploaded_at: new Date().toISOString(),
+        company_name: companyName,
+      }
+      setRecentUploads(prev => [newItem, ...prev].slice(0, 10))
+      setSuccessMsg(`"${form.title}" uploaded successfully!`)
+      setForm({
+        company_id: '',
+        title: '',
+        description: '',
+        week_label: '',
+        content_type: 'Talking Head',
+        media_type: 'video',
+        file_url: DEMO_VIDEO_URL,
+        thumbnail_url: '',
+        status: 'ready_for_review',
+        can_showcase: true,
+      })
+      setTimeout(() => setSuccessMsg(''), 4000)
+      setSubmitting(false)
+      return
+    }
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     const { error } = await supabase.from('content_items').insert({

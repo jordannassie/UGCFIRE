@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity } from '@/lib/data'
 import type { Company, Message } from '@/lib/types'
+import { isDemoMode, DEMO_MESSAGES, DEMO_COMPANY } from '@/lib/demoData'
 import { Send, Info, Users } from 'lucide-react'
 
 function formatTime(dateStr: string) {
@@ -30,6 +31,14 @@ export default function TeamChatPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        setUserId('user-demo-client')
+        setMessages(DEMO_MESSAGES as Message[])
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setUserId(user.id)
@@ -60,6 +69,23 @@ export default function TeamChatPage() {
     e.preventDefault()
     if (!text.trim() || !company || sending) return
     setSending(true)
+
+    if (isDemoMode()) {
+      const newMsg: Message = {
+        id: `msg-demo-${Date.now()}`,
+        company_id: company.id,
+        content_item_id: null,
+        sender_user_id: 'user-demo-client',
+        sender_role: 'client',
+        message: text.trim(),
+        read_at: null,
+        created_at: new Date().toISOString(),
+      } as Message
+      setMessages(prev => [...prev, newMsg])
+      setText('')
+      setSending(false)
+      return
+    }
 
     try {
       const supabase = createClient()

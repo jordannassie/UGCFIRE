@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, statusColor } from '@/lib/data'
 import type { Company, Plan, BillingRecord } from '@/lib/types'
+import { isDemoMode, DEMO_BILLING, DEMO_PLANS, DEMO_COMPANY } from '@/lib/demoData'
 import { CreditCard, Package, Calendar, RefreshCw, AlertTriangle, CheckCircle, XCircle, ExternalLink } from 'lucide-react'
 
 function formatDate(dateStr: string | null) {
@@ -26,6 +27,15 @@ export default function BillingPage() {
   const [simulating, setSimulating] = useState<string | null>(null)
 
   async function loadData() {
+    if (isDemoMode()) {
+      setCompany(DEMO_COMPANY as Company)
+      const scalePlan = DEMO_PLANS.find(p => p.id === DEMO_COMPANY.plan_id)
+      if (scalePlan) setPlan(scalePlan as Plan)
+      setBillingRecord(DEMO_BILLING as BillingRecord)
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
     const co = await getMyCompany()
     setCompany(co)
@@ -54,6 +64,22 @@ export default function BillingPage() {
   async function simulateStatus(status: 'active_mock' | 'past_due_mock') {
     if (!company) return
     setSimulating(status)
+
+    if (isDemoMode()) {
+      const now = new Date()
+      const periodEnd = new Date(now)
+      periodEnd.setDate(periodEnd.getDate() + 30)
+      setBillingRecord({
+        ...DEMO_BILLING,
+        billing_status: status,
+        subscription_status: status,
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+      } as BillingRecord)
+      setSimulating(null)
+      return
+    }
+
     try {
       const supabase = createClient()
       const now = new Date()

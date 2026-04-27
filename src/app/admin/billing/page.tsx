@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity, statusColor } from '@/lib/data'
 import type { BillingStatus } from '@/lib/types'
+import { isDemoMode, DEMO_BILLING_RECORDS, DEMO_PLANS } from '@/lib/demoData'
 
 const BILLING_STATUSES: BillingStatus[] = ['inactive', 'active_mock', 'past_due_mock', 'canceled_mock']
 
@@ -41,6 +42,25 @@ export default function AdminBillingPage() {
   }, [])
 
   async function loadData() {
+    if (isDemoMode()) {
+      setPlans(DEMO_PLANS.map(p => ({ id: p.id, name: p.name, price_monthly: p.price_monthly })))
+      setRecords(DEMO_BILLING_RECORDS.map(b => ({
+        id: b.id,
+        company_id: b.company_id,
+        company_name: b.company_name,
+        plan_id: b.plan_id,
+        plan_name: b.plan_name,
+        plan_price: b.price_monthly,
+        billing_status: b.billing_status as BillingStatus,
+        subscription_status: b.subscription_status,
+        mock_mode: b.mock_mode,
+        current_period_start: b.current_period_start,
+        current_period_end: b.current_period_end,
+        saving: false,
+      })))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setAdminUserId(user.id)
@@ -83,21 +103,25 @@ export default function AdminBillingPage() {
   }
 
   async function updateBillingStatus(id: string, companyId: string, status: BillingStatus) {
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, billing_status: status, saving: false } : r))
+    if (isDemoMode()) return
     setRecords(prev => prev.map(r => r.id === id ? { ...r, saving: true } : r))
     const supabase = createClient()
     await supabase.from('billing_records').update({ billing_status: status }).eq('id', id)
     await supabase.from('companies').update({ billing_status: status }).eq('id', companyId)
-    setRecords(prev => prev.map(r => r.id === id ? { ...r, billing_status: status, saving: false } : r))
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, saving: false } : r))
     await logActivity({ company_id: companyId, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'billing_status_changed', event_message: `Billing status changed to ${status}` })
   }
 
   async function updatePlan(id: string, companyId: string, planId: string) {
+    const plan = plans.find(p => p.id === planId)
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, plan_id: planId, plan_name: plan?.name ?? '—', plan_price: plan?.price_monthly ?? 0, saving: false } : r))
+    if (isDemoMode()) return
     setRecords(prev => prev.map(r => r.id === id ? { ...r, saving: true } : r))
     const supabase = createClient()
     await supabase.from('billing_records').update({ plan_id: planId }).eq('id', id)
     await supabase.from('companies').update({ plan_id: planId }).eq('id', companyId)
-    const plan = plans.find(p => p.id === planId)
-    setRecords(prev => prev.map(r => r.id === id ? { ...r, plan_id: planId, plan_name: plan?.name ?? '—', plan_price: plan?.price_monthly ?? 0, saving: false } : r))
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, saving: false } : r))
     await logActivity({ company_id: companyId, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'plan_changed', event_message: `Plan changed to ${plan?.name}` })
   }
 

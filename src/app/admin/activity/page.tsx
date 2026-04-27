@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { statusColor } from '@/lib/data'
+import { isDemoMode, DEMO_ACTIVITY_LOGS, DEMO_COMPANIES } from '@/lib/demoData'
 
 interface ActivityRow {
   id: string
@@ -31,6 +32,20 @@ export default function AdminActivityPage() {
   }, [])
 
   async function loadData() {
+    if (isDemoMode()) {
+      setCompanies(DEMO_COMPANIES.map(c => ({ id: c.id, name: c.name })))
+      setLogs(DEMO_ACTIVITY_LOGS.map(a => ({
+        id: a.id,
+        created_at: a.created_at,
+        company_name: a.company_name,
+        company_id: a.company_id,
+        actor_role: a.actor_role,
+        event_type: a.event_type,
+        event_message: a.event_message,
+      })))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const [{ data: comps }, { data: activity }] = await Promise.all([
       supabase.from('companies').select('id, name').order('name'),

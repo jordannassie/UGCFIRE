@@ -7,6 +7,11 @@ import type {
   Company, Profile, Plan, BrandBrief, ContentItem, ClientUpload,
   Message, BillingRecord, Agreement, ActivityLog, ContentStatus, BillingStatus
 } from '@/lib/types'
+import {
+  isDemoMode, DEMO_COMPANIES, DEMO_ALL_CONTENT, DEMO_CLIENT_UPLOADS,
+  DEMO_MESSAGES, DEMO_BILLING_RECORDS, DEMO_AGREEMENTS, DEMO_BRAND_BRIEF,
+  DEMO_ACTIVITY_LOGS, DEMO_PLANS,
+} from '@/lib/demoData'
 
 const TABS = ['Overview', 'Brand Brief', 'Content', 'Client Uploads', 'Messages', 'Billing', 'Agreement', 'Activity Log'] as const
 type Tab = typeof TABS[number]
@@ -51,6 +56,37 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   }, [messages, tab])
 
   async function loadAll() {
+    if (isDemoMode()) {
+      const companyId = id
+      const demoComp = DEMO_COMPANIES.find(c => c.id === companyId) ?? DEMO_COMPANIES[0]
+      setCompany({
+        ...demoComp,
+        website: null,
+        created_at: '2026-04-01T00:00:00Z',
+        is_demo: true,
+      } as unknown as Company)
+      setProfile({
+        id: demoComp.owner_user_id,
+        email: demoComp.owner_email,
+        full_name: demoComp.name + ' Owner',
+        role: 'client',
+        created_at: '2026-04-01T00:00:00Z',
+      } as unknown as Profile)
+      const demoPlan = DEMO_PLANS.find(p => p.id === demoComp.plan_id)
+      setPlan(demoPlan ? { ...demoPlan } as unknown as Plan : null)
+      setBrief(demoComp.id === 'company-demo-brand' ? DEMO_BRAND_BRIEF as unknown as BrandBrief : null)
+      setContent(DEMO_ALL_CONTENT.filter(c => c.company_id === companyId) as unknown as ContentItem[])
+      setClientUploads(DEMO_CLIENT_UPLOADS.filter(u => u.company_id === companyId) as unknown as ClientUpload[])
+      setMessages(DEMO_MESSAGES.filter(m => m.company_id === companyId) as unknown as Message[])
+      const demoBilling = DEMO_BILLING_RECORDS.find(b => b.company_id === companyId)
+      setBilling(demoBilling ? { ...demoBilling } as unknown as BillingRecord : null)
+      const demoAgreement = DEMO_AGREEMENTS.find(a => a.company_id === companyId)
+      setAgreement(demoAgreement ? { ...demoAgreement, accepted_checkbox: true } as unknown as Agreement : null)
+      setActivityLogs(DEMO_ACTIVITY_LOGS.filter(l => l.company_id === companyId) as unknown as ActivityLog[])
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setAdminUserId(user.id)
@@ -96,30 +132,51 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   }
 
   async function updateContentStatus(itemId: string, status: ContentStatus) {
+    setContent(prev => prev.map(c => c.id === itemId ? { ...c, status } : c))
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('content_items').update({ status }).eq('id', itemId)
-    setContent(prev => prev.map(c => c.id === itemId ? { ...c, status } : c))
     await logActivity({ company_id: id, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'content_status_changed', event_message: `Content status updated to ${status}` })
   }
 
   async function archiveContent(itemId: string) {
+    setContent(prev => prev.filter(c => c.id !== itemId))
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('content_items').update({ deleted_at: new Date().toISOString(), status: 'archived' }).eq('id', itemId)
-    setContent(prev => prev.filter(c => c.id !== itemId))
   }
 
   async function updateUploadStatus(uploadId: string, status: string) {
-    const supabase = createClient()
     const update: { status: string; reviewed_at?: string; archived_at?: string } = { status }
     if (status === 'reviewed') update.reviewed_at = new Date().toISOString()
     if (status === 'archived') update.archived_at = new Date().toISOString()
-    await supabase.from('client_uploads').update(update).eq('id', uploadId)
     setClientUploads(prev => prev.map(u => u.id === uploadId ? { ...u, ...update } : u))
+    if (isDemoMode()) return
+    const supabase = createClient()
+    await supabase.from('client_uploads').update(update).eq('id', uploadId)
   }
 
   async function sendReply() {
     if (!replyText.trim()) return
     setSendingReply(true)
+
+    if (isDemoMode()) {
+      const demoMsg = {
+        id: `demo-msg-${Date.now()}`,
+        company_id: id,
+        content_item_id: null,
+        sender_user_id: 'user-admin',
+        sender_role: 'admin',
+        message: replyText.trim(),
+        read_at: null,
+        created_at: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, demoMsg as unknown as Message])
+      setReplyText('')
+      setSendingReply(false)
+      return
+    }
+
     const supabase = createClient()
     const { data } = await supabase.from('messages').insert({
       company_id: id,
@@ -136,18 +193,20 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
   async function updateBillingStatus(status: BillingStatus) {
     if (!billing) return
+    setBilling(prev => prev ? { ...prev, billing_status: status } : prev)
+    setCompany(prev => prev ? { ...prev, billing_status: status } : prev)
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('billing_records').update({ billing_status: status }).eq('id', billing.id)
-    setBilling(prev => prev ? { ...prev, billing_status: status } : prev)
     await supabase.from('companies').update({ billing_status: status }).eq('id', id)
-    setCompany(prev => prev ? { ...prev, billing_status: status } : prev)
     await logActivity({ company_id: id, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'billing_status_changed', event_message: `Billing status changed to ${status}` })
   }
 
   async function toggleShowcase(current: boolean) {
+    setCompany(prev => prev ? { ...prev, showcase_permission: !current } : prev)
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('companies').update({ showcase_permission: !current }).eq('id', id)
-    setCompany(prev => prev ? { ...prev, showcase_permission: !current } : prev)
   }
 
   if (loading) {

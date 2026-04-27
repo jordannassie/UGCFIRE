@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { statusColor } from '@/lib/data'
 import { Upload, GitPullRequestArrow, MessageSquare, Film } from 'lucide-react'
 import type { ActivityLog } from '@/lib/types'
+import { isDemoMode, DEMO_ADMIN_STATS, DEMO_ACTIVITY_LOGS } from '@/lib/demoData'
 
 interface StatCard {
   label: string
@@ -49,6 +50,13 @@ export default function AdminOverviewPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setStats(DEMO_ADMIN_STATS)
+        setRecentActivity(DEMO_ACTIVITY_LOGS.map(l => ({ ...l })) as (ActivityLog & { company_name?: string })[])
+        setProductionQueue([])
+        setLoading(false)
+        return
+      }
       const supabase = createClient()
       const monthStart = new Date()
       monthStart.setDate(1)

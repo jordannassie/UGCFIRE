@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/data'
 import { Send } from 'lucide-react'
 import type { Message } from '@/lib/types'
+import { isDemoMode, DEMO_MESSAGES, DEMO_COMPANIES } from '@/lib/demoData'
 
 interface CompanyThread {
   id: string
@@ -33,6 +34,17 @@ export default function AdminMessagesPage() {
   }, [messages])
 
   async function loadCompanies() {
+    if (isDemoMode()) {
+      setCompanies(DEMO_COMPANIES.map(c => ({
+        id: c.id,
+        name: c.name,
+        unread_count: DEMO_MESSAGES.filter(m => m.company_id === c.id && !m.read_at && m.sender_role === 'client').length,
+        last_message: DEMO_MESSAGES.filter(m => m.company_id === c.id).slice(-1)[0]?.message ?? null,
+        last_message_at: DEMO_MESSAGES.filter(m => m.company_id === c.id).slice(-1)[0]?.created_at ?? null,
+      })).filter(c => DEMO_MESSAGES.some(m => m.company_id === c.id)))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setAdminUserId(user.id)
@@ -71,6 +83,14 @@ export default function AdminMessagesPage() {
   async function selectCompany(companyId: string) {
     setSelectedCompanyId(companyId)
     setThreadLoading(true)
+
+    if (isDemoMode()) {
+      setMessages(DEMO_MESSAGES.filter(m => m.company_id === companyId) as unknown as Message[])
+      setCompanies(prev => prev.map(c => c.id === companyId ? { ...c, unread_count: 0 } : c))
+      setThreadLoading(false)
+      return
+    }
+
     const supabase = createClient()
 
     const { data } = await supabase
@@ -98,6 +118,24 @@ export default function AdminMessagesPage() {
   async function sendReply() {
     if (!replyText.trim() || !selectedCompanyId) return
     setSending(true)
+
+    if (isDemoMode()) {
+      const demoMsg = {
+        id: `demo-msg-${Date.now()}`,
+        company_id: selectedCompanyId,
+        content_item_id: null,
+        sender_user_id: 'user-admin',
+        sender_role: 'admin',
+        message: replyText.trim(),
+        read_at: null,
+        created_at: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, demoMsg as unknown as Message])
+      setReplyText('')
+      setSending(false)
+      return
+    }
+
     const supabase = createClient()
     const { data } = await supabase.from('messages').insert({
       company_id: selectedCompanyId,

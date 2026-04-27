@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useState, useEffect, type CSSProperties } from "react";
 import { Phone, Inbox, MessageSquare, CreditCard, Star } from "lucide-react";
+import FireButton from "@/components/FireButton";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -749,15 +750,15 @@ export default function Home() {
           <a href="#plans" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             See Plans
           </a>
-          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
+          <FireButton href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             Book a Call
-          </a>
+          </FireButton>
         </div>
         {/* Mobile: Book a Call + Hamburger */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire hamburger-cta" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none", display: "none" }}>
+          <FireButton href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire hamburger-cta" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none", display: "none" }}>
             Book a Call
-          </a>
+          </FireButton>
           <button
             className="hamburger"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -782,7 +783,7 @@ export default function Home() {
         ))}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
           <a href="/login" className="btn-ghost" style={{ textDecoration: "none", textAlign: "center" }}>Sign In</a>
-          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ textDecoration: "none", textAlign: "center" }} onClick={() => setMenuOpen(false)}>Book a Call</a>
+          <FireButton href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ textDecoration: "none", textAlign: "center" }} onClick={() => setMenuOpen(false)}>Book a Call</FireButton>
         </div>
       </div>
 
@@ -941,9 +942,9 @@ export default function Home() {
                 Monthly AI-assisted UGC content for brands that need consistent short-form videos, creative direction, and done-for-you content production.
               </p>
               <div style={{ display: "flex", gap: 14 }}>
-                <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none" }}>
+                <FireButton href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none" }}>
                   Book a Call
-                </a>
+                </FireButton>
                 <a href="#plans" className="btn-ghost" style={{ fontSize: 15, textDecoration: "none" }}>
                   See Plans →
                 </a>
@@ -1395,9 +1396,9 @@ export default function Home() {
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 32, maxWidth: 400 }}>
               Book a quick 20-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
             </p>
-            <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none", display: "inline-block" }}>
+            <FireButton href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none", display: "inline-block" }}>
               Book a Discovery Call
-            </a>
+            </FireButton>
           </div>
 
           {/* Right: interactive calendar UI */}

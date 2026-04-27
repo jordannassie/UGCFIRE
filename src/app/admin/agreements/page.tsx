@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Check, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { isDemoMode, DEMO_AGREEMENTS } from '@/lib/demoData'
 
 interface AgreementRow {
   id: string
@@ -25,6 +26,24 @@ export default function AdminAgreementsPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setAgreements(DEMO_AGREEMENTS.map(a => ({
+          id: a.id,
+          company_id: a.company_id,
+          company_name: a.company_name,
+          plan_name: a.plan_name,
+          signed_name: a.signed_name,
+          signed_email: a.signed_email,
+          signed_at: a.signed_at,
+          agreement_version: a.agreement_version,
+          showcase_rights_checkbox: a.showcase_rights_checkbox,
+          contract_body: a.contract_body,
+          contract_title: a.contract_title,
+          accepted_checkbox: true,
+        })))
+        setLoading(false)
+        return
+      }
       const supabase = createClient()
       const { data } = await supabase
         .from('agreements')

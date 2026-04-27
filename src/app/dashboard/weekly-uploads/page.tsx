@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity, statusColor } from '@/lib/data'
 import type { Company, ContentItem, Message } from '@/lib/types'
+import { isDemoMode, DEMO_CONTENT_ITEMS, DEMO_COMPANY } from '@/lib/demoData'
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -131,6 +132,14 @@ export default function WeeklyUploadsPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        setUserId('user-demo-client')
+        setItems(DEMO_CONTENT_ITEMS.filter(i => ['ready_for_review', 'revision_requested'].includes(i.status)) as ContentItem[])
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setUserId(user.id)
@@ -159,6 +168,12 @@ export default function WeeklyUploadsPage() {
     if (!company || processing) return
     setProcessing(item.id)
 
+    if (isDemoMode()) {
+      setItems(prev => prev.filter(i => i.id !== item.id))
+      setProcessing(null)
+      return
+    }
+
     const supabase = createClient()
     await supabase.from('content_items').update({
       status: 'approved',
@@ -181,6 +196,14 @@ export default function WeeklyUploadsPage() {
   async function submitRevision(item: ContentItem) {
     if (!company || !revisionNote.trim() || processing) return
     setProcessing(item.id)
+
+    if (isDemoMode()) {
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'revision_requested' } : i))
+      setRevisionItem(null)
+      setRevisionNote('')
+      setProcessing(null)
+      return
+    }
 
     const supabase = createClient()
     await supabase.from('content_items').update({ status: 'revision_requested' }).eq('id', item.id)

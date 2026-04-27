@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, statusColor } from '@/lib/data'
 import type { Company, ContentItem } from '@/lib/types'
+import { isDemoMode, DEMO_CONTENT_ITEMS, DEMO_COMPANY } from '@/lib/demoData'
 import { Download, Play, Image as ImageIcon, Star, LayoutGrid, Video, FileImage } from 'lucide-react'
 
 type Filter = 'all' | 'photo' | 'video' | 'carousel' | 'graphic'
@@ -122,6 +123,13 @@ export default function ContentBinsPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        setItems(DEMO_CONTENT_ITEMS.filter(i => ['approved', 'delivered'].includes(i.status)) as ContentItem[])
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const co = await getMyCompany()
       setCompany(co)

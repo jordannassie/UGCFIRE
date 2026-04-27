@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity, statusColor } from '@/lib/data'
 import type { Company, ClientUpload } from '@/lib/types'
+import { isDemoMode, DEMO_CLIENT_UPLOADS, DEMO_COMPANY } from '@/lib/demoData'
 import { Upload, CheckCircle, Link as LinkIcon, FileText, Tag, StickyNote, ExternalLink } from 'lucide-react'
 
 const CATEGORIES = [
@@ -48,6 +49,13 @@ export default function UploadsPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        setUploads(DEMO_CLIENT_UPLOADS as ClientUpload[])
+        setLoading(false)
+        return
+      }
+
       const co = await getMyCompany()
       setCompany(co)
       if (co) await fetchUploads(co.id)
@@ -71,6 +79,27 @@ export default function UploadsPage() {
     if (!company || !form.title.trim() || !form.file_url.trim()) return
     setSubmitting(true)
     setSuccess(false)
+
+    if (isDemoMode()) {
+      const newUpload: ClientUpload = {
+        id: `upload-demo-${Date.now()}`,
+        company_id: company.id,
+        uploaded_by: 'user-demo-client',
+        file_url: form.file_url.trim(),
+        file_name: form.title.trim(),
+        file_type: 'application/octet-stream',
+        upload_category: form.category,
+        title: form.title.trim(),
+        notes: form.notes.trim() || null,
+        status: 'submitted',
+        created_at: new Date().toISOString(),
+      } as ClientUpload
+      setUploads(prev => [newUpload, ...prev])
+      setForm({ title: '', category: CATEGORIES[0], file_url: '', notes: '' })
+      setSuccess(true)
+      setSubmitting(false)
+      return
+    }
 
     try {
       const supabase = createClient()

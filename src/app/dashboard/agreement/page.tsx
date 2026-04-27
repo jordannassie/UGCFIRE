@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity } from '@/lib/data'
 import type { Company, Plan, Agreement } from '@/lib/types'
+import { isDemoMode, DEMO_AGREEMENT, DEMO_COMPANY } from '@/lib/demoData'
 import { FileText, CheckCircle, ChevronDown, ChevronUp, Shield, User, Mail, Calendar, Star } from 'lucide-react'
 
 const CONTRACT_TITLE = 'UGCfire Service Agreement'
@@ -74,6 +75,13 @@ export default function AgreementPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        setExistingAgreement(DEMO_AGREEMENT as Agreement)
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const co = await getMyCompany()
       setCompany(co)

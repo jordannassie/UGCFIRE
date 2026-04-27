@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { statusColor } from '@/lib/data'
+import { isDemoMode, DEMO_COMPANIES } from '@/lib/demoData'
 
 interface ClientRow {
   id: string
@@ -26,6 +27,20 @@ export default function AdminClientsPage() {
   }, [])
 
   async function loadClients() {
+    if (isDemoMode()) {
+      setClients(DEMO_COMPANIES.map(c => ({
+        id: c.id,
+        name: c.name,
+        owner_email: c.owner_email,
+        plan_name: c.plan_name,
+        billing_status: c.billing_status,
+        onboarding_status: c.onboarding_status,
+        showcase_permission: c.showcase_permission,
+        last_activity: c.last_activity,
+      })))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const { data: companies } = await supabase
       .from('companies')
@@ -59,9 +74,10 @@ export default function AdminClientsPage() {
   }
 
   async function toggleShowcase(id: string, current: boolean) {
+    setClients(prev => prev.map(c => c.id === id ? { ...c, showcase_permission: !current } : c))
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('companies').update({ showcase_permission: !current }).eq('id', id)
-    setClients(prev => prev.map(c => c.id === id ? { ...c, showcase_permission: !current } : c))
   }
 
   const filtered = clients.filter(c =>

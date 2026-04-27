@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { statusColor } from '@/lib/data'
 import { ExternalLink } from 'lucide-react'
 import type { ContentStatus, MediaType } from '@/lib/types'
+import { isDemoMode, DEMO_ALL_CONTENT, DEMO_COMPANIES } from '@/lib/demoData'
 
 const ALL_STATUSES: ContentStatus[] = ['in_production', 'ready_for_review', 'revision_requested', 'approved', 'delivered', 'archived']
 const ALL_MEDIA: MediaType[] = ['video', 'photo', 'carousel', 'graphic', 'other']
@@ -54,6 +55,24 @@ export default function AdminContentPage() {
   }, [])
 
   async function loadData() {
+    if (isDemoMode()) {
+      setCompanies(DEMO_COMPANIES.map(c => ({ id: c.id, name: c.name })))
+      setContent(DEMO_ALL_CONTENT.map(i => ({
+        id: i.id,
+        title: i.title,
+        media_type: i.media_type as MediaType,
+        week_label: (i as { week_label?: string | null }).week_label ?? null,
+        status: i.status as ContentStatus,
+        can_showcase: i.can_showcase,
+        uploaded_at: i.uploaded_at,
+        company_name: (i as { company_name?: string }).company_name ??
+          (DEMO_COMPANIES.find(c => c.id === i.company_id)?.name ?? '—'),
+        company_id: i.company_id,
+        file_url: i.file_url ?? null,
+      })))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const [{ data: comps }, { data: items }] = await Promise.all([
       supabase.from('companies').select('id, name').order('name'),
@@ -72,21 +91,24 @@ export default function AdminContentPage() {
   }
 
   async function updateStatus(id: string, status: ContentStatus) {
+    setContent(prev => prev.map(c => c.id === id ? { ...c, status } : c))
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('content_items').update({ status }).eq('id', id)
-    setContent(prev => prev.map(c => c.id === id ? { ...c, status } : c))
   }
 
   async function toggleShowcase(id: string, current: boolean) {
+    setContent(prev => prev.map(c => c.id === id ? { ...c, can_showcase: !current } : c))
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('content_items').update({ can_showcase: !current }).eq('id', id)
-    setContent(prev => prev.map(c => c.id === id ? { ...c, can_showcase: !current } : c))
   }
 
   async function archiveItem(id: string) {
+    setContent(prev => prev.filter(c => c.id !== id))
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('content_items').update({ deleted_at: new Date().toISOString(), status: 'archived' }).eq('id', id)
-    setContent(prev => prev.filter(c => c.id !== id))
   }
 
   const filtered = content.filter(c => {

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/data'
 import type { UploadStatus } from '@/lib/types'
+import { isDemoMode, DEMO_CLIENT_UPLOADS, DEMO_COMPANIES } from '@/lib/demoData'
 
 interface UploadRow {
   id: string
@@ -46,6 +47,22 @@ export default function AdminClientUploadsPage() {
   }, [])
 
   async function loadData() {
+    if (isDemoMode()) {
+      setCompanies(DEMO_COMPANIES.map(c => ({ id: c.id, name: c.name })))
+      setUploads(DEMO_CLIENT_UPLOADS.map(u => ({
+        id: u.id,
+        title: u.title,
+        upload_category: u.upload_category,
+        file_url: u.file_url,
+        status: u.status as UploadStatus,
+        notes: u.notes,
+        created_at: u.created_at,
+        company_name: DEMO_COMPANIES.find(c => c.id === u.company_id)?.name ?? '—',
+        company_id: u.company_id,
+      })))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setAdminUserId(user.id)
@@ -66,12 +83,13 @@ export default function AdminClientUploadsPage() {
   }
 
   async function updateStatus(id: string, status: UploadStatus, companyId: string) {
+    setUploads(prev => prev.map(u => u.id === id ? { ...u, status } : u))
+    if (isDemoMode()) return
     const supabase = createClient()
     const update: { status: UploadStatus; reviewed_at?: string; archived_at?: string } = { status }
     if (status === 'reviewed') update.reviewed_at = new Date().toISOString()
     if (status === 'archived') update.archived_at = new Date().toISOString()
     await supabase.from('client_uploads').update(update).eq('id', id)
-    setUploads(prev => prev.map(u => u.id === id ? { ...u, status } : u))
     await logActivity({
       company_id: companyId,
       actor_user_id: adminUserId,

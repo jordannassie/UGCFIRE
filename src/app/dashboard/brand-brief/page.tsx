@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity } from '@/lib/data'
 import type { Company, BrandBrief } from '@/lib/types'
+import { isDemoMode, DEMO_BRAND_BRIEF, DEMO_COMPANY } from '@/lib/demoData'
 import { FileText, CheckCircle, Globe, Target, Mic, Image, Video, Link as LinkIcon, MessageSquare, Folder, Edit3 } from 'lucide-react'
 
 const CONTENT_STYLE_OPTIONS = [
@@ -53,6 +54,27 @@ export default function BrandBriefPage() {
 
   useEffect(() => {
     async function load() {
+      if (isDemoMode()) {
+        setCompany(DEMO_COMPANY as Company)
+        setExistingBrief(DEMO_BRAND_BRIEF as BrandBrief)
+        setForm({
+          company_name: DEMO_BRAND_BRIEF.company_name,
+          website: DEMO_BRAND_BRIEF.website ?? '',
+          offer: DEMO_BRAND_BRIEF.offer ?? '',
+          target_customer: DEMO_BRAND_BRIEF.target_customer ?? '',
+          brand_voice: DEMO_BRAND_BRIEF.brand_voice ?? '',
+          preferred_styles: [],
+          video_styles: DEMO_BRAND_BRIEF.video_styles ?? '',
+          photo_styles: '',
+          example_video_links: DEMO_BRAND_BRIEF.examples ?? '',
+          example_photo_links: '',
+          notes: DEMO_BRAND_BRIEF.notes ?? '',
+          assets_url: DEMO_BRAND_BRIEF.assets_url ?? '',
+        })
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const co = await getMyCompany()
       setCompany(co)

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { logActivity, statusColor } from '@/lib/data'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { RevisionStatus } from '@/lib/types'
+import { isDemoMode, DEMO_REVISIONS } from '@/lib/demoData'
 
 interface RevisionRow {
   id: string
@@ -32,6 +33,23 @@ export default function AdminRevisionsPage() {
   }, [])
 
   async function loadData() {
+    if (isDemoMode()) {
+      setRevisions(DEMO_REVISIONS.map(r => ({
+        id: r.id,
+        revision_note: r.revision_note,
+        status: r.status as RevisionStatus,
+        created_at: r.created_at,
+        completed_at: null,
+        content_item_id: r.content_item_id,
+        company_id: r.company_id,
+        content_title: r.content_title,
+        media_type: 'video',
+        company_name: r.company_name,
+        expanded: false,
+      })))
+      setLoading(false)
+      return
+    }
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setAdminUserId(user.id)
@@ -73,18 +91,20 @@ export default function AdminRevisionsPage() {
   }
 
   async function markInProgress(id: string, companyId: string) {
+    setRevisions(prev => prev.map(r => r.id === id ? { ...r, status: 'in_progress' as RevisionStatus } : r))
+    if (isDemoMode()) return
     const supabase = createClient()
     await supabase.from('content_revisions').update({ status: 'in_progress' }).eq('id', id)
-    setRevisions(prev => prev.map(r => r.id === id ? { ...r, status: 'in_progress' } : r))
     await logActivity({ company_id: companyId, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'revision_marked_in_progress', event_message: 'Revision marked in progress' })
   }
 
   async function markResolved(id: string, contentItemId: string, companyId: string) {
-    const supabase = createClient()
     const now = new Date().toISOString()
+    setRevisions(prev => prev.map(r => r.id === id ? { ...r, status: 'completed' as RevisionStatus, completed_at: now } : r))
+    if (isDemoMode()) return
+    const supabase = createClient()
     await supabase.from('content_revisions').update({ status: 'completed', completed_at: now }).eq('id', id)
     await supabase.from('content_items').update({ status: 'ready_for_review' }).eq('id', contentItemId)
-    setRevisions(prev => prev.map(r => r.id === id ? { ...r, status: 'completed', completed_at: now } : r))
     await logActivity({ company_id: companyId, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'revision_marked_completed', event_message: 'Revision resolved — content ready for review' })
   }
 
