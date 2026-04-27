@@ -40,6 +40,8 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+Before uploading to Netlify or making branches ready for review, run `npm run build` locally to make sure the production bundle succeeds and mirrors Netlify’s build step.
+
 ## Supabase Setup (optional)
 
 1. Create a project at [supabase.com](https://supabase.com) if you need auth or database features.
