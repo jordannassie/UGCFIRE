@@ -4,6 +4,16 @@ import Image from "next/image";
 import React, { useState, useEffect, type CSSProperties } from "react";
 import { Phone, Inbox, MessageSquare, CreditCard, Star } from "lucide-react";
 
+function InstagramIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4.5"/>
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+    </svg>
+  );
+}
+
 const BOOKING_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ1r9yLOh-Z6nt5dZAgnKaR9iXZ6ea-kOkrJxLqctzq_0C4uLmNgX2FpB6zTQl26FqmN21-zAquz?gv=true";
 const SUPABASE_URL = "https://yawgvntvhpgittvntihx.supabase.co";
 
@@ -665,6 +675,12 @@ export default function Home() {
           ))}
         </div>
         <div className="nav-btns-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <a href="https://www.instagram.com/ugcfire" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", color: "rgba(255,255,255,0.5)", transition: "color 0.2s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF3B1A")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+          >
+            <InstagramIcon size={18} />
+          </a>
           <a href="/login" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             Sign In
           </a>
@@ -1568,20 +1584,18 @@ export default function Home() {
               }}>
                 UGCFire is a monthly AI-assisted UGC content subscription for brands that need consistent short-form videos without hiring a full content team.
               </p>
-              <div style={{ display: "flex", gap: 14, marginTop: 24 }}>
-                {["Instagram", "YouTube", "TikTok", "LinkedIn"].map((s) => (
-                  <a key={s} href="#" style={{
-                    fontSize: 12,
-                    color: "rgba(255,255,255,0.35)",
-                    textDecoration: "none",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
-                  >
-                    {s}
-                  </a>
-                ))}
+              <div style={{ display: "flex", gap: 16, marginTop: 24, alignItems: "center" }}>
+                <a
+                  href="https://www.instagram.com/ugcfire"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="UGCFire on Instagram"
+                  style={{ color: "rgba(255,255,255,0.4)", transition: "color 0.2s", display: "flex" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#FF3B1A")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
+                >
+                  <InstagramIcon size={28} />
+                </a>
               </div>
             </div>
             {[
