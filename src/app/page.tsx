@@ -1147,44 +1147,31 @@ export default function Home() {
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
           <div className="booking-left" style={{ flex: "1 1 340px" }}>
-            {/* Line 1: "See if" */}
-            <div style={{
-              fontFamily: "var(--font-bebas)",
-              fontSize: "clamp(48px, 5vw, 80px)",
-              letterSpacing: "0.01em",
-              color: "#fff",
-              lineHeight: 1,
-              marginBottom: 6,
-            }}>
-              See if
-            </div>
-            {/* Line 2: Logo */}
-            <div style={{ marginBottom: 4, lineHeight: 0 }}>
-              <Image
-                src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
-                alt="UGC Fire"
-                width={260}
-                height={100}
-                style={{ objectFit: "contain", objectPosition: "left center", display: "block" }}
-                unoptimized
-              />
-            </div>
-            {/* Line 3: "Is the right fit" */}
             <h2 style={{
               fontFamily: "var(--font-bebas)",
-              fontSize: "clamp(48px, 5vw, 80px)",
+              fontSize: "clamp(52px, 5.5vw, 88px)",
               letterSpacing: "0.01em",
               color: "#fff",
-              lineHeight: 1,
+              lineHeight: 0.95,
               marginBottom: 16,
             }}>
+              See if<br />
+              <span style={{ color: "#FF3B1A" }}>UGCFire</span><br />
               Is the right fit<br />
-              <span style={{ fontStyle: "italic", fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(28px, 3vw, 46px)", fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>
-                (it totally is)
-              </span>
+              For your brand.
             </h2>
+            <div style={{
+              fontStyle: "italic",
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: "clamp(20px, 2vw, 30px)",
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.45)",
+              marginBottom: 24,
+            }}>
+              (it probably is)
+            </div>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 32, maxWidth: 400 }}>
-              Book a quick 20-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
+              Book a quick 15-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
             </p>
             <a href={BOOKING_URL} className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none", display: "inline-block" }}>
               Book a Discovery Call
