@@ -1162,8 +1162,8 @@ export default function Home() {
               <Image
                 src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
                 alt="UGC Fire"
-                width={160}
-                height={64}
+                width={240}
+                height={96}
                 style={{ objectFit: "contain", flexShrink: 0 }}
                 unoptimized
               />
@@ -1196,27 +1196,93 @@ export default function Home() {
             </a>
           </div>
 
-          {/* Right: live Google Calendar embed */}
+          {/* Right: custom calendar UI */}
           <div className="booking-right" style={{
-            flex: "1 1 480px",
-            maxWidth: 560,
+            flex: "1 1 320px",
+            maxWidth: 420,
+            background: "rgba(14,14,14,0.98)",
+            border: "1px solid rgba(255,255,255,0.09)",
             borderRadius: 20,
-            overflow: "hidden",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 0 60px rgba(255,59,26,0.08)",
+            padding: "28px 24px 24px",
+            boxShadow: "0 0 48px rgba(255,59,26,0.06)",
           }}>
-            <iframe
-              src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1r9yLOh-Z6nt5dZAgnKaR9iXZ6ea-kOkrJxLqctzq_0C4uLmNgX2FpB6zTQl26FqmN21-zAquz?gv=true"
-              style={{
-                border: 0,
-                width: "100%",
-                height: 720,
-                display: "block",
-                background: "#ffffff",
-              }}
-              frameBorder={0}
-              title="Book a discovery call with UGCFire"
-            />
+            {/* Month header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>May 2026</span>
+              <div style={{ display: "flex", gap: 12 }}>
+                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 18, cursor: "pointer", userSelect: "none" }}>‹</span>
+                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 18, cursor: "pointer", userSelect: "none" }}>›</span>
+              </div>
+            </div>
+
+            {/* Day labels */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 6 }}>
+              {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
+                <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 600, paddingBottom: 4 }}>{d}</div>
+              ))}
+            </div>
+
+            {/* Date grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 20 }}>
+              {([...Array(4).fill(null), 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31] as (number|null)[]).map((d, i) => (
+                <div key={i} style={{
+                  textAlign: "center",
+                  fontSize: 13,
+                  padding: "7px 0",
+                  borderRadius: 7,
+                  color: d === 14 ? "#fff" : d === null ? "transparent" : "rgba(255,255,255,0.35)",
+                  background: d === 14 ? "#FF3B1A" : d !== null && [7,8,9,12,13,15,16].includes(d as number) ? "rgba(255,255,255,0.04)" : "transparent",
+                  fontWeight: d === 14 ? 700 : 400,
+                  cursor: d !== null ? "pointer" : "default",
+                }}>
+                  {d ?? ""}
+                </div>
+              ))}
+            </div>
+
+            {/* Time slot label */}
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+              Available Times — Wed 14
+            </div>
+
+            {/* Clickable time slots */}
+            {["10:00am","10:30am","11:00am","1:00pm"].map(t => (
+              <a
+                key={t}
+                href={BOOKING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "block",
+                  padding: "11px 14px",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 10,
+                  marginBottom: 8,
+                  fontSize: 14,
+                  color: "rgba(255,255,255,0.7)",
+                  textAlign: "center",
+                  textDecoration: "none",
+                  transition: "border-color 0.2s, background 0.2s, color 0.2s",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,59,26,0.5)";
+                  (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,59,26,0.08)";
+                  (e.currentTarget as HTMLAnchorElement).style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.08)";
+                  (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
+                  (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)";
+                }}
+              >
+                {t}
+              </a>
+            ))}
+
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
+              Select a time to book through Google Calendar.
+            </p>
           </div>
         </div>
       </section>
