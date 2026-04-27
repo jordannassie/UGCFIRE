@@ -1330,15 +1330,15 @@ export default function Home() {
                     {MONTH_NAMES[calMonth]} {calYear}
                   </span>
                   <div style={{ display: "flex", gap: 4 }}>
-                    <button onClick={prevMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "rgba(255,255,255,0.5)", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>‹</button>
-                    <button onClick={nextMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "rgba(255,255,255,0.5)", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>›</button>
+                    <button onClick={prevMonth} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, color: "#fff", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>‹</button>
+                    <button onClick={nextMonth} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, color: "#fff", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>›</button>
                   </div>
                 </div>
 
                 {/* Day labels */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 6 }}>
                   {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
-                    <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 600, paddingBottom: 4 }}>{d}</div>
+                    <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.55)", fontWeight: 600, paddingBottom: 4 }}>{d}</div>
                   ))}
                 </div>
 
@@ -1358,15 +1358,15 @@ export default function Home() {
                           fontSize: 13,
                           padding: "7px 0",
                           borderRadius: 7,
-                          border: today && !selected ? "1px solid rgba(255,59,26,0.4)" : "1px solid transparent",
-                          color: selected ? "#fff" : selectable ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.18)",
-                          background: selected ? "#FF3B1A" : selectable ? "rgba(255,255,255,0.04)" : "transparent",
-                          fontWeight: selected ? 700 : 400,
+                          border: today && !selected ? "1px solid rgba(255,59,26,0.7)" : "1px solid transparent",
+                          color: selected ? "#fff" : selectable ? "#fff" : "rgba(255,255,255,0.25)",
+                          background: selected ? "#FF3B1A" : selectable ? "rgba(255,255,255,0.08)" : "transparent",
+                          fontWeight: selected ? 700 : selectable ? 500 : 400,
                           cursor: selectable ? "pointer" : "default",
                           transition: "background 0.15s, color 0.15s",
                         }}
-                        onMouseEnter={(e) => { if (selectable && !selected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.15)"; }}
-                        onMouseLeave={(e) => { if (selectable && !selected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)"; }}
+                        onMouseEnter={(e) => { if (selectable && !selected) { (e.currentTarget as HTMLButtonElement).style.background = "#FF3B1A"; } }}
+                        onMouseLeave={(e) => { if (selectable && !selected) { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; } }}
                       >
                         {d}
                       </button>
@@ -1375,8 +1375,8 @@ export default function Home() {
                 </div>
 
                 {/* Time slots area */}
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 16 }}>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
                     {!calDay
                       ? "Pick a date above"
                       : calLoading
@@ -1389,26 +1389,26 @@ export default function Home() {
                   </div>
 
                   {!calDay && (
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "16px 0" }}>
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textAlign: "center", padding: "16px 0" }}>
                       Select a weekday to see open times.
                     </p>
                   )}
 
                   {calDay && calLoading && (
-                    <div style={{ textAlign: "center", padding: "16px 0", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+                    <div style={{ textAlign: "center", padding: "16px 0", color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
                       Checking calendar…
                     </div>
                   )}
 
                   {calDay && !calLoading && calApiError && (
                     <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
-                      style={{ display: "block", padding: "11px 14px", border: "1px solid rgba(255,59,26,0.35)", borderRadius: 10, marginBottom: 8, fontSize: 14, color: "#FF3B1A", textAlign: "center", textDecoration: "none" }}>
+                      style={{ display: "block", padding: "11px 14px", border: "1px solid rgba(255,59,26,0.5)", borderRadius: 10, marginBottom: 8, fontSize: 14, color: "#FF3B1A", textAlign: "center", textDecoration: "none", fontWeight: 600 }}>
                       Book via Google Calendar →
                     </a>
                   )}
 
                   {calDay && !calLoading && !calApiError && calSlots.length === 0 && (
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "10px 0" }}>
+                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textAlign: "center", padding: "10px 0" }}>
                       No open slots this day. Try another.
                     </p>
                   )}
@@ -1419,12 +1419,12 @@ export default function Home() {
                       onClick={() => { setSelectedSlot(slot); setShowModal(true); setBookStatus("idle"); setBookName(""); setBookEmail(""); setBookBrand(""); setBookMeetLink(null); setBookError(null); }}
                       style={{
                         display: "block", width: "100%", padding: "11px 14px",
-                        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, marginBottom: 8,
-                        fontSize: 14, color: "rgba(255,255,255,0.7)", textAlign: "center",
-                        background: "transparent", cursor: "pointer", transition: "border-color 0.2s, background 0.2s, color 0.2s",
+                        border: "1px solid rgba(255,255,255,0.18)", borderRadius: 10, marginBottom: 8,
+                        fontSize: 14, color: "#fff", textAlign: "center", fontWeight: 600,
+                        background: "rgba(255,255,255,0.06)", cursor: "pointer", transition: "border-color 0.2s, background 0.2s",
                       }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,59,26,0.5)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.08)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)"; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#FF3B1A"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.15)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.18)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)"; }}
                     >
                       {slot.label}
                     </button>
