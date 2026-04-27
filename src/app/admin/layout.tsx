@@ -6,25 +6,19 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY } from '@/lib/demoData'
 import {
-  LayoutDashboard, Users, UploadCloud, Film, FolderOpen,
-  RefreshCcw, MessageCircle, CreditCard, FileText, Activity,
-  Settings, Menu,
+  LayoutDashboard, Clapperboard, Users, CreditCard, FileText, Activity, Settings, Menu, LogOut,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 const NAV = [
-  { label: 'Overview',       href: '/admin',               icon: LayoutDashboard },
-  { label: 'Clients',        href: '/admin/clients',        icon: Users },
-  { label: 'Upload Content', href: '/admin/uploads',        icon: UploadCloud },
-  { label: 'All Content',    href: '/admin/content',        icon: Film },
-  { label: 'Client Uploads', href: '/admin/client-uploads', icon: FolderOpen },
-  { label: 'Revisions',      href: '/admin/revisions',      icon: RefreshCcw },
-  { label: 'Messages',       href: '/admin/messages',       icon: MessageCircle },
-  { label: 'Billing',        href: '/admin/billing',        icon: CreditCard },
-  { label: 'Agreements',     href: '/admin/agreements',     icon: FileText },
-  { label: 'Activity',       href: '/admin/activity',       icon: Activity },
-  { label: 'Demo Tools',     href: '/admin/demo',           icon: Settings },
+  { label: 'Command Center', href: '/admin',             icon: LayoutDashboard },
+  { label: 'Studio',         href: '/admin/studio',      icon: Clapperboard },
+  { label: 'Clients',        href: '/admin/clients',      icon: Users },
+  { label: 'Billing',        href: '/admin/billing',      icon: CreditCard },
+  { label: 'Agreements',     href: '/admin/agreements',   icon: FileText },
+  { label: 'Activity',       href: '/admin/activity',     icon: Activity },
+  { label: 'Demo Tools',     href: '/admin/demo',         icon: Settings },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -123,17 +117,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="p-5 border-b border-white/5">
-          <div className="flex items-center gap-2 mb-3">
-            <Link href="/">
-              <Image
-                src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
-                alt="UGCFire"
-                width={90}
-                height={36}
-                unoptimized
-              />
-            </Link>
-            <span className="text-[10px] font-bold bg-[#FF3B1A] text-white px-1.5 py-0.5 rounded uppercase tracking-widest">Admin</span>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <Link href="/">
+                <Image
+                  src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
+                  alt="UGCFire"
+                  width={90}
+                  height={36}
+                  unoptimized
+                />
+              </Link>
+              <span className="text-[10px] font-bold bg-[#FF3B1A] text-white px-1.5 py-0.5 rounded uppercase tracking-widest">Admin</span>
+            </div>
+            <button onClick={signOut} title="Sign out" className="text-white/30 hover:text-[#FF3B1A] transition p-1 rounded-lg hover:bg-white/5">
+              <LogOut size={16} />
+            </button>
           </div>
           <p className="text-white/30 text-xs">Command Center</p>
         </div>

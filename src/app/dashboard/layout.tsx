@@ -8,23 +8,19 @@ import { getMyCompany } from '@/lib/data'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY, DEMO_COMPANY } from '@/lib/demoData'
 import type { Company } from '@/lib/types'
 import {
-  Home, CreditCard, FileCheck, ShoppingCart, Target,
-  UploadCloud, Video, FolderOpen, MessageCircle, Wallet, Menu, LogOut, Camera,
+  Home, Clapperboard, Target, User, Wallet, FileCheck, ShoppingCart, Menu, LogOut, Camera,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 const NAV = [
-  { label: 'Home',            href: '/dashboard',                icon: Home },
-  { label: 'Plan',            href: '/dashboard/plan',           icon: CreditCard },
-  { label: 'Agreement',       href: '/dashboard/agreement',      icon: FileCheck },
-  { label: 'Checkout',        href: '/dashboard/checkout',       icon: ShoppingCart },
-  { label: 'Brand Brief',     href: '/dashboard/brand-brief',    icon: Target },
-  { label: 'My Uploads',      href: '/dashboard/uploads',        icon: UploadCloud },
-  { label: 'Weekly Uploads',  href: '/dashboard/weekly-uploads', icon: Video },
-  { label: 'Content Bins',    href: '/dashboard/content-bins',   icon: FolderOpen },
-  { label: 'Team Chat',       href: '/dashboard/team-chat',      icon: MessageCircle },
-  { label: 'Billing',         href: '/dashboard/billing',        icon: Wallet },
+  { label: 'Home',        href: '/dashboard',              icon: Home },
+  { label: 'Studio',      href: '/dashboard/studio',       icon: Clapperboard },
+  { label: 'Brand Brief', href: '/dashboard/brand-brief',  icon: Target },
+  { label: 'Profile',     href: '/dashboard/profile',      icon: User },
+  { label: 'Billing',     href: '/dashboard/billing',      icon: Wallet },
+  { label: 'Agreement',   href: '/dashboard/agreement',    icon: FileCheck },
+  { label: 'Checkout',    href: '/dashboard/checkout',     icon: ShoppingCart },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

@@ -750,9 +750,9 @@ export default function Home() {
           <a href="#plans" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             See Plans
           </a>
-          <FireButton href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
+          <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             Book a Call
-          </FireButton>
+          </a>
         </div>
         {/* Mobile: Book a Call + Hamburger */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1215,13 +1215,13 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <a
+              <FireButton
                 href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
                 className="btn-fire"
                 style={{ display: "block", textAlign: "center", textDecoration: "none", fontSize: 15, padding: "14px 24px" }}
               >
                 {plan.cta}
-              </a>
+              </FireButton>
             </div>
           ))}
         </div>
