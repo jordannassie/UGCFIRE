@@ -409,6 +409,7 @@ function StarRating() {
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heroVideo, setHeroVideo] = useState(0);
 
   // Calendar booking state
   interface CalSlot { iso: string; label: string }
@@ -438,6 +439,12 @@ export default function Home() {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Auto-rotate hero video every 8 seconds
+  useEffect(() => {
+    const timer = setInterval(() => setHeroVideo((v) => (v + 1) % 2), 8000);
+    return () => clearInterval(timer);
   }, []);
 
   // Fetch real slots from Edge Function for a given date string (YYYY-MM-DD)
@@ -726,28 +733,66 @@ export default function Home() {
         padding: "120px 3rem 5rem",
         overflow: "hidden",
       }}>
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            zIndex: 0,
-            opacity: 0.55,
-          }}
-          src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128_httpss.mj.runshB1JpuEK_8_Complete_slow_mo_420644a6-5c25-482d-8c3b-cec268a9fbf5_0.mp4"
-        />
+        {/* Rotating hero videos */}
+        {[
+          "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/hf_20260423_175314_87422d76-6d45-43ac-838b-1f9fc7175cdd.mp4",
+          "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/hf_20260423_181257_b777a1c9-586e-4548-8c89-0dd1db1f3887.mp4",
+        ].map((src, i) => (
+          <video
+            key={src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            onEnded={() => setHeroVideo((v) => (v + 1) % 2)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              zIndex: 0,
+              opacity: heroVideo === i ? 0.55 : 0,
+              transition: "opacity 1s ease",
+            }}
+            src={src}
+          />
+        ))}
         <div style={{
           position: "absolute",
           inset: 0,
           zIndex: 1,
           background: "radial-gradient(ellipse 55% 60% at 72% 38%, rgba(255,59,26,0.22) 0%, transparent 70%)",
         }} />
+        {/* Video dot toggle */}
+        <div style={{
+          position: "absolute",
+          bottom: 28,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 4,
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}>
+          {[0, 1].map((i) => (
+            <button
+              key={i}
+              onClick={() => setHeroVideo(i)}
+              aria-label={`Hero video ${i + 1}`}
+              style={{
+                width: heroVideo === i ? 28 : 8,
+                height: 8,
+                borderRadius: 4,
+                background: heroVideo === i ? "#FF3B1A" : "rgba(255,255,255,0.35)",
+                border: "none",
+                cursor: "pointer",
+                transition: "width 0.3s ease, background 0.3s ease",
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
         <div style={{
           position: "absolute",
           inset: 0,
