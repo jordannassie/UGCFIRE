@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity } from '@/lib/data'
 import type { Company, Plan } from '@/lib/types'
+import { CreditCard, CheckCircle, Zap, Lock, ArrowRight, Package } from 'lucide-react'
 
 const PLAN_FEATURES: Record<string, string[]> = {
   growth: [
@@ -124,44 +125,70 @@ export default function CheckoutPage() {
     return (
       <div className="max-w-lg space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-white">Payment Active</h1>
-          <p className="text-white/40 mt-1 text-sm">Your subscription is currently active.</p>
+          <h1 className="text-3xl font-bold text-white">Subscription Active</h1>
+          <p className="text-white/40 mt-1 text-sm">Your subscription is running and content is in production.</p>
         </div>
 
-        <div className="bg-[#111] border border-green-500/20 rounded-xl p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-green-400 text-xl">✓</span>
-            <span className="text-green-400 font-bold">Subscription Active</span>
-            <span className="ml-auto bg-orange-500/20 text-orange-300 text-xs font-bold px-2 py-0.5 rounded-full">TEST MODE</span>
+        <div className="bg-[#111] border border-green-500/20 rounded-xl p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="text-green-400" size={20} />
+              <span className="text-green-400 font-bold text-lg">Active Subscription</span>
+            </div>
+            <span className="bg-orange-500/20 text-orange-300 text-xs font-bold px-3 py-1 rounded-full border border-orange-500/30">
+              TEST MODE
+            </span>
           </div>
 
           {plan && (
-            <div className="pt-2 border-t border-white/5">
-              <p className="text-white font-bold">{plan.name}</p>
-              <p className="text-white/40 text-sm">${plan.price_monthly.toLocaleString()}/month</p>
+            <div className="bg-white/5 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#FF3B1A]/20 flex items-center justify-center">
+                  <Package className="text-[#FF3B1A]" size={18} />
+                </div>
+                <div>
+                  <p className="text-white font-bold">{plan.name}</p>
+                  <p className="text-white/40 text-sm">{PLAN_FEATURES[plan.slug]?.[0]}</p>
+                </div>
+              </div>
+              <p className="text-[#FF3B1A] font-bold text-lg">${plan.price_monthly.toLocaleString()}<span className="text-white/30 text-xs">/mo</span></p>
             </div>
           )}
 
           {billingRecord.current_period_start && billingRecord.current_period_end && (
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-white/40 text-xs">Period Start</p>
-                <p className="text-white mt-0.5">{formatDate(billingRecord.current_period_start)}</p>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Billing Start</p>
+                <p className="text-white">{formatDate(billingRecord.current_period_start)}</p>
               </div>
               <div>
-                <p className="text-white/40 text-xs">Period End</p>
-                <p className="text-white mt-0.5">{formatDate(billingRecord.current_period_end)}</p>
+                <p className="text-white/40 text-xs uppercase tracking-wider mb-1">Next Renewal</p>
+                <p className="text-white">{formatDate(billingRecord.current_period_end)}</p>
               </div>
             </div>
           )}
+
+          <div className="flex items-center gap-2 text-white/30 text-xs">
+            <CreditCard size={12} />
+            <span>Mock card ending in 4242</span>
+          </div>
         </div>
 
-        <Link
-          href="/dashboard/billing"
-          className="border border-white/10 text-white/60 px-6 py-3 rounded-lg hover:border-[#FF3B1A] hover:text-white transition inline-block"
-        >
-          View Billing Details
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href="/dashboard/brand-brief"
+            className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition inline-flex items-center gap-2"
+          >
+            Go to Brand Brief
+            <ArrowRight size={16} />
+          </Link>
+          <Link
+            href="/dashboard/billing"
+            className="border border-white/10 text-white/60 px-6 py-3 rounded-lg hover:border-[#FF3B1A] hover:text-white transition inline-block"
+          >
+            View Billing
+          </Link>
+        </div>
       </div>
     )
   }
@@ -189,33 +216,51 @@ export default function CheckoutPage() {
           </div>
 
           <div className="border-t border-white/10 pt-4">
-            <p className="text-white/50 text-xs uppercase tracking-wider mb-3">What's included</p>
+            <p className="text-white/50 text-xs uppercase tracking-wider mb-3">What&apos;s included</p>
             <ul className="space-y-2">
               {(PLAN_FEATURES[plan.slug] ?? []).map(feat => (
                 <li key={feat} className="flex items-center gap-2 text-sm text-white/70">
-                  <span className="text-green-400 flex-shrink-0">✓</span>
+                  <CheckCircle className="text-green-400 flex-shrink-0" size={14} />
                   {feat}
                 </li>
               ))}
             </ul>
           </div>
 
+          {/* Mock card UI */}
+          <div className="border border-white/10 rounded-xl p-4 bg-white/5">
+            <div className="flex items-center gap-2 mb-3">
+              <CreditCard className="text-white/40" size={16} />
+              <p className="text-white/50 text-xs uppercase tracking-wider">Payment Method</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="bg-white/10 rounded px-2 py-1 text-white/50 text-xs font-mono">**** **** **** 4242</div>
+              </div>
+              <span className="text-white/30 text-xs">Exp 12/28</span>
+            </div>
+            <p className="text-white/20 text-xs mt-2">Stripe test card — no real charge</p>
+          </div>
+
           <button
             onClick={simulatePayment}
             disabled={paying}
-            className="w-full bg-[#FF3B1A] text-white font-bold px-6 py-4 rounded-lg hover:bg-[#e02e10] transition text-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-[#FF3B1A] text-white font-bold px-6 py-4 rounded-lg hover:bg-[#e02e10] transition text-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
           >
+            <Zap size={18} />
             {paying ? 'Processing...' : 'Simulate Successful Payment'}
           </button>
 
-          <p className="text-white/30 text-xs text-center">
-            No real charge. This is a demo/mock checkout. Stripe will be connected for live payments.
-          </p>
+          <div className="flex items-center justify-center gap-2 text-white/30 text-xs">
+            <Lock size={12} />
+            <span>No real charge. Demo/mock checkout. Stripe connects for live payments.</span>
+          </div>
         </div>
       )}
 
       {!plan && (
         <div className="bg-[#111] border border-white/10 rounded-xl p-8 text-center">
+          <Package className="text-[#FF3B1A] mx-auto mb-4" size={32} />
           <p className="text-white/40 mb-4">No plan selected. Please choose a plan first.</p>
           <Link href="/dashboard/plan" className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition inline-block">
             Choose a Plan

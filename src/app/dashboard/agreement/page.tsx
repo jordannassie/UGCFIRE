@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity } from '@/lib/data'
 import type { Company, Plan, Agreement } from '@/lib/types'
+import { FileText, CheckCircle, ChevronDown, ChevronUp, Shield, User, Mail, Calendar, Star } from 'lucide-react'
 
 const CONTRACT_TITLE = 'UGCfire Service Agreement'
 
@@ -64,8 +65,10 @@ export default function AgreementPage() {
   const [existingAgreement, setExistingAgreement] = useState<Agreement | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [contractExpanded, setContractExpanded] = useState(false)
 
   const [signedName, setSignedName] = useState('')
+  const [signedEmail, setSignedEmail] = useState('')
   const [acceptedCheckbox, setAcceptedCheckbox] = useState(false)
   const [showcaseCheckbox, setShowcaseCheckbox] = useState(false)
 
@@ -90,6 +93,10 @@ export default function AgreementPage() {
           .single()
 
         if (agreement) setExistingAgreement(agreement as Agreement)
+
+        // Pre-fill email from auth
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.email) setSignedEmail(user.email)
       }
 
       setLoading(false)
@@ -116,7 +123,7 @@ export default function AgreementPage() {
         contract_title: CONTRACT_TITLE,
         contract_body: CONTRACT_BODY,
         signed_name: signedName.trim(),
-        signed_email: user.email ?? '',
+        signed_email: signedEmail.trim() || (user.email ?? ''),
         accepted_checkbox: acceptedCheckbox,
         showcase_rights_checkbox: showcaseCheckbox,
         signed_at: new Date().toISOString(),
@@ -152,6 +159,7 @@ export default function AgreementPage() {
     return (
       <div className="max-w-2xl">
         <div className="bg-[#111] border border-white/10 rounded-xl p-8 text-center">
+          <FileText className="text-[#FF3B1A] mx-auto mb-4" size={32} />
           <p className="text-white/60 mb-4">You need to select a plan before signing the agreement.</p>
           <a href="/dashboard/plan" className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition inline-block">
             Choose a Plan
@@ -164,41 +172,96 @@ export default function AgreementPage() {
   if (existingAgreement) {
     return (
       <div className="max-w-2xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Agreement Signed</h1>
-          <p className="text-white/40 mt-1 text-sm">Your service agreement is on file.</p>
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Service Agreement</h1>
+            <p className="text-white/40 mt-1 text-sm">Your agreement is on file and legally binding.</p>
+          </div>
+          <span className="bg-green-500/20 text-green-300 text-sm font-bold px-4 py-1.5 rounded-full border border-green-500/20 flex items-center gap-2">
+            <CheckCircle size={14} />
+            Signed
+          </span>
         </div>
 
-        <div className="bg-[#111] border border-green-500/20 rounded-xl p-6 space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-green-400 text-xl">✓</span>
-            <span className="text-green-400 font-bold">Agreement Signed</span>
+        <div className="bg-[#111] border border-green-500/20 rounded-xl p-6 space-y-5">
+          <div className="flex items-center gap-2 pb-4 border-b border-white/5">
+            <Shield className="text-[#FF3B1A]" size={18} />
+            <span className="text-white font-bold">Agreement Details</span>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-white/40">Signed by</p>
-              <p className="text-white font-medium mt-0.5">{existingAgreement.signed_name}</p>
+
+          <div className="grid grid-cols-2 gap-5 text-sm">
+            <div className="flex items-start gap-3">
+              <User className="text-[#FF3B1A] mt-0.5 flex-shrink-0" size={16} />
+              <div>
+                <p className="text-white/40 text-xs mb-0.5">Signed by</p>
+                <p className="text-white font-medium">{existingAgreement.signed_name}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white/40">Email</p>
-              <p className="text-white font-medium mt-0.5">{existingAgreement.signed_email}</p>
+            <div className="flex items-start gap-3">
+              <Mail className="text-[#FF3B1A] mt-0.5 flex-shrink-0" size={16} />
+              <div>
+                <p className="text-white/40 text-xs mb-0.5">Email</p>
+                <p className="text-white font-medium break-all">{existingAgreement.signed_email}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white/40">Date signed</p>
-              <p className="text-white font-medium mt-0.5">{formatDate(existingAgreement.signed_at)}</p>
+            <div className="flex items-start gap-3">
+              <Calendar className="text-[#FF3B1A] mt-0.5 flex-shrink-0" size={16} />
+              <div>
+                <p className="text-white/40 text-xs mb-0.5">Date signed</p>
+                <p className="text-white font-medium">{formatDate(existingAgreement.signed_at)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white/40">Plan</p>
-              <p className="text-white font-medium mt-0.5">{plan?.name ?? '—'}</p>
+            <div className="flex items-start gap-3">
+              <Star className="text-[#FF3B1A] mt-0.5 flex-shrink-0" size={16} />
+              <div>
+                <p className="text-white/40 text-xs mb-0.5">Plan</p>
+                <p className="text-white font-medium">{plan?.name ?? '—'}</p>
+              </div>
             </div>
           </div>
+
+          <div className="pt-4 border-t border-white/5 space-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="text-green-400 flex-shrink-0" size={14} />
+              <span className="text-white/60">Accepted terms &amp; conditions</span>
+            </div>
+            {existingAgreement.showcase_rights_checkbox && (
+              <div className="flex items-center gap-2">
+                <CheckCircle className="text-green-400 flex-shrink-0" size={14} />
+                <span className="text-white/60">Granted portfolio &amp; showcase rights to UGCFire</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-white/30">
+              <FileText size={14} />
+              <span>Version {existingAgreement.agreement_version}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* View contract expandable */}
+        <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setContractExpanded(!contractExpanded)}
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition"
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="text-[#FF3B1A]" size={16} />
+              <span className="text-white font-medium text-sm">View Contract</span>
+            </div>
+            {contractExpanded ? <ChevronUp className="text-white/40" size={16} /> : <ChevronDown className="text-white/40" size={16} />}
+          </button>
+          {contractExpanded && (
+            <div className="border-t border-white/10 p-6">
+              <pre className="text-white/50 text-xs leading-relaxed whitespace-pre-wrap font-sans max-h-80 overflow-y-auto">{CONTRACT_BODY}</pre>
+            </div>
+          )}
         </div>
 
         <a
           href="/dashboard/checkout"
           className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition inline-block"
         >
-          Continue to Checkout →
+          Continue to Checkout
         </a>
       </div>
     )
@@ -221,52 +284,97 @@ export default function AgreementPage() {
         </div>
       )}
 
+      {/* Contract expandable */}
+      <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
+        <button
+          onClick={() => setContractExpanded(!contractExpanded)}
+          className="w-full flex items-center justify-between px-6 py-4 hover:bg-white/5 transition"
+        >
+          <div className="flex items-center gap-2">
+            <FileText className="text-[#FF3B1A]" size={16} />
+            <span className="text-white font-medium">{CONTRACT_TITLE}</span>
+          </div>
+          {contractExpanded ? <ChevronUp className="text-white/40" size={16} /> : <ChevronDown className="text-white/40" size={16} />}
+        </button>
+        {contractExpanded && (
+          <div className="border-t border-white/10 p-6">
+            <div className="max-h-80 overflow-y-auto">
+              <pre className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap font-sans">{CONTRACT_BODY}</pre>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="bg-[#111] border border-white/10 rounded-xl p-6">
-        <h2 className="text-white font-bold mb-4">{CONTRACT_TITLE}</h2>
-        <div className="max-h-96 overflow-y-auto border border-white/10 rounded-lg bg-black/20 p-4">
-          <pre className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap font-sans">{CONTRACT_BODY}</pre>
+        <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/5">
+          <Shield className="text-[#FF3B1A]" size={18} />
+          <span className="text-white font-bold">Electronic Signature</span>
+          <span className="ml-auto bg-red-500/10 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full border border-red-500/20">Unsigned</span>
         </div>
 
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="block text-white/60 text-sm mb-2">Type your full name to sign</label>
-            <input
-              type="text"
-              value={signedName}
-              onChange={e => setSignedName(e.target.value)}
-              placeholder="Your full legal name"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none"
-            />
+        <div className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-white/60 text-sm mb-2 flex items-center gap-1.5">
+                <User size={12} className="text-[#FF3B1A]" />
+                Full legal name
+              </label>
+              <input
+                type="text"
+                value={signedName}
+                onChange={e => setSignedName(e.target.value)}
+                placeholder="Your full legal name"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-white/60 text-sm mb-2 flex items-center gap-1.5">
+                <Mail size={12} className="text-[#FF3B1A]" />
+                Email address
+              </label>
+              <input
+                type="email"
+                value={signedEmail}
+                onChange={e => setSignedEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none"
+              />
+            </div>
           </div>
 
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-white/5 transition">
             <input
               type="checkbox"
               checked={acceptedCheckbox}
               onChange={e => setAcceptedCheckbox(e.target.checked)}
               className="mt-0.5 accent-[#FF3B1A]"
             />
-            <span className="text-white/60 text-sm">I have read and agree to the UGCfire Service Agreement.</span>
+            <span className="text-white/60 text-sm">I have read and agree to the UGCfire Service Agreement and all terms outlined above.</span>
           </label>
 
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-white/5 transition">
             <input
               type="checkbox"
               checked={showcaseCheckbox}
               onChange={e => setShowcaseCheckbox(e.target.checked)}
               className="mt-0.5 accent-[#FF3B1A]"
             />
-            <span className="text-white/60 text-sm">I understand UGCFire may use approved/delivered content for portfolio and promotional purposes.</span>
+            <span className="text-white/60 text-sm">I grant UGCFire permission to use approved and delivered content for portfolio, marketing, and promotional purposes (Section 12).</span>
           </label>
         </div>
 
         <button
           onClick={handleSign}
           disabled={!canSubmit || submitting}
-          className="mt-6 w-full bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-40 disabled:cursor-not-allowed"
+          className="mt-6 w-full bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
+          <Shield size={16} />
           {submitting ? 'Signing...' : 'Sign Agreement & Continue'}
         </button>
+
+        <p className="text-white/25 text-xs text-center mt-3">
+          Electronic signature is legally binding. Your IP and timestamp are recorded.
+        </p>
       </div>
     </div>
   )

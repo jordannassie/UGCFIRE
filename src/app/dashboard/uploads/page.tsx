@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, logActivity, statusColor } from '@/lib/data'
 import type { Company, ClientUpload } from '@/lib/types'
+import { Upload, CheckCircle, Link as LinkIcon, FileText, Tag, StickyNote, ExternalLink } from 'lucide-react'
 
 const CATEGORIES = [
   'Logo/Brand Asset',
@@ -19,6 +20,16 @@ const CATEGORIES = [
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function uploadStatusColor(status: string): string {
+  const map: Record<string, string> = {
+    submitted: 'bg-blue-500/20 text-blue-300 border border-blue-500/20',
+    reviewed: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/20',
+    used: 'bg-green-500/20 text-green-300 border border-green-500/20',
+    archived: 'bg-gray-500/20 text-gray-400 border border-gray-500/20',
+  }
+  return map[status] ?? statusColor(status)
 }
 
 export default function UploadsPage() {
@@ -114,11 +125,18 @@ export default function UploadsPage() {
 
       {/* Upload form */}
       <div className="bg-[#111] border border-white/10 rounded-xl p-6">
-        <h2 className="text-white font-bold mb-5">Upload New Asset</h2>
+        <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/5">
+          <Upload className="text-[#FF3B1A]" size={18} />
+          <h2 className="text-white font-bold">Upload New Asset</h2>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-white/60 text-sm mb-2">Title</label>
+              <label className="block text-white/60 text-sm mb-2 flex items-center gap-1.5">
+                <FileText size={12} className="text-[#FF3B1A]" />
+                Title
+              </label>
               <input
                 type="text"
                 required
@@ -129,11 +147,14 @@ export default function UploadsPage() {
               />
             </div>
             <div>
-              <label className="block text-white/60 text-sm mb-2">Category</label>
+              <label className="block text-white/60 text-sm mb-2 flex items-center gap-1.5">
+                <Tag size={12} className="text-[#FF3B1A]" />
+                Category
+              </label>
               <select
                 value={form.category}
                 onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none"
+                className="w-full bg-[#0a0a0a] border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none"
               >
                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
@@ -141,7 +162,10 @@ export default function UploadsPage() {
           </div>
 
           <div>
-            <label className="block text-white/60 text-sm mb-2">File URL or Google Drive / Dropbox link</label>
+            <label className="block text-white/60 text-sm mb-2 flex items-center gap-1.5">
+              <LinkIcon size={12} className="text-[#FF3B1A]" />
+              File URL or Google Drive / Dropbox link
+            </label>
             <input
               type="url"
               required
@@ -153,7 +177,10 @@ export default function UploadsPage() {
           </div>
 
           <div>
-            <label className="block text-white/60 text-sm mb-2">Notes <span className="text-white/30">(optional)</span></label>
+            <label className="block text-white/60 text-sm mb-2 flex items-center gap-1.5">
+              <StickyNote size={12} className="text-[#FF3B1A]" />
+              Notes <span className="text-white/30">(optional)</span>
+            </label>
             <textarea
               rows={3}
               value={form.notes}
@@ -164,14 +191,18 @@ export default function UploadsPage() {
           </div>
 
           {success && (
-            <p className="text-green-400 text-sm">✓ Upload submitted successfully!</p>
+            <div className="flex items-center gap-2 text-green-400 text-sm bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-3">
+              <CheckCircle size={16} />
+              Asset submitted successfully.
+            </div>
           )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-60"
+            className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-60 flex items-center gap-2"
           >
+            <Upload size={16} />
             {submitting ? 'Submitting...' : 'Submit Upload'}
           </button>
         </form>
@@ -179,37 +210,47 @@ export default function UploadsPage() {
 
       {/* Past uploads */}
       <div>
-        <h2 className="text-white font-bold text-lg mb-4">Past Uploads</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white font-bold text-lg">Uploaded Assets</h2>
+          {uploads.length > 0 && (
+            <span className="text-white/30 text-sm">{uploads.length} file{uploads.length !== 1 ? 's' : ''}</span>
+          )}
+        </div>
+
         {uploads.length === 0 ? (
-          <div className="bg-[#111] border border-white/10 rounded-xl p-8 text-center">
-            <p className="text-white/30">No uploads yet. Share your first asset above.</p>
+          <div className="bg-[#111] border border-white/10 rounded-xl p-10 text-center">
+            <Upload className="text-white/20 mx-auto mb-3" size={32} />
+            <p className="text-white/40 font-medium mb-1">No uploads yet</p>
+            <p className="text-white/20 text-sm">Share your first asset using the form above.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {uploads.map(upload => (
-              <div key={upload.id} className="bg-[#111] border border-white/10 rounded-xl p-4">
+              <div key={upload.id} className="bg-[#111] border border-white/10 rounded-xl p-4 hover:border-white/20 transition">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
                       <p className="text-white font-semibold text-sm">{upload.title}</p>
-                      <span className="text-white/30 text-xs">·</span>
-                      <span className="text-white/40 text-xs">{upload.upload_category}</span>
+                      <span className="bg-white/5 text-white/40 text-xs px-2 py-0.5 rounded-full border border-white/10">
+                        {upload.upload_category}
+                      </span>
                     </div>
                     {upload.notes && (
-                      <p className="text-white/40 text-xs mt-1 truncate">{upload.notes}</p>
+                      <p className="text-white/40 text-xs mt-1 line-clamp-1">{upload.notes}</p>
                     )}
-                    <p className="text-white/30 text-xs mt-1">{formatDate(upload.created_at)}</p>
+                    <p className="text-white/25 text-xs mt-2">{formatDate(upload.created_at)}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor(upload.status)}`}>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${uploadStatusColor(upload.status)}`}>
                       {upload.status}
                     </span>
                     <a
                       href={upload.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="border border-white/10 text-white/50 text-xs px-3 py-1.5 rounded-lg hover:border-[#FF3B1A] hover:text-white transition"
+                      className="border border-white/10 text-white/50 text-xs px-3 py-1.5 rounded-lg hover:border-[#FF3B1A] hover:text-white transition flex items-center gap-1.5"
                     >
+                      <ExternalLink size={12} />
                       View
                     </a>
                   </div>

@@ -4,12 +4,35 @@ import { createClient } from '@/lib/supabase/client'
 import { logActivity, statusColor } from '@/lib/data'
 import type { MediaType, ContentStatus } from '@/lib/types'
 
+const DEMO_VIDEO_URL = 'https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128_httpss.mj.runVArsopscz9I_slow_motion_pers_c2fb5354-bceb-4ae0-8069-d65e46035d16_1.mp4'
+
+const CONTENT_TYPES = [
+  'Talking Head',
+  'Product Demo',
+  'Lifestyle',
+  'Before After',
+  'Testimonial',
+  'Tutorial',
+  'Direct Response',
+  'Other',
+]
+
+const MEDIA_TYPES: MediaType[] = ['video', 'photo', 'carousel', 'graphic', 'other']
+const MEDIA_LABELS: Record<MediaType, string> = {
+  video: 'Video',
+  photo: 'Photo',
+  carousel: 'Carousel',
+  graphic: 'Graphic',
+  other: 'Other',
+}
+
 interface Company { id: string; name: string }
 interface RecentUpload {
   id: string
   title: string
   status: ContentStatus
   media_type: MediaType
+  content_type: string | null
   uploaded_at: string
   company_name: string
 }
@@ -26,9 +49,9 @@ export default function AdminUploadsPage() {
     title: '',
     description: '',
     week_label: '',
-    content_type: '',
+    content_type: 'Talking Head',
     media_type: 'video' as MediaType,
-    file_url: '',
+    file_url: DEMO_VIDEO_URL,
     thumbnail_url: '',
     status: 'ready_for_review' as ContentStatus,
     can_showcase: true,
@@ -43,10 +66,10 @@ export default function AdminUploadsPage() {
     const [{ data: comps }, { data: uploads }] = await Promise.all([
       supabase.from('companies').select('id, name').order('name'),
       supabase.from('content_items')
-        .select('id, title, status, media_type, uploaded_at, company_id, companies(name)')
+        .select('id, title, status, media_type, content_type, uploaded_at, company_id, companies(name)')
         .is('deleted_at', null)
         .order('uploaded_at', { ascending: false })
-        .limit(20),
+        .limit(10),
     ])
     setCompanies((comps ?? []) as Company[])
     const rows = (uploads ?? []).map((u: { companies?: { name?: string } | null } & RecentUpload) => ({
@@ -92,9 +115,9 @@ export default function AdminUploadsPage() {
         title: '',
         description: '',
         week_label: '',
-        content_type: '',
+        content_type: 'Talking Head',
         media_type: 'video',
-        file_url: '',
+        file_url: DEMO_VIDEO_URL,
         thumbnail_url: '',
         status: 'ready_for_review',
         can_showcase: true,
@@ -147,16 +170,17 @@ export default function AdminUploadsPage() {
 
           <div>
             <label className="text-white/60 text-xs uppercase tracking-wider block mb-2">Content Type</label>
-            <input type="text" value={form.content_type} onChange={e => setForm(p => ({ ...p, content_type: e.target.value }))}
-              placeholder="e.g. Hook-driven product demo"
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none" />
+            <select value={form.content_type} onChange={e => setForm(p => ({ ...p, content_type: e.target.value }))}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none">
+              {CONTENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
           </div>
 
           <div>
             <label className="text-white/60 text-xs uppercase tracking-wider block mb-2">Media Type</label>
             <select value={form.media_type} onChange={e => setForm(p => ({ ...p, media_type: e.target.value as MediaType }))}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none">
-              {(['video', 'photo', 'carousel', 'graphic', 'other'] as MediaType[]).map(t => <option key={t} value={t}>{t}</option>)}
+              {MEDIA_TYPES.map(t => <option key={t} value={t}>{MEDIA_LABELS[t]}</option>)}
             </select>
           </div>
 
@@ -172,6 +196,7 @@ export default function AdminUploadsPage() {
             <input required type="text" value={form.file_url} onChange={e => setForm(p => ({ ...p, file_url: e.target.value }))}
               placeholder="https://..."
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none" />
+            <p className="text-white/30 text-xs mt-1">Demo URL pre-filled — replace with actual file URL</p>
           </div>
 
           <div>
@@ -187,6 +212,8 @@ export default function AdminUploadsPage() {
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-[#FF3B1A] focus:outline-none">
               <option value="in_production">In Production</option>
               <option value="ready_for_review">Ready for Review</option>
+              <option value="approved">Approved</option>
+              <option value="delivered">Delivered</option>
             </select>
           </div>
 
@@ -209,10 +236,14 @@ export default function AdminUploadsPage() {
       {/* Recent uploads */}
       <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
         <div className="p-6 border-b border-white/5">
-          <h2 className="text-white font-semibold">Recent Uploads (Last 20)</h2>
+          <h2 className="text-white font-semibold">Recent Uploads (Last 10)</h2>
         </div>
         {loading ? (
           <div className="p-8 text-center text-white/40 text-sm">Loading...</div>
+        ) : recentUploads.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-white/30 text-sm">No uploads yet — use the form above to add content</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -220,23 +251,24 @@ export default function AdminUploadsPage() {
                 <tr>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Company</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Title</th>
+                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Content Type</th>
+                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Media</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Status</th>
-                  <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-4 pt-5">Type</th>
                   <th className="text-white/40 text-xs uppercase font-semibold pb-3 border-b border-white/5 text-left px-6 pt-5">Uploaded</th>
                 </tr>
               </thead>
               <tbody>
-                {recentUploads.length === 0 && (
-                  <tr><td colSpan={5} className="py-8 text-center text-white/30">No uploads yet</td></tr>
-                )}
                 {recentUploads.map(u => (
-                  <tr key={u.id}>
+                  <tr key={u.id} className="hover:bg-white/2">
                     <td className="py-3 border-b border-white/5 text-white/70 px-6">{u.company_name}</td>
-                    <td className="py-3 border-b border-white/5 text-white font-medium px-4">{u.title}</td>
+                    <td className="py-3 border-b border-white/5 text-white font-medium px-4 max-w-xs truncate">{u.title}</td>
+                    <td className="py-3 border-b border-white/5 text-white/50 px-4 text-xs">{u.content_type ?? '—'}</td>
+                    <td className="py-3 border-b border-white/5 px-4">
+                      <span className="text-xs bg-white/10 text-white/60 px-2 py-1 rounded-full">{u.media_type}</span>
+                    </td>
                     <td className="py-3 border-b border-white/5 px-4">
                       <span className={`text-xs px-2 py-1 rounded-full ${statusColor(u.status)}`}>{u.status}</span>
                     </td>
-                    <td className="py-3 border-b border-white/5 text-white/60 px-4">{u.media_type}</td>
                     <td className="py-3 border-b border-white/5 text-white/40 px-6 text-xs">{new Date(u.uploaded_at).toLocaleDateString()}</td>
                   </tr>
                 ))}

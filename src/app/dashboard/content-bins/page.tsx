@@ -4,28 +4,40 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany, statusColor } from '@/lib/data'
 import type { Company, ContentItem } from '@/lib/types'
+import { Download, Play, Image as ImageIcon, Star, LayoutGrid, Video, FileImage } from 'lucide-react'
 
-type Filter = 'all' | 'photo' | 'video' | 'approved' | 'delivered'
+type Filter = 'all' | 'photo' | 'video' | 'carousel' | 'graphic'
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'photo', label: 'Photos' },
-  { key: 'video', label: 'Videos' },
-  { key: 'approved', label: 'Approved' },
-  { key: 'delivered', label: 'Delivered' },
+const FILTERS: { key: Filter; label: string; icon: React.ReactNode }[] = [
+  { key: 'all', label: 'All', icon: <LayoutGrid size={14} /> },
+  { key: 'photo', label: 'Photos', icon: <FileImage size={14} /> },
+  { key: 'video', label: 'Videos', icon: <Video size={14} /> },
+  { key: 'carousel', label: 'Carousels', icon: <ImageIcon size={14} /> },
+  { key: 'graphic', label: 'Graphics', icon: <Star size={14} /> },
 ]
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function mediaTypeBadge(type: string) {
+  const map: Record<string, string> = {
+    video: 'bg-blue-500/80 text-white',
+    photo: 'bg-purple-500/80 text-white',
+    carousel: 'bg-indigo-500/80 text-white',
+    graphic: 'bg-pink-500/80 text-white',
+    other: 'bg-gray-500/80 text-white',
+  }
+  return map[type] ?? 'bg-gray-500/80 text-white'
+}
+
 function ContentCard({ item }: { item: ContentItem }) {
   const isVideo = item.media_type === 'video'
 
   return (
-    <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden flex flex-col">
+    <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden flex flex-col hover:border-white/20 transition">
       {/* Preview */}
-      <div className="relative bg-black aspect-video">
+      <div className="relative bg-black/60 aspect-video">
         {item.file_url ? (
           isVideo ? (
             <video
@@ -40,23 +52,46 @@ function ContentCard({ item }: { item: ContentItem }) {
           )
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-white/20 text-sm">{isVideo ? '▶' : '🖼'}</span>
+            {isVideo
+              ? <Play className="text-white/20" size={36} />
+              : <ImageIcon className="text-white/20" size={36} />
+            }
           </div>
         )}
+
+        {/* Badges overlay */}
         <div className="absolute top-2 left-2 flex gap-1.5">
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isVideo ? 'bg-blue-500/80 text-white' : 'bg-purple-500/80 text-white'}`}>
-            {isVideo ? 'Video' : 'Photo'}
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${mediaTypeBadge(item.media_type)}`}>
+            {item.media_type}
           </span>
         </div>
+
+        {item.can_showcase && (
+          <div className="absolute top-2 right-2">
+            <span className="bg-[#FF3B1A]/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Star size={10} />
+              Showcase
+            </span>
+          </div>
+        )}
+
+        {isVideo && item.file_url && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-black/60 border border-white/20 flex items-center justify-center">
+              <Play className="text-white ml-0.5" size={20} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Info */}
       <div className="p-4 flex flex-col gap-2 flex-1">
         <p className="text-white font-semibold text-sm leading-snug">{item.title}</p>
-        <div className="flex items-center gap-2 flex-wrap">
-          {item.week_label && <span className="text-white/30 text-xs">{item.week_label}</span>}
-          {item.content_type && <span className="text-white/30 text-xs">· {item.content_type}</span>}
+        <div className="flex items-center gap-2 flex-wrap text-xs text-white/30">
+          {item.week_label && <span>{item.week_label}</span>}
+          {item.content_type && <span>· {item.content_type}</span>}
         </div>
+
         <div className="flex items-center justify-between mt-auto pt-2">
           <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor(item.status)}`}>
             {item.status}
@@ -66,9 +101,10 @@ function ContentCard({ item }: { item: ContentItem }) {
               href={item.file_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/50 text-xs hover:text-white transition border border-white/10 px-3 py-1 rounded-lg hover:border-[#FF3B1A]"
+              className="text-white/50 text-xs hover:text-white transition border border-white/10 px-3 py-1.5 rounded-lg hover:border-[#FF3B1A] flex items-center gap-1.5"
             >
-              ↓ Download
+              <Download size={12} />
+              Download
             </a>
           )}
         </div>
@@ -108,17 +144,29 @@ export default function ContentBinsPage() {
 
   const filtered = items.filter(item => {
     if (filter === 'all') return true
-    if (filter === 'photo') return item.media_type === 'photo' || item.media_type === 'carousel' || item.media_type === 'graphic'
+    if (filter === 'photo') return item.media_type === 'photo'
     if (filter === 'video') return item.media_type === 'video'
-    if (filter === 'approved') return item.status === 'approved'
-    if (filter === 'delivered') return item.status === 'delivered'
+    if (filter === 'carousel') return item.media_type === 'carousel'
+    if (filter === 'graphic') return item.media_type === 'graphic'
     return true
   })
+
+  // Count per filter
+  const counts: Record<Filter, number> = {
+    all: items.length,
+    photo: items.filter(i => i.media_type === 'photo').length,
+    video: items.filter(i => i.media_type === 'video').length,
+    carousel: items.filter(i => i.media_type === 'carousel').length,
+    graphic: items.filter(i => i.media_type === 'graphic').length,
+  }
 
   if (loading) {
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 bg-white/5 rounded animate-pulse" />
+        <div className="flex gap-2">
+          {[...Array(5)].map((_, i) => <div key={i} className="h-9 w-24 bg-white/5 rounded-lg animate-pulse" />)}
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => <div key={i} className="h-56 bg-white/5 rounded-xl animate-pulse" />)}
         </div>
@@ -128,38 +176,53 @@ export default function ContentBinsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white">Content Bins</h1>
-        <p className="text-white/40 mt-1 text-sm">Your approved and delivered content. Download anytime.</p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Content Bins</h1>
+          <p className="text-white/40 mt-1 text-sm">Your approved and delivered content. Download anytime.</p>
+        </div>
+        {items.length > 0 && (
+          <span className="bg-[#FF3B1A]/10 text-[#FF3B1A] text-sm font-bold px-4 py-1.5 rounded-full border border-[#FF3B1A]/20">
+            {items.length} asset{items.length !== 1 ? 's' : ''}
+          </span>
+        )}
       </div>
 
-      {/* Filter bar */}
+      {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
-        {FILTERS.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              filter === f.key
-                ? 'bg-[#FF3B1A] text-white'
-                : 'border border-white/10 text-white/50 hover:border-white/30 hover:text-white'
-            }`}
-          >
-            {f.label}
-            {f.key === 'all' && items.length > 0 && (
-              <span className="ml-1.5 text-xs opacity-60">({items.length})</span>
-            )}
-          </button>
-        ))}
+        {FILTERS.map(f => {
+          const count = counts[f.key]
+          if (f.key !== 'all' && count === 0) return null
+          return (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
+                filter === f.key
+                  ? 'bg-[#FF3B1A] text-white'
+                  : 'border border-white/10 text-white/50 hover:border-white/30 hover:text-white'
+              }`}
+            >
+              {f.icon}
+              {f.label}
+              {count > 0 && (
+                <span className={`text-xs opacity-60 ${filter === f.key ? '' : ''}`}>({count})</span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {filtered.length === 0 ? (
         <div className="bg-[#111] border border-white/10 rounded-xl p-12 text-center">
-          <p className="text-white/30 text-lg mb-2">No content yet</p>
-          <p className="text-white/20 text-sm">
+          <LayoutGrid className="text-white/10 mx-auto mb-4" size={40} />
+          <p className="text-white/40 font-medium text-lg mb-2">
+            {items.length === 0 ? 'No approved content yet' : 'No content in this category'}
+          </p>
+          <p className="text-white/20 text-sm max-w-sm mx-auto">
             {items.length === 0
-              ? 'Your first deliverables will appear here once production begins.'
-              : 'No content matches the selected filter.'}
+              ? 'No approved content yet. Check Weekly Uploads to review and approve your deliverables.'
+              : 'No content matches the selected filter. Try a different category.'}
           </p>
         </div>
       ) : (

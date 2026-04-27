@@ -2,10 +2,28 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { statusColor } from '@/lib/data'
+import { ExternalLink } from 'lucide-react'
 import type { ContentStatus, MediaType } from '@/lib/types'
 
 const ALL_STATUSES: ContentStatus[] = ['in_production', 'ready_for_review', 'revision_requested', 'approved', 'delivered', 'archived']
 const ALL_MEDIA: MediaType[] = ['video', 'photo', 'carousel', 'graphic', 'other']
+
+const MEDIA_LABELS: Record<MediaType, string> = {
+  video: 'Video',
+  photo: 'Photo',
+  carousel: 'Carousel',
+  graphic: 'Graphic',
+  other: 'Other',
+}
+
+const STATUS_LABELS: Record<ContentStatus, string> = {
+  in_production: 'In Production',
+  ready_for_review: 'Ready for Review',
+  revision_requested: 'Revision Requested',
+  approved: 'Approved',
+  delivered: 'Delivered',
+  archived: 'Archived',
+}
 
 interface ContentRow {
   id: string
@@ -17,6 +35,7 @@ interface ContentRow {
   uploaded_at: string
   company_name: string
   company_id: string
+  file_url: string | null
 }
 
 interface Company { id: string; name: string }
@@ -39,7 +58,7 @@ export default function AdminContentPage() {
     const [{ data: comps }, { data: items }] = await Promise.all([
       supabase.from('companies').select('id, name').order('name'),
       supabase.from('content_items')
-        .select('id, title, media_type, week_label, status, can_showcase, uploaded_at, company_id, companies(name)')
+        .select('id, title, media_type, week_label, status, can_showcase, uploaded_at, company_id, file_url, companies(name)')
         .is('deleted_at', null)
         .order('uploaded_at', { ascending: false }),
     ])
@@ -94,12 +113,12 @@ export default function AdminContentPage() {
         <select value={filterMedia} onChange={e => setFilterMedia(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:border-[#FF3B1A] focus:outline-none">
           <option value="">All Media Types</option>
-          {ALL_MEDIA.map(m => <option key={m} value={m}>{m}</option>)}
+          {ALL_MEDIA.map(m => <option key={m} value={m}>{MEDIA_LABELS[m]}</option>)}
         </select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:border-[#FF3B1A] focus:outline-none">
           <option value="">All Statuses</option>
-          {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          {ALL_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
         </select>
         {(filterCompany || filterMedia || filterStatus) && (
           <button onClick={() => { setFilterCompany(''); setFilterMedia(''); setFilterStatus('') }}
@@ -113,6 +132,16 @@ export default function AdminContentPage() {
       <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-white/40 text-sm">Loading content...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-white/30 text-sm mb-2">
+              {content.length === 0 ? 'No content has been uploaded yet' : 'No items match the current filters'}
+            </p>
+            {(filterCompany || filterMedia || filterStatus) && (
+              <button onClick={() => { setFilterCompany(''); setFilterMedia(''); setFilterStatus('') }}
+                className="text-[#FF3B1A] text-xs hover:underline mt-1">Clear filters</button>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -129,15 +158,12 @@ export default function AdminContentPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="py-8 text-center text-white/30">No content found</td></tr>
-                )}
                 {filtered.map(item => (
-                  <tr key={item.id} className="hover:bg-white/2">
+                  <tr key={item.id} className="hover:bg-white/[0.02]">
                     <td className="py-3 border-b border-white/5 text-white/70 px-6 text-sm">{item.company_name}</td>
                     <td className="py-3 border-b border-white/5 text-white font-medium px-4 max-w-xs truncate">{item.title}</td>
                     <td className="py-3 border-b border-white/5 px-4">
-                      <span className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded-full">{item.media_type}</span>
+                      <span className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded-full">{MEDIA_LABELS[item.media_type] ?? item.media_type}</span>
                     </td>
                     <td className="py-3 border-b border-white/5 text-white/50 px-4 text-xs">{item.week_label ?? '—'}</td>
                     <td className="py-3 border-b border-white/5 px-4">
@@ -146,7 +172,7 @@ export default function AdminContentPage() {
                         onChange={e => updateStatus(item.id, e.target.value as ContentStatus)}
                         className="bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs focus:border-[#FF3B1A] focus:outline-none"
                       >
-                        {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                        {ALL_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
                       </select>
                     </td>
                     <td className="py-3 border-b border-white/5 px-4 text-center">
@@ -159,7 +185,16 @@ export default function AdminContentPage() {
                     </td>
                     <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs whitespace-nowrap">{new Date(item.uploaded_at).toLocaleDateString()}</td>
                     <td className="py-3 border-b border-white/5 px-6">
-                      <button onClick={() => archiveItem(item.id)} className="text-xs text-red-400 hover:text-red-300 transition">Archive</button>
+                      <div className="flex items-center gap-3">
+                        {item.file_url && (
+                          <a href={item.file_url} target="_blank" rel="noreferrer"
+                            className="text-[#FF3B1A] hover:text-[#e02e10] transition flex items-center gap-1 text-xs">
+                            <ExternalLink size={12} />
+                            View
+                          </a>
+                        )}
+                        <button onClick={() => archiveItem(item.id)} className="text-xs text-red-400 hover:text-red-300 transition">Archive</button>
+                      </div>
                     </td>
                   </tr>
                 ))}

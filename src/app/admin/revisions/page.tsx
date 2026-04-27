@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity, statusColor } from '@/lib/data'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { RevisionStatus } from '@/lib/types'
 
 interface RevisionRow {
@@ -78,33 +79,47 @@ export default function AdminRevisionsPage() {
     await logActivity({ company_id: companyId, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'revision_marked_in_progress', event_message: 'Revision marked in progress' })
   }
 
-  async function markCompleted(id: string, contentItemId: string, companyId: string) {
+  async function markResolved(id: string, contentItemId: string, companyId: string) {
     const supabase = createClient()
     const now = new Date().toISOString()
     await supabase.from('content_revisions').update({ status: 'completed', completed_at: now }).eq('id', id)
     await supabase.from('content_items').update({ status: 'ready_for_review' }).eq('id', contentItemId)
     setRevisions(prev => prev.map(r => r.id === id ? { ...r, status: 'completed', completed_at: now } : r))
-    await logActivity({ company_id: companyId, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'revision_marked_completed', event_message: 'Revision completed — content ready for review' })
+    await logActivity({ company_id: companyId, actor_user_id: adminUserId, actor_role: 'admin', event_type: 'revision_marked_completed', event_message: 'Revision resolved — content ready for review' })
   }
 
   const filtered = filterStatus === 'all' ? revisions : revisions.filter(r => r.status === filterStatus)
+
+  const openCount = revisions.filter(r => r.status === 'open').length
+  const inProgressCount = revisions.filter(r => r.status === 'in_progress').length
+  const resolvedCount = revisions.filter(r => r.status === 'completed').length
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Revisions</h1>
-        <p className="text-white/40 text-sm mt-1">{revisions.filter(r => r.status === 'open').length} open revision requests</p>
+        <div className="flex gap-4 mt-2">
+          <span className="text-white/40 text-sm">
+            <span className="text-red-300 font-semibold">{openCount}</span> open
+          </span>
+          <span className="text-white/40 text-sm">
+            <span className="text-yellow-300 font-semibold">{inProgressCount}</span> in progress
+          </span>
+          <span className="text-white/40 text-sm">
+            <span className="text-green-300 font-semibold">{resolvedCount}</span> resolved
+          </span>
+        </div>
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {(['all', 'open', 'in_progress', 'completed'] as FilterStatus[]).map(s => (
           <button
             key={s}
             onClick={() => setFilterStatus(s)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filterStatus === s ? 'bg-[#FF3B1A] text-white' : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'}`}
           >
-            {s === 'all' ? 'All' : s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {s === 'all' ? 'All' : s === 'completed' ? 'Resolved' : s.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
             {s !== 'all' && (
               <span className="ml-2 text-xs opacity-70">({revisions.filter(r => r.status === s).length})</span>
             )}
@@ -115,6 +130,10 @@ export default function AdminRevisionsPage() {
       <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-white/40 text-sm">Loading revisions...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-white/30 text-sm">No revisions found</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -130,48 +149,52 @@ export default function AdminRevisionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 && (
-                  <tr><td colSpan={7} className="py-8 text-center text-white/30">No revisions found</td></tr>
-                )}
                 {filtered.map(r => (
                   <>
-                    <tr key={r.id} className="hover:bg-white/2">
+                    <tr key={r.id} className="hover:bg-white/[0.02]">
                       <td className="py-3 border-b border-white/5 text-white/70 px-6">{r.company_name}</td>
-                      <td className="py-3 border-b border-white/5 text-white font-medium px-4 max-w-xs truncate">{r.content_title}</td>
-                      <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">{r.media_type}</td>
-                      <td className="py-3 border-b border-white/5 px-4">
+                      <td className="py-3 border-b border-white/5 text-white font-medium px-4 max-w-[160px] truncate">{r.content_title}</td>
+                      <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">
+                        <span className="bg-white/10 px-2 py-0.5 rounded-full">{r.media_type}</span>
+                      </td>
+                      <td className="py-3 border-b border-white/5 px-4 max-w-[200px]">
                         <button
                           onClick={() => setRevisions(prev => prev.map(rev => rev.id === r.id ? { ...rev, expanded: !rev.expanded } : rev))}
-                          className="text-white/60 text-xs hover:text-white text-left max-w-xs"
+                          className="text-white/60 text-xs hover:text-white text-left flex items-center gap-1 w-full"
                         >
+                          {r.expanded ? <ChevronDown size={12} className="shrink-0" /> : <ChevronRight size={12} className="shrink-0" />}
                           <span className="line-clamp-1">{r.revision_note}</span>
-                          <span className="text-[#FF3B1A] hover:underline ml-1">{r.expanded ? 'less' : 'more'}</span>
                         </button>
                       </td>
                       <td className="py-3 border-b border-white/5 px-4">
-                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor(r.status)}`}>{r.status}</span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor(r.status)}`}>
+                          {r.status === 'completed' ? 'Resolved' : r.status === 'in_progress' ? 'In Progress' : r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                        </span>
                       </td>
                       <td className="py-3 border-b border-white/5 text-white/40 px-4 text-xs whitespace-nowrap">{new Date(r.created_at).toLocaleDateString()}</td>
                       <td className="py-3 border-b border-white/5 px-6 flex gap-2">
                         {r.status === 'open' && (
                           <button onClick={() => markInProgress(r.id, r.company_id)}
                             className="text-xs border border-white/10 px-2 py-1 rounded text-white/60 hover:text-white hover:border-[#FF3B1A] transition whitespace-nowrap">
-                            In Progress
+                            Mark In Progress
                           </button>
                         )}
                         {r.status !== 'completed' && (
-                          <button onClick={() => markCompleted(r.id, r.content_item_id, r.company_id)}
+                          <button onClick={() => markResolved(r.id, r.content_item_id, r.company_id)}
                             className="text-xs bg-green-500/20 text-green-300 border border-green-500/30 px-2 py-1 rounded hover:bg-green-500/30 transition whitespace-nowrap">
-                            Complete
+                            Mark Resolved
                           </button>
                         )}
                       </td>
                     </tr>
                     {r.expanded && (
                       <tr key={`${r.id}-expanded`}>
-                        <td colSpan={7} className="px-6 py-3 bg-white/5 text-white/70 text-sm border-b border-white/5">
-                          <p className="font-medium text-white/40 text-xs mb-1 uppercase tracking-wider">Full Revision Note</p>
-                          {r.revision_note}
+                        <td colSpan={7} className="px-6 py-4 bg-white/[0.03] text-white/70 text-sm border-b border-white/5">
+                          <p className="font-medium text-white/40 text-xs mb-2 uppercase tracking-wider">Full Revision Note</p>
+                          <p className="leading-relaxed">{r.revision_note}</p>
+                          {r.completed_at && (
+                            <p className="text-white/30 text-xs mt-2">Resolved on {new Date(r.completed_at).toLocaleString()}</p>
+                          )}
                         </td>
                       </tr>
                     )}

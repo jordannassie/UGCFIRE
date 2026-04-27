@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/data'
+import { Send } from 'lucide-react'
 import type { Message } from '@/lib/types'
 
 interface CompanyThread {
@@ -44,7 +45,6 @@ export default function AdminMessagesPage() {
 
     if (!msgs) { setLoading(false); return }
 
-    // Group by company
     const companyMap = new Map<string, { unread: number; last: string; lastAt: string }>()
     for (const m of msgs) {
       if (!companyMap.has(m.company_id)) {
@@ -114,17 +114,23 @@ export default function AdminMessagesPage() {
   }
 
   const selectedCompany = companies.find(c => c.id === selectedCompanyId)
+  const totalUnread = companies.reduce((sum, c) => sum + c.unread_count, 0)
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Messages</h1>
-        <p className="text-white/40 text-sm mt-1">Admin inbox — all client threads</p>
+        <p className="text-white/40 text-sm mt-1">
+          Admin inbox — all client threads
+          {totalUnread > 0 && (
+            <span className="ml-2 bg-[#FF3B1A] text-white text-xs font-bold px-2 py-0.5 rounded-full">{totalUnread} unread</span>
+          )}
+        </p>
       </div>
 
-      <div className="flex gap-0 h-[calc(100vh-200px)] min-h-[500px]">
+      <div className="flex gap-0 h-[calc(100vh-220px)] min-h-[500px]">
         {/* Left panel - company list */}
-        <div className="w-80 shrink-0 bg-[#111] border border-white/10 rounded-l-xl flex flex-col overflow-hidden">
+        <div className="w-72 shrink-0 bg-[#111] border border-white/10 rounded-l-xl flex flex-col overflow-hidden">
           <div className="p-4 border-b border-white/10">
             <p className="text-white/40 text-xs uppercase font-semibold tracking-wider">Conversations</p>
           </div>
@@ -132,7 +138,7 @@ export default function AdminMessagesPage() {
             {loading ? (
               <div className="p-4 text-center text-white/40 text-sm">Loading...</div>
             ) : companies.length === 0 ? (
-              <div className="p-4 text-center text-white/30 text-sm">No messages yet</div>
+              <div className="p-6 text-center text-white/30 text-sm">No messages yet</div>
             ) : (
               companies.map(c => (
                 <button
@@ -143,7 +149,7 @@ export default function AdminMessagesPage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-white text-sm font-medium truncate">{c.name}</span>
                     {c.unread_count > 0 && (
-                      <span className="bg-[#FF3B1A] text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                      <span className="bg-[#FF3B1A] text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shrink-0">
                         {c.unread_count}
                       </span>
                     )}
@@ -164,14 +170,17 @@ export default function AdminMessagesPage() {
         <div className="flex-1 bg-[#0d0d0d] border border-l-0 border-white/10 rounded-r-xl flex flex-col overflow-hidden">
           {!selectedCompanyId ? (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-white/30 text-sm">Select a conversation to view messages</p>
+              <div className="text-center">
+                <p className="text-white/30 text-sm">Select a conversation</p>
+                <p className="text-white/20 text-xs mt-1">to view messages</p>
+              </div>
             </div>
           ) : (
             <>
               <div className="p-4 border-b border-white/10 flex items-center gap-3">
                 <div>
                   <p className="text-white font-semibold">{selectedCompany?.name}</p>
-                  <p className="text-white/40 text-xs">{messages.length} messages</p>
+                  <p className="text-white/40 text-xs">{messages.length} messages in thread</p>
                 </div>
               </div>
 
@@ -179,15 +188,17 @@ export default function AdminMessagesPage() {
                 {threadLoading ? (
                   <div className="text-center text-white/40 text-sm py-8">Loading thread...</div>
                 ) : messages.length === 0 ? (
-                  <div className="text-center text-white/30 text-sm py-8">No messages in this thread</div>
+                  <div className="text-center text-white/30 text-sm py-8">No messages in this thread yet</div>
                 ) : (
                   messages.map(msg => (
                     <div key={msg.id} className={`flex ${msg.sender_role === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-sm px-4 py-3 rounded-xl text-sm ${msg.sender_role === 'admin' ? 'bg-[#FF3B1A]/20 text-white' : 'bg-white/5 text-white/80'}`}>
-                        <p className={`text-xs mb-1 font-medium ${msg.sender_role === 'admin' ? 'text-[#FF3B1A]' : 'text-white/40'}`}>
-                          {msg.sender_role === 'admin' ? 'You (Admin)' : 'Client'} · {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <div className={`max-w-sm px-4 py-3 rounded-xl text-sm ${msg.sender_role === 'admin' ? 'bg-[#FF3B1A]/20 text-white' : 'bg-white/8 text-white/80'}`}>
+                        <p className={`text-xs mb-1.5 font-medium ${msg.sender_role === 'admin' ? 'text-[#FF3B1A]' : 'text-white/40'}`}>
+                          {msg.sender_role === 'admin' ? 'You (Admin)' : selectedCompany?.name ?? 'Client'}
+                          {' · '}
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        {msg.message}
+                        <p className="leading-relaxed">{msg.message}</p>
                       </div>
                     </div>
                   ))
@@ -207,9 +218,10 @@ export default function AdminMessagesPage() {
                 <button
                   onClick={sendReply}
                   disabled={sending || !replyText.trim()}
-                  className="bg-[#FF3B1A] text-white font-bold px-6 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-50"
+                  className="bg-[#FF3B1A] text-white font-bold px-5 py-3 rounded-lg hover:bg-[#e02e10] transition disabled:opacity-50 flex items-center gap-2"
                 >
-                  {sending ? '...' : 'Send'}
+                  <Send size={14} />
+                  {sending ? 'Sending...' : 'Send'}
                 </button>
               </div>
             </>
