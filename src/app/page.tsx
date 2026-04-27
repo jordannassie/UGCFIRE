@@ -1146,19 +1146,38 @@ export default function Home() {
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
           <div className="booking-left" style={{ flex: "1 1 340px" }}>
-            <h2 style={{
+            {/* Line 1: SEE IF */}
+            <div style={{
               fontFamily: "var(--font-bebas)",
               fontSize: "clamp(52px, 5.5vw, 88px)",
               letterSpacing: "0.01em",
               color: "#fff",
-              lineHeight: 0.95,
-              marginBottom: 16,
+              lineHeight: 1,
+              marginBottom: 2,
             }}>
-              See if<br />
-              <span style={{ color: "#FF3B1A" }}>UGCFire</span><br />
-              Is the right fit<br />
-              For your brand.
-            </h2>
+              See if
+            </div>
+            {/* Line 2: [logo] IS THE RIGHT FIT inline */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 8 }}>
+              <Image
+                src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
+                alt="UGC Fire"
+                width={160}
+                height={64}
+                style={{ objectFit: "contain", flexShrink: 0 }}
+                unoptimized
+              />
+              <span style={{
+                fontFamily: "var(--font-bebas)",
+                fontSize: "clamp(52px, 5.5vw, 88px)",
+                letterSpacing: "0.01em",
+                color: "#fff",
+                lineHeight: 1,
+              }}>
+                Is the right fit
+              </span>
+            </div>
+            {/* Italic sub */}
             <div style={{
               fontStyle: "italic",
               fontFamily: "'DM Sans', sans-serif",
@@ -1167,7 +1186,7 @@ export default function Home() {
               color: "rgba(255,255,255,0.45)",
               marginBottom: 24,
             }}>
-              (it probably is)
+              (it totally is)
             </div>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 32, maxWidth: 400 }}>
               Book a quick 15-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
