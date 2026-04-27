@@ -602,7 +602,7 @@ export default function Home() {
           ))}
         </div>
         <div className="nav-btns-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <a href="#client-dashboard" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
+          <a href="/login" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             Sign In
           </a>
           <a href="#plans" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
@@ -640,7 +640,7 @@ export default function Home() {
           <a key={label} href={href} onClick={() => setMenuOpen(false)}>{label}</a>
         ))}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-          <a href="#client-dashboard" className="btn-ghost" style={{ textDecoration: "none", textAlign: "center" }}>Sign In</a>
+          <a href="/login" className="btn-ghost" style={{ textDecoration: "none", textAlign: "center" }}>Sign In</a>
           <a href={BOOKING_URL} className="btn-fire" style={{ textDecoration: "none", textAlign: "center" }} onClick={() => setMenuOpen(false)}>Book a Call</a>
         </div>
       </div>
