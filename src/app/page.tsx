@@ -801,7 +801,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="sec-v" style={{ padding: "100px 0", overflow: "hidden" }}>
+      <section id="results" className="sec-v" style={{ padding: "100px 0", overflow: "hidden" }}>
         <div className="sec" style={{ textAlign: "center", marginBottom: 56, padding: "0 3rem" }}>
           <div style={{
             fontSize: 12,
