@@ -907,7 +907,7 @@ export default function StudioWorkspace({
   // UI
   const [selected, setSelected]         = useState<Set<string>>(new Set())
   const [activeItem, setActiveItem]     = useState<ContentItem | null>(null)
-  const [layout, setLayout]             = useState<'grid' | 'list'>(role === 'admin' ? 'list' : 'grid')
+  const [layout, setLayout]             = useState<'grid' | 'list'>('grid')
   const [chatOpen, setChatOpen]         = useState(initialPanel === 'chat' || initialPanel === 'messages')
   const [clientUploadOpen, setClientUploadOpen] = useState(false)
   const [bulkUploadOpen, setBulkUploadOpen] = useState(initialMode === 'bulk_upload')
@@ -1091,20 +1091,59 @@ export default function StudioWorkspace({
       )}
 
       {/* ── Main layout ── */}
-      <div className={`flex gap-5 transition-all duration-200 ${mainPadding}`}>
+      <div className={`transition-all duration-200 ${mainPadding}`}>
 
-        {/* Admin left client panel */}
+        {/* Admin top control row */}
         {role === 'admin' && (
-          <AdminClientPanel
-            companies={companies}
-            allContent={items}
-            selected={selectedCompany}
-            onSelect={setSelectedCompany}
-          />
+          <div className="flex flex-wrap items-center gap-2.5 pb-4 border-b border-white/8 mb-4">
+            {/* Client selector */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-white/40 text-xs shrink-0">Viewing Client Studio</span>
+              <select
+                value={selectedCompany}
+                onChange={e => { setSelectedCompany(e.target.value); setSelected(new Set()) }}
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FF3B1A] min-w-[180px]"
+              >
+                <option value="all">All Client Studios</option>
+                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {selectedCompany !== 'all' && (
+                <span className="text-[#FF3B1A] text-[11px] font-semibold bg-[#FF3B1A]/10 px-2.5 py-1 rounded-full border border-[#FF3B1A]/20 whitespace-nowrap">
+                  Viewing: {companies.find(c => c.id === selectedCompany)?.name} Studio
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Admin quick actions */}
+            <button onClick={() => setBulkUploadOpen(true)} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/8 text-white/60 hover:text-white text-xs px-2.5 py-1.5 rounded-lg transition">
+              <Plus size={11} /> New Batch
+            </button>
+            <button onClick={() => setBulkUploadOpen(true)} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/8 text-white/60 hover:text-white text-xs px-2.5 py-1.5 rounded-lg transition">
+              <Upload size={11} /> Bulk Upload
+            </button>
+            {selected.size > 0 && (
+              <>
+                <button
+                  onClick={() => { showToast(`Sent ${selected.size} item${selected.size > 1 ? 's' : ''} to client.`); setSelected(new Set()) }}
+                  className="flex items-center gap-1.5 bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 text-xs px-2.5 py-1.5 rounded-lg transition"
+                >
+                  <Send size={11} /> Send Selected
+                </button>
+                <button
+                  onClick={() => { showToast(`${selected.size} item${selected.size > 1 ? 's' : ''} marked delivered.`); setSelected(new Set()) }}
+                  className="flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-xs px-2.5 py-1.5 rounded-lg transition"
+                >
+                  <CheckCheck size={11} /> Mark Delivered
+                </button>
+              </>
+            )}
+          </div>
         )}
 
         {/* Center content */}
-        <div className="flex-1 min-w-0 space-y-4">
+        <div className="min-w-0 space-y-4">
 
           {/* ── Toolbar ── */}
           <div className="flex flex-wrap items-center gap-2">
@@ -1161,7 +1200,7 @@ export default function StudioWorkspace({
               {generalChat.length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#FF3B1A] rounded-full" />}
             </button>
 
-            {/* Client uploads tab */}
+            {/* Assets / client uploads tab */}
             <button
               onClick={() => setShowClientUploads(p => !p)}
               className={`flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-lg transition ${showClientUploads ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-white/5 text-white/50 hover:text-white'}`}
@@ -1169,22 +1208,10 @@ export default function StudioWorkspace({
               <Paperclip size={12} /> Assets
             </button>
 
-            {/* Admin: bulk upload */}
-            {role === 'admin' && (
-              <button onClick={() => setBulkUploadOpen(true)} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/8 text-white/70 text-xs px-3 py-2 rounded-lg transition">
-                <Plus size={12} /> New Batch
-              </button>
-            )}
-
-            {/* Upload button */}
+            {/* Upload button — client only in toolbar; admin uses top control row */}
             {role === 'client' && (
               <button onClick={() => setClientUploadOpen(true)} className="flex items-center gap-1.5 bg-[#FF3B1A] text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-[#e02e10] transition">
                 <Upload size={12} /> Upload Assets
-              </button>
-            )}
-            {role === 'admin' && (
-              <button onClick={() => setBulkUploadOpen(true)} className="flex items-center gap-1.5 bg-[#FF3B1A] text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-[#e02e10] transition">
-                <Upload size={12} /> Bulk Upload
               </button>
             )}
           </div>
@@ -1238,7 +1265,17 @@ export default function StudioWorkspace({
               {filteredItems.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-white/25">
                   <SlidersHorizontal size={28} className="mb-3 opacity-40" />
-                  <p className="text-sm">No content matches these filters.</p>
+                  {role === 'admin' && selectedCompany !== 'all' ? (
+                    <>
+                      <p className="text-sm">No content yet for this client.</p>
+                      <p className="text-xs mt-1 text-white/15">Upload assets or create a new batch to get started.</p>
+                      <button onClick={() => setBulkUploadOpen(true)} className="mt-4 flex items-center gap-1.5 bg-[#FF3B1A] text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-[#e02e10] transition">
+                        <Upload size={12} /> Upload Batch
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-sm">No content matches these filters.</p>
+                  )}
                 </div>
               )}
 
