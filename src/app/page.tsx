@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useState, useEffect, type CSSProperties } from "react";
-import { Phone, Inbox, MessageSquare, CreditCard } from "lucide-react";
+import { Phone, Inbox, MessageSquare, CreditCard, Star } from "lucide-react";
 
 // Later: replace this with your Google Calendar appointment link.
 const BOOKING_URL = "#booking";
@@ -382,6 +382,20 @@ function TestimonialCard({ quote, name, handle, revenue }: TestimonialProps) {
   );
 }
 
+function StarRating() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 3 }}>
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} size={16} color="#FF3B1A" fill="#FF3B1A" strokeWidth={0} />
+        ))}
+      </div>
+      <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>4.9</span>
+      <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>on G2 · 1,200+ brands</span>
+    </div>
+  );
+}
+
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -509,6 +523,7 @@ export default function Home() {
 
           /* Hero */
           .hero-badge { display: none !important; }
+          .hero-top-label { padding-top: 40px !important; }
           .hero-bottom { flex-direction: column !important; align-items: flex-start !important; }
           .hero-stats { width: 100% !important; justify-content: flex-start !important; }
           .stat-card { min-width: 0 !important; flex: 1 1 calc(33% - 12px) !important; }
@@ -709,8 +724,11 @@ export default function Home() {
           </div>
         </div>
         <div style={{ position: "relative", zIndex: 2, maxWidth: 1200, width: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
-            <span style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>
+          <div className="hero-top-label" style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 14 }}>
+              <StarRating />
+            </div>
+            <span style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>
               Monthly AI-Assisted Content For Brands
             </span>
           </div>
@@ -1026,6 +1044,9 @@ export default function Home() {
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={sectionHead}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+              <StarRating />
+            </div>
             <div style={{
               fontSize: 12,
               letterSpacing: "0.14em",
