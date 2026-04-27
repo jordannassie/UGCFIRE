@@ -40,22 +40,27 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Supabase Setup
+## Supabase Setup (optional)
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Copy your **Project URL** and **anon public key** from **Project Settings → API**
-3. Paste them into `.env.local`
+1. Create a project at [supabase.com](https://supabase.com) if you need auth or database features.
+2. Copy your **Project URL** and **anon public key** from **Project Settings → API**.
+3. Paste them into `.env.local`. Without them, the helpers and proxy simply skip Supabase calls so the UI stays live.
 
 ## Netlify Deployment
 
-1. Push this repo to GitHub
-2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site → Import from Git**
-3. Connect your GitHub repo
-4. Netlify auto-detects the `netlify.toml` — no extra config needed
-5. Add your environment variables in **Site settings → Environment variables**:
+1. Push this repo to GitHub.
+2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site → Import from Git**.
+3. Connect your GitHub repo.
+4. Netlify reads `netlify.toml` + `_redirects` and wires `@netlify/plugin-nextjs` automatically.
+5. Add these environment variables when ready (they can stay blank until you have them):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-6. Deploy!
+6. Deploy! Every request rewrites to Netlify’s Next.js handler via `_redirects`.
+
+### Netlify build settings
+
+- **Build command:** `npm run build`
+- **Publish directory:** `.next`
 
 ## Project Structure
 
