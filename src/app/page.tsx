@@ -1147,33 +1147,36 @@ export default function Home() {
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
           <div className="booking-left" style={{ flex: "1 1 340px" }}>
-            {/* "See if [logo]" on one line */}
-            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 4 }}>
-              <span style={{
-                fontFamily: "var(--font-bebas)",
-                fontSize: "clamp(48px, 5vw, 80px)",
-                letterSpacing: "0.01em",
-                color: "#fff",
-                lineHeight: 1,
-              }}>
-                See if
-              </span>
+            {/* Line 1: "See if" */}
+            <div style={{
+              fontFamily: "var(--font-bebas)",
+              fontSize: "clamp(48px, 5vw, 80px)",
+              letterSpacing: "0.01em",
+              color: "#fff",
+              lineHeight: 1,
+              marginBottom: 6,
+            }}>
+              See if
+            </div>
+            {/* Line 2: Logo */}
+            <div style={{ marginBottom: 4, lineHeight: 0 }}>
               <Image
                 src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
                 alt="UGC Fire"
-                width={180}
-                height={72}
-                style={{ objectFit: "contain" }}
+                width={260}
+                height={100}
+                style={{ objectFit: "contain", objectPosition: "left center", display: "block" }}
                 unoptimized
               />
             </div>
+            {/* Line 3: "Is the right fit" */}
             <h2 style={{
               fontFamily: "var(--font-bebas)",
               fontSize: "clamp(48px, 5vw, 80px)",
               letterSpacing: "0.01em",
               color: "#fff",
               lineHeight: 1,
-              marginBottom: 12,
+              marginBottom: 16,
             }}>
               Is the right fit<br />
               <span style={{ fontStyle: "italic", fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(28px, 3vw, 46px)", fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>
