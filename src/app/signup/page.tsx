@@ -81,9 +81,9 @@ export default function SignupPage() {
       setLoading(false)
       return
     }
-    router.push(role === 'admin' ? '/admin' : '/dashboard')
-    setDemoStatus('')
-    setLoading(false)
+    // Use full page navigation so session cookies are established before middleware runs
+    setDemoStatus('Loading workspace…')
+    window.location.href = role === 'admin' ? '/admin' : '/dashboard'
   }
 
   const inputStyle = 'w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF3B1A] text-sm'
