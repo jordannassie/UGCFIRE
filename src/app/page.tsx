@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 
-// ─── TYPES ───────────────────────────────────────────────────────────────────
 interface StatCardProps {
   value: string;
   label: string;
@@ -22,16 +21,9 @@ interface TestimonialProps {
   revenue: string;
 }
 
-// ─── DATA ────────────────────────────────────────────────────────────────────
 const BRANDS = [
-  "ClickFunnels",
-  "Shopify",
-  "MindValley",
-  "Kajabi",
-  "GoHighLevel",
-  "Teachable",
-  "ActiveCampaign",
-  "Thinkific",
+  "ClickFunnels", "Shopify", "MindValley", "Kajabi",
+  "GoHighLevel", "Teachable", "ActiveCampaign", "Thinkific",
 ];
 
 const FEATURES: FeatureCardProps[] = [
@@ -95,7 +87,6 @@ const REEL_CARDS = [
   { views: "8K", revenue: "$12K", delta: "+38%", label: "Make your brand anything" },
 ];
 
-// ─── SUBCOMPONENTS ────────────────────────────────────────────────────────────
 function StatCard({ value, label, delta }: StatCardProps) {
   return (
     <div
@@ -184,7 +175,6 @@ function ReelCard({
         flexShrink: 0,
       }}
     >
-      {/* Simulated video thumbnail */}
       <div
         style={{
           height: 280,
@@ -288,11 +278,10 @@ function TestimonialCard({ quote, name, handle, revenue }: TestimonialProps) {
   );
 }
 
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
-  const fireStyle: React.CSSProperties = { color: "#FF3B1A" };
-  const sectionHead: React.CSSProperties = {
+  const fireStyle: CSSProperties = { color: "#FF3B1A" };
+  const sectionHead: CSSProperties = {
     textAlign: "center",
     marginBottom: 64,
   };
@@ -305,7 +294,6 @@ export default function Home() {
 
   return (
     <>
-      {/* ── GLOBAL STYLES ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
         :root {
@@ -367,7 +355,6 @@ export default function Home() {
         .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
       `}</style>
 
-      {/* ── NAV ── */}
       <nav
         style={{
           position: "fixed",
@@ -386,11 +373,7 @@ export default function Home() {
           transition: "background 0.3s, backdrop-filter 0.3s",
         }}
       >
-        {/* Logo */}
-        <a
-          href="#"
-          style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}
-        >
+        <a href="#" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
           <span
             style={{
               fontFamily: "var(--font-bebas)",
@@ -403,8 +386,6 @@ export default function Home() {
           </span>
           <span style={{ fontSize: 22, marginTop: -2 }}>🔥</span>
         </a>
-
-        {/* Nav links */}
         <div style={{ display: "flex", alignItems: "center", gap: 40 }}>
           {["How It Works", "Pricing", "Results", "Creators"].map((link) => (
             <a
@@ -424,8 +405,6 @@ export default function Home() {
             </a>
           ))}
         </div>
-
-        {/* CTA */}
         <div style={{ display: "flex", gap: 12 }}>
           <button className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px" }}>
             Sign In
@@ -436,99 +415,74 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* ── HERO ── */}
-      <section
-        style={{
-          position: "relative",
-          minHeight: "100vh",
+      <section style={{
+        position: "relative",
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "flex-end",
+        padding: "0 3rem 5rem",
+        overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(135deg, #120500 0%, #1f0800 25%, #0d0d0d 60%, #080808 100%)",
+          zIndex: 0,
+        }} />
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          background: "radial-gradient(ellipse 55% 60% at 72% 38%, rgba(255,59,26,0.22) 0%, transparent 70%)",
+        }} />
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          background: "linear-gradient(to bottom, transparent 30%, rgba(8,8,8,0.95) 100%)",
+        }} />
+        <div style={{
+          position: "absolute",
+          top: 90,
+          right: "3rem",
+          zIndex: 3,
+          background: "rgba(20,20,20,0.9)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 12,
+          padding: "14px 18px",
           display: "flex",
-          alignItems: "flex-end",
-          padding: "0 3rem 5rem",
-          overflow: "hidden",
-        }}
-      >
-        {/* Background */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(135deg, #120500 0%, #1f0800 25%, #0d0d0d 60%, #080808 100%)",
-            zIndex: 0,
-          }}
-        />
-
-        {/* Overlays */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            background:
-              "radial-gradient(ellipse 55% 60% at 72% 38%, rgba(255,59,26,0.22) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 1,
-            background: "linear-gradient(to bottom, transparent 30%, rgba(8,8,8,0.95) 100%)",
-          }}
-        />
-
-        {/* Live workshop badge */}
-        <div
-          style={{
-            position: "absolute",
-            top: 90,
-            right: "3rem",
-            zIndex: 3,
-            background: "rgba(20,20,20,0.9)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 12,
-            padding: "14px 18px",
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-start",
-            maxWidth: 280,
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#FF3B1A",
-              marginTop: 5,
-              flexShrink: 0,
-            }}
-          />
+          gap: 12,
+          alignItems: "flex-start",
+          maxWidth: 280,
+          backdropFilter: "blur(12px)",
+        }}>
+          <div style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: "#FF3B1A",
+            marginTop: 5,
+            flexShrink: 0,
+          }} />
           <div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "rgba(255,255,255,0.45)",
-                marginBottom: 4,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
+            <div style={{
+              fontSize: 11,
+              color: "rgba(255,255,255,0.45)",
+              marginBottom: 4,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}>
               Live Workshop
             </div>
-            <div
-              style={{
-                fontSize: 13,
-                color: "rgba(255,255,255,0.85)",
-                lineHeight: 1.5,
-              }}
-            >
+            <div style={{
+              fontSize: 13,
+              color: "rgba(255,255,255,0.85)",
+              lineHeight: 1.5,
+            }}>
               How to scale UGC ads to $100K/month — join us live.
             </div>
           </div>
         </div>
-
-        {/* Hero content */}
         <div style={{ position: "relative", zIndex: 2, maxWidth: 1200, width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
             <span style={{ color: "#facc15", fontSize: 18 }}>★</span>
@@ -539,33 +493,33 @@ export default function Home() {
               </span>
             </span>
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-bebas)",
-              fontSize: "clamp(72px, 9vw, 130px)",
-              lineHeight: 0.95,
-              letterSpacing: "0.01em",
-              color: "#fff",
-              marginBottom: 32,
-              maxWidth: 760,
-            }}
-          >
-            Turn Creators
-            <br />
+          <h1 style={{
+            fontFamily: "var(--font-bebas)",
+            fontSize: "clamp(72px, 9vw, 130px)",
+            lineHeight: 0.95,
+            letterSpacing: "0.01em",
+            color: "#fff",
+            marginBottom: 32,
+            maxWidth: 760,
+          }}>
+            Turn Creators<br />
             Into <span style={fireStyle}>Conversions.</span>
           </h1>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 32 }}>
+          <div style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 32,
+          }}>
             <div style={{ maxWidth: 460 }}>
-              <p
-                style={{
-                  fontSize: "clamp(15px, 1.3vw, 18px)",
-                  color: "rgba(255,255,255,0.65)",
-                  lineHeight: 1.7,
-                  marginBottom: 28,
-                }}
-              >
-                The UGC platform built for performance marketers — AI-matched creators, 48-hour turnaround,
-                and ads that actually convert.
+              <p style={{
+                fontSize: "clamp(15px, 1.3vw, 18px)",
+                color: "rgba(255,255,255,0.65)",
+                lineHeight: 1.7,
+                marginBottom: 28,
+              }}>
+                The UGC platform built for performance marketers — AI-matched creators, 48-hour turnaround, and ads that actually convert.
               </p>
               <div style={{ display: "flex", gap: 14 }}>
                 <button className="btn-fire" style={{ fontSize: 16, padding: "15px 36px" }}>
@@ -585,59 +539,46 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── BRAND LOGO MARQUEE ── */}
-      <section
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          padding: "20px 0",
-          overflow: "hidden",
-          background: "rgba(255,255,255,0.015)",
-        }}
-      >
+      <section style={{
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        padding: "20px 0",
+        overflow: "hidden",
+        background: "rgba(255,255,255,0.015)",
+      }}>
         <div className="brand-scroll">
           {[...BRANDS, ...BRANDS].map((b, i) => (
-            <span
-              key={i}
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 700,
-                fontSize: 14,
-                letterSpacing: "0.08em",
-                color: "rgba(255,255,255,0.25)",
-                textTransform: "uppercase",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {b}
-            </span>
+            <span key={i} style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 700,
+              fontSize: 14,
+              letterSpacing: "0.08em",
+              color: "rgba(255,255,255,0.25)",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+            }}>{b}</span>
           ))}
         </div>
       </section>
 
-      {/* ── REEL SHOWCASE ── */}
       <section style={{ padding: "100px 0", overflow: "hidden" }}>
         <div style={{ textAlign: "center", marginBottom: 56, padding: "0 3rem" }}>
-          <div
-            style={{
-              fontSize: 12,
-              letterSpacing: "0.14em",
-              color: "#FF3B1A",
-              textTransform: "uppercase",
-              fontWeight: 600,
-              marginBottom: 12,
-            }}
-          >
+          <div style={{
+            fontSize: 12,
+            letterSpacing: "0.14em",
+            color: "#FF3B1A",
+            textTransform: "uppercase",
+            fontWeight: 600,
+            marginBottom: 12,
+          }}>
             Live results
           </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-bebas)",
-              fontSize: "clamp(48px, 5vw, 72px)",
-              letterSpacing: "0.02em",
-              color: "#fff",
-            }}
-          >
+          <h2 style={{
+            fontFamily: "var(--font-bebas)",
+            fontSize: "clamp(48px, 5vw, 72px)",
+            letterSpacing: "0.02em",
+            color: "#fff",
+          }}>
             Ads That Actually <span style={fireStyle}>Burn</span>
           </h2>
           <p style={{ fontSize: 16, color: "rgba(255,255,255,0.45)", marginTop: 12 }}>
@@ -653,84 +594,68 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
       <section style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
         <div style={sectionHead}>
-          <div
-            style={{
-              fontSize: 12,
-              letterSpacing: "0.14em",
-              color: "#FF3B1A",
-              textTransform: "uppercase",
-              fontWeight: 600,
-              marginBottom: 12,
-            }}
-          >
+          <div style={{
+            fontSize: 12,
+            letterSpacing: "0.14em",
+            color: "#FF3B1A",
+            textTransform: "uppercase",
+            fontWeight: 600,
+            marginBottom: 12,
+          }}>
             The platform
           </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-bebas)",
-              fontSize: "clamp(48px, 5vw, 72px)",
-              letterSpacing: "0.02em",
-              color: "#fff",
-            }}
-          >
+          <h2 style={{
+            fontFamily: "var(--font-bebas)",
+            fontSize: "clamp(48px, 5vw, 72px)",
+            letterSpacing: "0.02em",
+            color: "#fff",
+          }}>
             Everything You Need to <span style={fireStyle}>Scale</span>
           </h2>
         </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 20,
-          }}
-        >
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 20,
+        }}>
           {FEATURES.map((f, i) => (
             <FeatureCard key={i} {...f} />
           ))}
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section
-        style={{
-          padding: "100px 3rem",
-          background: "linear-gradient(180deg, transparent 0%, rgba(255,59,26,0.04) 50%, transparent 100%)",
-        }}
-      >
+      <section style={{
+        padding: "100px 3rem",
+        background: "linear-gradient(180deg, transparent 0%, rgba(255,59,26,0.04) 50%, transparent 100%)",
+      }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={sectionHead}>
-            <div
-              style={{
-                fontSize: 12,
-                letterSpacing: "0.14em",
-                color: "#FF3B1A",
-                textTransform: "uppercase",
-                fontWeight: 600,
-                marginBottom: 12,
-              }}
-            >
+            <div style={{
+              fontSize: 12,
+              letterSpacing: "0.14em",
+              color: "#FF3B1A",
+              textTransform: "uppercase",
+              fontWeight: 600,
+              marginBottom: 12,
+            }}>
               Social proof
             </div>
-            <h2
-              style={{
-                fontFamily: "var(--font-bebas)",
-                fontSize: "clamp(48px, 5vw, 72px)",
-                letterSpacing: "0.02em",
-                color: "#fff",
-              }}
-            >
+            <h2 style={{
+              fontFamily: "var(--font-bebas)",
+              fontSize: "clamp(48px, 5vw, 72px)",
+              letterSpacing: "0.02em",
+              color: "#fff",
+            }}>
               They <span style={fireStyle}>Scaled.</span> You&apos;re Next.
             </h2>
           </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: 20,
-            }}
-          >
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: 20,
+          }}>
             {TESTIMONIALS.map((t, i) => (
               <TestimonialCard key={i} {...t} />
             ))}
@@ -738,40 +663,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
       <section style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
         <div style={sectionHead}>
-          <div
-            style={{
-              fontSize: 12,
-              letterSpacing: "0.14em",
-              color: "#FF3B1A",
-              textTransform: "uppercase",
-              fontWeight: 600,
-              marginBottom: 12,
-            }}
-          >
+          <div style={{
+            fontSize: 12,
+            letterSpacing: "0.14em",
+            color: "#FF3B1A",
+            textTransform: "uppercase",
+            fontWeight: 600,
+            marginBottom: 12,
+          }}>
             Process
           </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-bebas)",
-              fontSize: "clamp(48px, 5vw, 72px)",
-              letterSpacing: "0.02em",
-              color: "#fff",
-            }}
-          >
+          <h2 style={{
+            fontFamily: "var(--font-bebas)",
+            fontSize: "clamp(48px, 5vw, 72px)",
+            letterSpacing: `0.02em`,
+            color: "#fff",
+          }}>
             Live in <span style={fireStyle}>3 Steps</span>
           </h2>
         </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: 24,
-            position: "relative",
-          }}
-        >
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: 24,
+          position: "relative",
+        }}>
           {[
             {
               step: "01",
@@ -813,26 +731,22 @@ export default function Home() {
               >
                 {step}
               </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "#FF3B1A",
-                  fontWeight: 600,
-                  marginBottom: 12,
-                  letterSpacing: "0.04em",
-                }}
-              >
+              <div style={{
+                fontSize: 13,
+                color: "#FF3B1A",
+                fontWeight: 600,
+                marginBottom: 12,
+                letterSpacing: "0.04em",
+              }}>
                 Step {step}
               </div>
-              <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 20,
-                  fontWeight: 700,
-                  marginBottom: 12,
-                  color: "#fff",
-                }}
-              >
+              <div style={{
+                fontFamily: "'Syne', sans-serif",
+                fontSize: 20,
+                fontWeight: 700,
+                marginBottom: 12,
+                color: "#fff",
+              }}>
                 {title}
               </div>
               <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>{desc}</div>
@@ -841,34 +755,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA BANNER ── */}
-      <section
-        style={{
-          padding: "80px 3rem",
-          background: "linear-gradient(135deg, rgba(255,59,26,0.12) 0%, rgba(255,59,26,0.04) 100%)",
-          borderTop: "1px solid rgba(255,59,26,0.2)",
-          borderBottom: "1px solid rgba(255,59,26,0.2)",
-          textAlign: "center",
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "var(--font-bebas)",
-            fontSize: "clamp(52px, 6vw, 88px)",
-            letterSpacing: "0.01em",
-            color: "#fff",
-            lineHeight: 1,
-            marginBottom: 20,
-          }}
-        >
-          Ready to <span style={fireStyle}>Ignite</span>
-          <br />
-          Your Ad Account?
+      <section style={{
+        padding: "80px 3rem",
+        background: "linear-gradient(135deg, rgba(255,59,26,0.12) 0%, rgba(255,59,26,0.04) 100%)",
+        borderTop: "1px solid rgba(255,59,26,0.2)",
+        borderBottom: "1px solid rgba(255,59,26,0.2)",
+        textAlign: "center",
+      }}>
+        <h2 style={{
+          fontFamily: "var(--font-bebas)",
+          fontSize: "clamp(52px, 6vw, 88px)",
+          letterSpacing: "0.01em",
+          color: "#fff",
+          lineHeight: 1,
+          marginBottom: 20,
+        }}>
+          Ready to <span style={fireStyle}>Ignite</span><br />Your Ad Account?
         </h2>
-        <p style={{ fontSize: 17, color: "rgba(255,255,255,0.5)", marginBottom: 36, maxWidth: 480, margin: "0 auto 36px" }}>
+        <p style={{
+          fontSize: 17,
+          color: "rgba(255,255,255,0.5)",
+          marginBottom: 36,
+          maxWidth: 480,
+          margin: "0 auto 36px",
+        }}>
           Join 1,200+ brands already scaling with UGC Fire. No contracts. Cancel anytime.
         </p>
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 16,
+          flexWrap: "wrap",
+        }}>
           <button className="btn-fire" style={{ fontSize: 17, padding: "16px 44px" }}>
             Start Free Trial
           </button>
@@ -881,128 +799,117 @@ export default function Home() {
         </p>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer
-        style={{
-          background: "#060606",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          padding: "64px 3rem 32px",
-        }}
-      >
+      <footer style={{
+        background: "#060606",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        padding: "64px 3rem 32px",
+      }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 48, marginBottom: 56 }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr 1fr 1fr",
+            gap: 48,
+            marginBottom: 56,
+          }}>
             <div>
-              <div
-                style={{
-                  fontFamily: "var(--font-bebas)",
-                  fontSize: "1.8rem",
-                  color: "#fff",
-                  letterSpacing: "0.04em",
-                  marginBottom: 14,
-                }}
-              >
+              <div style={{
+                fontFamily: "var(--font-bebas)",
+                fontSize: "1.8rem",
+                color: "#fff",
+                letterSpacing: "0.04em",
+                marginBottom: 14,
+              }}>
                 UGC<span style={fireStyle}>FIRE</span> 🔥
               </div>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "rgba(255,255,255,0.35)",
-                  lineHeight: 1.8,
-                  maxWidth: 240,
-                }}
-              >
+              <p style={{
+                fontSize: 13,
+                color: "rgba(255,255,255,0.35)",
+                lineHeight: 1.8,
+                maxWidth: 240,
+              }}>
                 The AI-powered UGC platform turning creator content into performance marketing gold.
               </p>
               <div style={{ display: "flex", gap: 14, marginTop: 24 }}>
                 {["Instagram", "YouTube", "TikTok", "LinkedIn"].map((s) => (
-                  <a
-                    key={s}
-                    href="#"
-                    style={{
-                      fontSize: 12,
-                      color: "rgba(255,255,255,0.35)",
-                      textDecoration: "none",
-                      transition: "color 0.2s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+                  <a key={s} href="#" style={{
+                    fontSize: 12,
+                    color: "rgba(255,255,255,0.35)",
+                    textDecoration: "none",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
                   >
                     {s}
                   </a>
                 ))}
               </div>
             </div>
-
-            {[...Array(3)].map((_, colIndex) => {
-              const columns = [
-                {
-                  heading: "Product",
-                  links: ["How It Works", "Pricing", "Creator Network", "Integrations", "API"],
-                },
-                {
-                  heading: "Resources",
-                  links: ["Blog", "Case Studies", "Creator Hub", "Help Center", "Affiliate Program"],
-                },
-                {
-                  heading: "Legal",
-                  links: ["Terms of Service", "Privacy Policy", "Cookie Policy", "AI Terms", "Creator Agreement"],
-                },
-              ];
-              const column = columns[colIndex];
-              return (
-                <div key={column.heading}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "rgba(255,255,255,0.3)",
-                      fontWeight: 600,
-                      marginBottom: 18,
-                    }}
-                  >
-                    {column.heading}
-                  </div>
-                  {column.links.map((l) => (
-                    <a
-                      key={l}
-                      href="#"
-                      style={{
-                        display: "block",
-                        fontSize: 13,
-                        color: "rgba(255,255,255,0.45)",
-                        textDecoration: "none",
-                        marginBottom: 12,
-                        transition: "color 0.2s",
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
-                    >
-                      {l}
-                    </a>
-                  ))}
+            {[
+              {
+                heading: "Product",
+                links: ["How It Works", "Pricing", "Creator Network", "Integrations", "API"],
+              },
+              {
+                heading: "Resources",
+                links: ["Blog", "Case Studies", "Creator Hub", "Help Center", "Affiliate Program"],
+              },
+              {
+                heading: "Legal",
+                links: ["Terms of Service", "Privacy Policy", "Cookie Policy", "AI Terms", "Creator Agreement"],
+              },
+            ].map(({ heading, links }) => (
+              <div key={heading}>
+                <div style={{
+                  fontSize: 11,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.3)",
+                  fontWeight: 600,
+                  marginBottom: 18,
+                }}>
+                  {heading}
                 </div>
-              );
-            })}
+                {links.map((l) => (
+                  <a
+                    key={l}
+                    href="#"
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      color: "rgba(255,255,255,0.45)",
+                      textDecoration: "none",
+                      marginBottom: 12,
+                      transition: "color 0.2s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
+                  >
+                    {l}
+                  </a>
+                ))}
+              </div>
+            ))}
           </div>
-          <div
-            style={{
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              paddingTop: 24,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 12,
-            }}
-          >
+          <div style={{
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            paddingTop: 24,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}>
             <span style={{ fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
               © {new Date().getFullYear()} UGC Fire, Inc. All rights reserved.
             </span>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.2)" }}>Built for performance marketers 🔥</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
+              Built for performance marketers 🔥
+            </span>
           </div>
         </div>
       </footer>
     </>
   );
 }
+
