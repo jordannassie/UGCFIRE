@@ -1147,17 +1147,17 @@ export default function Home() {
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
           <div className="booking-left" style={{ flex: "1 1 340px" }}>
-            <h2 style={{
-              fontFamily: "var(--font-bebas)",
-              fontSize: "clamp(48px, 5vw, 80px)",
-              letterSpacing: "0.01em",
-              color: "#fff",
-              lineHeight: 1,
-              marginBottom: 12,
-            }}>
-              See if<br />
-            </h2>
-            <div style={{ marginBottom: 8 }}>
+            {/* "See if [logo]" on one line */}
+            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 4 }}>
+              <span style={{
+                fontFamily: "var(--font-bebas)",
+                fontSize: "clamp(48px, 5vw, 80px)",
+                letterSpacing: "0.01em",
+                color: "#fff",
+                lineHeight: 1,
+              }}>
+                See if
+              </span>
               <Image
                 src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
                 alt="UGC Fire"
@@ -1181,7 +1181,7 @@ export default function Home() {
               </span>
             </h2>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 32, maxWidth: 400 }}>
-              Book a quick 15-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
+              Book a quick 20-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
             </p>
             <a href={BOOKING_URL} className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none", display: "inline-block" }}>
               Book a Discovery Call
