@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UGCFIRE
+
+UGC at the speed of fire. A platform for UGC creators and brands to manage briefs, deliver content, and get paid — all in one blazing-fast workflow.
+
+## Stack
+
+- **Framework:** [Next.js 16](https://nextjs.org) (App Router)
+- **Database & Auth:** [Supabase](https://supabase.com)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com)
+- **Deployment:** [Netlify](https://netlify.com)
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone & install
+
+```bash
+git clone https://github.com/jordannassie/UGCFIRE.git
+cd UGCFIRE
+npm install
+```
+
+### 2. Set up environment variables
+
+```bash
+cp .env.local.example .env.local
+```
+
+Then fill in your Supabase credentials from the [Supabase dashboard](https://supabase.com/dashboard/project/_/settings/api):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 3. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a project at [supabase.com](https://supabase.com)
+2. Copy your **Project URL** and **anon public key** from **Project Settings → API**
+3. Paste them into `.env.local`
 
-## Learn More
+## Netlify Deployment
 
-To learn more about Next.js, take a look at the following resources:
+1. Push this repo to GitHub
+2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site → Import from Git**
+3. Connect your GitHub repo
+4. Netlify auto-detects the `netlify.toml` — no extra config needed
+5. Add your environment variables in **Site settings → Environment variables**:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+6. Deploy!
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/
+│   ├── layout.tsx       # Root layout + metadata
+│   ├── page.tsx         # Landing page
+│   └── globals.css
+├── lib/
+│   └── supabase/
+│       ├── client.ts    # Browser Supabase client
+│       └── server.ts    # Server Supabase client (RSC / API routes)
+└── middleware.ts         # Session refresh middleware
+```
