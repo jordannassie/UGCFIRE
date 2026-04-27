@@ -540,9 +540,15 @@ export default function Home() {
             </a>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <a href="#login" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
+            Sign In
+          </a>
+          <a href="#plans" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
+            See Plans
+          </a>
           <a href={BOOKING_URL} className="btn-fire" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
-            Book Call
+            Book a Call
           </a>
         </div>
       </nav>
@@ -1017,14 +1023,15 @@ export default function Home() {
             marginBottom: 56,
           }}>
             <div>
-              <div style={{
-                fontFamily: "var(--font-bebas)",
-                fontSize: "1.8rem",
-                color: "#fff",
-                letterSpacing: "0.04em",
-                marginBottom: 14,
-              }}>
-                UGC<span style={fireStyle}>FIRE</span> 🔥
+              <div style={{ marginBottom: 14 }}>
+                <Image
+                  src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
+                  alt="UGC Fire"
+                  width={110}
+                  height={44}
+                  style={{ objectFit: "contain" }}
+                  unoptimized
+                />
               </div>
               <p style={{
                 fontSize: 13,
