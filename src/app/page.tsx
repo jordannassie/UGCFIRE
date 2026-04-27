@@ -510,8 +510,8 @@ export default function Home() {
           <Image
             src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
             alt="UGC Fire"
-            width={120}
-            height={48}
+            width={240}
+            height={96}
             style={{ objectFit: "contain" }}
             unoptimized
           />
