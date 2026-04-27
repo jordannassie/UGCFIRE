@@ -613,7 +613,7 @@ export default function Home() {
           ))}
         </div>
         <div className="nav-btns-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <a href="#login" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
+          <a href="#client-dashboard" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             Sign In
           </a>
           <a href="#plans" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
@@ -651,7 +651,7 @@ export default function Home() {
           <a key={label} href={href} onClick={() => setMenuOpen(false)}>{label}</a>
         ))}
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-          <a href="#login" className="btn-ghost" style={{ textDecoration: "none", textAlign: "center" }}>Sign In</a>
+          <a href="#client-dashboard" className="btn-ghost" style={{ textDecoration: "none", textAlign: "center" }}>Sign In</a>
           <a href={BOOKING_URL} className="btn-fire" style={{ textDecoration: "none", textAlign: "center" }} onClick={() => setMenuOpen(false)}>Book a Call</a>
         </div>
       </div>
@@ -838,6 +838,149 @@ export default function Home() {
             {[...REEL_CARDS, ...REEL_CARDS].map((card, i) => (
               <ReelCard key={i} {...card} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section id="how-it-works" className="sec sec-v" style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
+        <div style={sectionHead}>
+          <div style={{ fontSize: 12, letterSpacing: "0.14em", color: "#FF3B1A", textTransform: "uppercase", fontWeight: 600, marginBottom: 12 }}>
+            How It Works
+          </div>
+          <h2 style={{ fontFamily: "var(--font-bebas)", fontSize: "clamp(48px, 5vw, 72px)", letterSpacing: "0.02em", color: "#fff", lineHeight: 1 }}>
+            A simple weekly content<br />
+            <span style={fireStyle}>system for your brand.</span>
+          </h2>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
+          {[
+            {
+              step: "01",
+              title: "Book a Discovery Call",
+              desc: "We learn your brand, offer, audience, voice, goals, and what type of content you need each month.",
+            },
+            {
+              step: "02",
+              title: "We Build Your Content Direction",
+              desc: "We create your hooks, angles, scripts, creative direction, and content plan so every video feels on-brand.",
+            },
+            {
+              step: "03",
+              title: "Content Is Uploaded Weekly",
+              desc: "Every week, your new UGC-style videos are uploaded into your client dashboard for review.",
+            },
+            {
+              step: "04",
+              title: "Review, Approve, and Post",
+              desc: "Review each video, request edits, approve final assets, and post across TikTok, Reels, Shorts, ads, landing pages, and social.",
+            },
+          ].map(({ step, title, desc }, i) => (
+            <div
+              key={i}
+              style={{
+                position: "relative",
+                padding: "32px 28px",
+                background: "rgba(255,255,255,0.025)",
+                border: "1px solid rgba(255,255,255,0.07)",
+                borderRadius: 16,
+              }}
+            >
+              <div style={{
+                fontFamily: "var(--font-bebas)",
+                fontSize: 72,
+                color: "rgba(255,59,26,0.12)",
+                lineHeight: 1,
+                position: "absolute",
+                top: 16,
+                right: 20,
+                letterSpacing: "-0.02em",
+                userSelect: "none",
+              }}>
+                {step}
+              </div>
+              <div style={{ fontSize: 13, color: "#FF3B1A", fontWeight: 600, marginBottom: 12, letterSpacing: "0.04em" }}>
+                Step {step}
+              </div>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 12, color: "#fff", lineHeight: 1.3 }}>
+                {title}
+              </div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CLIENT DASHBOARD ── */}
+      <section id="client-dashboard" className="sec sec-v" style={{
+        padding: "100px 3rem",
+        background: "linear-gradient(180deg, transparent 0%, rgba(255,59,26,0.03) 50%, transparent 100%)",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={sectionHead}>
+            <div style={{ fontSize: 12, letterSpacing: "0.14em", color: "#FF3B1A", textTransform: "uppercase", fontWeight: 600, marginBottom: 12 }}>
+              Client Dashboard
+            </div>
+            <h2 style={{ fontFamily: "var(--font-bebas)", fontSize: "clamp(48px, 5vw, 72px)", letterSpacing: "0.02em", color: "#fff", lineHeight: 1 }}>
+              Everything in <span style={fireStyle}>one place.</span>
+            </h2>
+            <p style={{ fontSize: 16, color: "rgba(255,255,255,0.45)", marginTop: 16, maxWidth: 560, margin: "16px auto 0" }}>
+              When your brand signs in, you&apos;ll have a simple dashboard to manage your monthly content subscription, review weekly uploads, chat with our team, and see billing.
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
+            {[
+              {
+                icon: "🗂️",
+                title: "Content Bins",
+                desc: "See your videos organized by status: Requested, In Production, Ready for Review, Approved, and Delivered.",
+              },
+              {
+                icon: "📥",
+                title: "Weekly Uploads",
+                desc: "New videos are uploaded each week so your brand always has fresh content ready to review and post.",
+              },
+              {
+                icon: "💬",
+                title: "Team Chat",
+                desc: "Message the UGCFire team, request changes, ask questions, and give feedback — all in one place.",
+              },
+              {
+                icon: "💳",
+                title: "Billing & Invoices",
+                desc: "View your plan, invoices, billing history, and subscription details from your client portal.",
+              },
+            ].map(({ icon, title, desc }, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 16,
+                  padding: "28px 24px",
+                  transition: "border-color 0.2s, background 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,80,40,0.35)";
+                  (e.currentTarget as HTMLDivElement).style.background = "rgba(255,59,26,0.04)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)";
+                  (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
+                }}
+              >
+                <div style={{ fontSize: 28, marginBottom: 14 }}>{icon}</div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 8, color: "#fff" }}>
+                  {title}
+                </div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>{desc}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 48 }}>
+            <a href="#login" className="btn-ghost" style={{ fontSize: 14, padding: "12px 28px", textDecoration: "none" }}>
+              Sign In to Your Dashboard
+            </a>
           </div>
         </div>
       </section>
