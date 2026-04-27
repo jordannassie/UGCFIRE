@@ -1147,7 +1147,17 @@ export default function Home() {
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
           <div className="booking-left" style={{ flex: "1 1 340px" }}>
-            <div style={{ marginBottom: 16 }}>
+            <h2 style={{
+              fontFamily: "var(--font-bebas)",
+              fontSize: "clamp(48px, 5vw, 80px)",
+              letterSpacing: "0.01em",
+              color: "#fff",
+              lineHeight: 1,
+              marginBottom: 12,
+            }}>
+              See if<br />
+            </h2>
+            <div style={{ marginBottom: 8 }}>
               <Image
                 src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
                 alt="UGC Fire"
