@@ -1213,9 +1213,9 @@ export default function Home() {
 
       <section id="booking" className="sec sec-v" style={{
         padding: "100px 3rem",
-        background: "linear-gradient(135deg, rgba(255,59,26,0.08) 0%, rgba(255,59,26,0.02) 100%)",
-        borderTop: "1px solid rgba(255,59,26,0.15)",
-        borderBottom: "1px solid rgba(255,59,26,0.15)",
+        background: "linear-gradient(135deg, #FF3B1A 0%, #cc2200 100%)",
+        borderTop: "none",
+        borderBottom: "none",
       }}>
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
@@ -1257,15 +1257,20 @@ export default function Home() {
               fontFamily: "'DM Sans', sans-serif",
               fontSize: "clamp(20px, 2vw, 30px)",
               fontWeight: 400,
-              color: "rgba(255,255,255,0.45)",
+              color: "rgba(255,255,255,0.75)",
               marginBottom: 24,
             }}>
               (it totally is)
             </div>
-            <p style={{ fontSize: 16, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 32, maxWidth: 400 }}>
-              Book a quick 15-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
+            <p style={{ fontSize: 16, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, marginBottom: 32, maxWidth: 400 }}>
+              Book a quick 20-minute discovery call. We&apos;ll review your brand, content goals, voice, offer, and whether Growth or Scale is the right plan.
             </p>
-            <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none", display: "inline-block" }}>
+            <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer" style={{
+              fontSize: 16, padding: "15px 36px", textDecoration: "none", display: "inline-block",
+              background: "#fff", color: "#FF3B1A", borderRadius: 10, fontWeight: 700,
+              boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
+              transition: "transform 0.15s, box-shadow 0.15s",
+            }}>
               Book a Discovery Call
             </a>
           </div>
@@ -1318,27 +1323,27 @@ export default function Home() {
               <div className="booking-right" style={{
                 flex: "1 1 320px",
                 maxWidth: 420,
-                background: "rgba(14,14,14,0.98)",
-                border: "1px solid rgba(255,255,255,0.09)",
+                background: "#fff",
+                border: "none",
                 borderRadius: 20,
                 padding: "28px 24px 24px",
-                boxShadow: "0 0 48px rgba(255,59,26,0.06)",
+                boxShadow: "0 8px 64px rgba(0,0,0,0.25)",
               }}>
                 {/* Month header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: "#fff" }}>
+                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 16, color: "#111" }}>
                     {MONTH_NAMES[calMonth]} {calYear}
                   </span>
                   <div style={{ display: "flex", gap: 4 }}>
-                    <button onClick={prevMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "rgba(255,255,255,0.5)", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>‹</button>
-                    <button onClick={nextMonth} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "rgba(255,255,255,0.5)", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>›</button>
+                    <button onClick={prevMonth} style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6, color: "#555", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>‹</button>
+                    <button onClick={nextMonth} style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6, color: "#555", fontSize: 16, width: 30, height: 30, cursor: "pointer", lineHeight: 1 }}>›</button>
                   </div>
                 </div>
 
                 {/* Day labels */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4, marginBottom: 6 }}>
                   {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
-                    <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", fontWeight: 600, paddingBottom: 4 }}>{d}</div>
+                    <div key={d} style={{ textAlign: "center", fontSize: 11, color: "rgba(0,0,0,0.35)", fontWeight: 600, paddingBottom: 4 }}>{d}</div>
                   ))}
                 </div>
 
@@ -1358,15 +1363,15 @@ export default function Home() {
                           fontSize: 13,
                           padding: "7px 0",
                           borderRadius: 7,
-                          border: today && !selected ? "1px solid rgba(255,59,26,0.4)" : "1px solid transparent",
-                          color: selected ? "#fff" : selectable ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.18)",
-                          background: selected ? "#FF3B1A" : selectable ? "rgba(255,255,255,0.04)" : "transparent",
+                          border: today && !selected ? "1px solid #FF3B1A" : "1px solid transparent",
+                          color: selected ? "#fff" : selectable ? "#111" : "rgba(0,0,0,0.2)",
+                          background: selected ? "#FF3B1A" : selectable ? "rgba(255,59,26,0.07)" : "transparent",
                           fontWeight: selected ? 700 : 400,
                           cursor: selectable ? "pointer" : "default",
                           transition: "background 0.15s, color 0.15s",
                         }}
-                        onMouseEnter={(e) => { if (selectable && !selected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.15)"; }}
-                        onMouseLeave={(e) => { if (selectable && !selected) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)"; }}
+                        onMouseEnter={(e) => { if (selectable && !selected) { (e.currentTarget as HTMLButtonElement).style.background = "#FF3B1A"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; } }}
+                        onMouseLeave={(e) => { if (selectable && !selected) { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.07)"; (e.currentTarget as HTMLButtonElement).style.color = "#111"; } }}
                       >
                         {d}
                       </button>
@@ -1375,8 +1380,8 @@ export default function Home() {
                 </div>
 
                 {/* Time slots area */}
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+                <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: 16 }}>
+                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
                     {!calDay
                       ? "Pick a date above"
                       : calLoading
@@ -1389,26 +1394,26 @@ export default function Home() {
                   </div>
 
                   {!calDay && (
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "16px 0" }}>
+                    <p style={{ fontSize: 13, color: "rgba(0,0,0,0.35)", textAlign: "center", padding: "16px 0" }}>
                       Select a weekday to see open times.
                     </p>
                   )}
 
                   {calDay && calLoading && (
-                    <div style={{ textAlign: "center", padding: "16px 0", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+                    <div style={{ textAlign: "center", padding: "16px 0", color: "rgba(0,0,0,0.35)", fontSize: 13 }}>
                       Checking calendar…
                     </div>
                   )}
 
                   {calDay && !calLoading && calApiError && (
                     <a href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
-                      style={{ display: "block", padding: "11px 14px", border: "1px solid rgba(255,59,26,0.35)", borderRadius: 10, marginBottom: 8, fontSize: 14, color: "#FF3B1A", textAlign: "center", textDecoration: "none" }}>
+                      style={{ display: "block", padding: "11px 14px", border: "1px solid #FF3B1A", borderRadius: 10, marginBottom: 8, fontSize: 14, color: "#FF3B1A", textAlign: "center", textDecoration: "none", fontWeight: 600 }}>
                       Book via Google Calendar →
                     </a>
                   )}
 
                   {calDay && !calLoading && !calApiError && calSlots.length === 0 && (
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "10px 0" }}>
+                    <p style={{ fontSize: 13, color: "rgba(0,0,0,0.4)", textAlign: "center", padding: "10px 0" }}>
                       No open slots this day. Try another.
                     </p>
                   )}
@@ -1419,12 +1424,12 @@ export default function Home() {
                       onClick={() => { setSelectedSlot(slot); setShowModal(true); setBookStatus("idle"); setBookName(""); setBookEmail(""); setBookBrand(""); setBookMeetLink(null); setBookError(null); }}
                       style={{
                         display: "block", width: "100%", padding: "11px 14px",
-                        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, marginBottom: 8,
-                        fontSize: 14, color: "rgba(255,255,255,0.7)", textAlign: "center",
-                        background: "transparent", cursor: "pointer", transition: "border-color 0.2s, background 0.2s, color 0.2s",
+                        border: "1px solid rgba(255,59,26,0.25)", borderRadius: 10, marginBottom: 8,
+                        fontSize: 14, color: "#FF3B1A", textAlign: "center", fontWeight: 600,
+                        background: "rgba(255,59,26,0.05)", cursor: "pointer", transition: "background 0.15s, color 0.15s",
                       }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,59,26,0.5)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.08)"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)"; }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#FF3B1A"; (e.currentTarget as HTMLButtonElement).style.color = "#fff"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.05)"; (e.currentTarget as HTMLButtonElement).style.color = "#FF3B1A"; }}
                     >
                       {slot.label}
                     </button>
