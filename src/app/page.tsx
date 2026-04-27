@@ -558,12 +558,22 @@ export default function Home() {
         padding: "120px 3rem 5rem",
         overflow: "hidden",
       }}>
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          background: "linear-gradient(135deg, #120500 0%, #1f0800 25%, #0d0d0d 60%, #080808 100%)",
-          zIndex: 0,
-        }} />
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: 0,
+            opacity: 0.55,
+          }}
+          src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128_httpss.mj.runshB1JpuEK_8_Complete_slow_mo_420644a6-5c25-482d-8c3b-cec268a9fbf5_0.mp4"
+        />
         <div style={{
           position: "absolute",
           inset: 0,
