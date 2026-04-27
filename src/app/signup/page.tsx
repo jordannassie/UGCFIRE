@@ -13,6 +13,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [demoStatus, setDemoStatus] = useState('')
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -53,11 +54,35 @@ export default function SignupPage() {
 
   async function handleDemoLogin(role: 'admin' | 'client') {
     setLoading(true); setError('')
+    setDemoStatus(role === 'admin' ? 'Preparing admin demo…' : 'Preparing demo…')
+
+    // Auto-seed demo data via server-side API route (uses service role key safely)
+    const seedRes = await fetch('/api/demo/seed', { method: 'POST' })
+    const seedJson = await seedRes.json()
+    if (!seedRes.ok || !seedJson.success) {
+      setError(
+        seedJson.error?.includes('SUPABASE_SERVICE_ROLE_KEY')
+          ? 'Demo seed needs SUPABASE_SERVICE_ROLE_KEY in your environment. Add it to .env.local and Netlify.'
+          : `Demo setup failed: ${seedJson.error ?? 'Unknown error. Check Supabase connection and service role key.'}`
+      )
+      setDemoStatus('')
+      setLoading(false)
+      return
+    }
+
+    setDemoStatus(role === 'admin' ? 'Signing in as admin…' : 'Signing in as demo client…')
     const supabase = createClient()
     const demoEmail = role === 'admin' ? 'admin@ugcfire.com' : 'demo@ugcfire.com'
-    const { error: err } = await supabase.auth.signInWithPassword({ email: demoEmail, password: 'UGCfire2026!' })
-    if (err) { setError('Demo login failed. Run demo seeding from /admin/demo first.'); setLoading(false); return }
+    const demoPassword = role === 'admin' ? 'admin123456' : 'demo123456'
+    const { error: err } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPassword })
+    if (err) {
+      setError('Demo setup completed but login failed. Check Supabase connection or email confirmation settings.')
+      setDemoStatus('')
+      setLoading(false)
+      return
+    }
     router.push(role === 'admin' ? '/admin' : '/dashboard')
+    setDemoStatus('')
     setLoading(false)
   }
 
@@ -98,11 +123,16 @@ export default function SignupPage() {
 
           <div className="mt-6 pt-6 border-t border-white/10 space-y-2">
             <p className="text-center text-white/30 text-xs mb-3">Demo Access</p>
-            <button onClick={() => handleDemoLogin('client')} disabled={loading} className="w-full border border-white/10 text-white/60 py-2 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition">
-              Demo Client Login
+            {demoStatus && (
+              <div className="bg-[#FF3B1A]/10 border border-[#FF3B1A]/20 text-[#FF3B1A] text-xs px-3 py-2 rounded-lg text-center animate-pulse">
+                {demoStatus}
+              </div>
+            )}
+            <button onClick={() => handleDemoLogin('client')} disabled={loading} className="w-full border border-white/10 text-white/60 py-2 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition disabled:opacity-40">
+              {loading && demoStatus.includes('demo…') ? demoStatus : 'Demo Client Login'}
             </button>
-            <button onClick={() => handleDemoLogin('admin')} disabled={loading} className="w-full border border-white/10 text-white/60 py-2 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition">
-              Demo Admin Login
+            <button onClick={() => handleDemoLogin('admin')} disabled={loading} className="w-full border border-white/10 text-white/60 py-2 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition disabled:opacity-40">
+              {loading && demoStatus.includes('admin') ? demoStatus : 'Demo Admin Login'}
             </button>
           </div>
         </div>
