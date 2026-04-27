@@ -92,11 +92,11 @@ export default function SignupPage() {
         loop
         playsInline
         className="absolute inset-0 w-full h-full object-cover z-0"
-        style={{ opacity: 0.35 }}
+        style={{ opacity: 0.6 }}
         src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128__--ar_9151_--bs_1_--motion_high_--video_1_9a3a1ff2-5c55-4a2a-bc02-824ad4a0d14d_0.mp4"
       />
       {/* Dark gradient overlay */}
-      <div className="absolute inset-0 z-0" style={{ background: 'linear-gradient(135deg, rgba(8,8,8,0.88) 0%, rgba(8,8,8,0.78) 100%)' }} />
+      <div className="absolute inset-0 z-0" style={{ background: 'linear-gradient(135deg, rgba(8,8,8,0.44) 0%, rgba(8,8,8,0.38) 100%)' }} />
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">

@@ -1342,12 +1342,12 @@ export default function Home() {
           playsInline
           style={{
             position: "absolute", inset: 0, width: "100%", height: "100%",
-            objectFit: "cover", zIndex: 0, opacity: 0.35,
+            objectFit: "cover", zIndex: 0, opacity: 0.6,
           }}
           src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128__--ar_9151_--bs_1_--motion_high_--video_1_9a3a1ff2-5c55-4a2a-bc02-824ad4a0d14d_0.mp4"
         />
         {/* Dark overlay */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(8,8,8,0.82) 0%, rgba(8,8,8,0.72) 100%)", zIndex: 1 }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(8,8,8,0.41) 0%, rgba(8,8,8,0.36) 100%)", zIndex: 1 }} />
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center", position: "relative", zIndex: 2 }}>
           {/* Left: copy */}
           <div className="booking-left" style={{ flex: "1 1 340px" }}>
