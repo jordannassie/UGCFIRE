@@ -14,6 +14,7 @@ import {
   CheckCircle2, Clock, Loader, CheckCheck, Archive, AlertCircle,
   MessageSquare, RotateCcw, Star, Send, ChevronRight,
   Paperclip, Eye, SlidersHorizontal, MessageCircle, Plus,
+  Folder as FolderIcon, FolderOpen, FolderPlus, ArrowLeft,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -83,6 +84,13 @@ export interface StudioWorkspaceProps {
   initialView?: string
   initialPanel?: string
   initialMode?: string
+}
+
+interface DemoFolder {
+  id: string
+  name: string
+  description: string
+  status: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -831,6 +839,88 @@ function ContentCard({
   )
 }
 
+// ─── Folder data ─────────────────────────────────────────────────────────────
+
+const DEMO_FOLDERS: DemoFolder[] = [
+  { id: 'brand-assets',    name: 'Brand Assets',     description: 'Logos, fonts, colors, product references',                     status: 'approved' },
+  { id: 'client-uploads',  name: 'Client Uploads',   description: 'Photoshoots, raw product images, founder clips, testimonials', status: 'ready_for_review' },
+  { id: 'week1-delivery',  name: 'Week 1 Delivery',  description: 'Finished UGC videos and social assets',                        status: 'delivered' },
+  { id: 'week2-delivery',  name: 'Week 2 Delivery',  description: 'Content currently in production or review',                    status: 'in_production' },
+  { id: 'approved',        name: 'Approved Content', description: 'Final approved assets ready to download',                      status: 'approved' },
+  { id: 'revisions',       name: 'Revisions',        description: 'Assets needing edits or feedback',                             status: 'revision_requested' },
+]
+
+function itemFolderId(item: ContentItem): string {
+  if (item.status === 'revision_requested') return 'revisions'
+  if (item.status === 'approved' || item.status === 'delivered') return 'approved'
+  if (item.media_type === 'graphic') return 'brand-assets'
+  if (item.week_label?.toLowerCase().includes('week 1')) return 'week1-delivery'
+  return 'week2-delivery'
+}
+
+// ─── Folder card ──────────────────────────────────────────────────────────────
+
+function FolderCard({
+  folder, items, totalComments, onClick,
+}: {
+  folder: DemoFolder
+  items: ContentItem[]
+  totalComments: number
+  onClick: () => void
+}) {
+  const previews = items.filter(i => i.file_url).slice(0, 3)
+
+  return (
+    <div
+      onClick={onClick}
+      className="group bg-[#111] border border-white/8 rounded-xl overflow-hidden cursor-pointer hover:border-white/18 transition-all duration-150"
+    >
+      {/* Thumbnail strip */}
+      <div className="h-28 bg-[#0a0a0a] flex overflow-hidden">
+        {previews.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <FolderOpen size={32} className="text-white/10" />
+          </div>
+        ) : previews.length === 1 ? (
+          <MediaPreview url={previews[0].file_url} type={previews[0].media_type} className="w-full h-full" />
+        ) : (
+          <>
+            <div className="flex-1 overflow-hidden">
+              <MediaPreview url={previews[0].file_url} type={previews[0].media_type} className="w-full h-full" />
+            </div>
+            <div className="w-px bg-black shrink-0" />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {previews.slice(1).map((p, i) => (
+                <div key={i} className={`flex-1 overflow-hidden ${i > 0 ? 'border-t border-black' : ''}`}>
+                  <MediaPreview url={p.file_url} type={p.media_type} className="w-full h-full" />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-3">
+        <div className="flex items-center gap-2 mb-1">
+          <FolderOpen size={14} className="text-[#FF3B1A]/70 shrink-0" />
+          <p className="text-white text-sm font-semibold truncate">{folder.name}</p>
+        </div>
+        <p className="text-white/35 text-[11px] leading-snug mb-2.5 line-clamp-2">{folder.description}</p>
+        <div className="flex items-center justify-between flex-wrap gap-1.5">
+          <StatusBadge status={folder.status} />
+          <div className="flex items-center gap-2.5 text-white/25 text-[10px]">
+            {items.length > 0 && <span>{items.length} file{items.length !== 1 ? 's' : ''}</span>}
+            {totalComments > 0 && (
+              <span className="flex items-center gap-0.5"><MessageSquare size={9} />{totalComments}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Admin Client Panel ───────────────────────────────────────────────────────
 
 function AdminClientPanel({
@@ -912,6 +1002,8 @@ export default function StudioWorkspace({
   const [clientUploadOpen, setClientUploadOpen] = useState(false)
   const [bulkUploadOpen, setBulkUploadOpen] = useState(initialMode === 'bulk_upload')
   const [toast, setToast]               = useState('')
+  const [studioView, setStudioView]     = useState<'folders' | 'files'>('folders')
+  const [activeFolder, setActiveFolder] = useState<DemoFolder | null>(null)
 
   function showToast(msg: string) {
     setToast(msg)
@@ -1145,6 +1237,231 @@ export default function StudioWorkspace({
         {/* Center content */}
         <div className="min-w-0 space-y-4">
 
+          {/* ── Studio tabs: Folders / All Files ── */}
+          <div className="flex items-center gap-0 border-b border-white/8">
+            <button
+              onClick={() => { setStudioView('folders'); setActiveFolder(null); setActiveItem(null) }}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition ${studioView === 'folders' ? 'text-white border-[#FF3B1A]' : 'text-white/40 border-transparent hover:text-white/70'}`}
+            >
+              <FolderIcon size={13} /> Folders
+            </button>
+            <button
+              onClick={() => { setStudioView('files'); setActiveFolder(null) }}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition ${studioView === 'files' ? 'text-white border-[#FF3B1A]' : 'text-white/40 border-transparent hover:text-white/70'}`}
+            >
+              <LayoutGrid size={13} /> All Files
+            </button>
+          </div>
+
+          {/* ── Folders overview ── */}
+          {studioView === 'folders' && !activeFolder && (() => {
+            const currentItems = filteredItems
+            const folderItems = (fid: string) =>
+              fid === 'client-uploads'
+                ? []
+                : currentItems.filter(i => itemFolderId(i) === fid)
+            const folderComments = (fid: string) =>
+              currentItems.filter(i => itemFolderId(i) === fid).reduce((n, i) => n + itemComments(i.id).length, 0)
+
+            return (
+              <div className="space-y-4">
+                {/* Top actions */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {role === 'admin' && (
+                    <button onClick={() => showToast('Folder created.')} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/8 text-white/60 hover:text-white text-xs px-3 py-2 rounded-lg transition">
+                      <FolderPlus size={13} /> New Folder
+                    </button>
+                  )}
+                  <button
+                    onClick={() => role === 'client' ? setClientUploadOpen(true) : setBulkUploadOpen(true)}
+                    className="flex items-center gap-1.5 bg-[#FF3B1A] text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-[#e02e10] transition"
+                  >
+                    <Upload size={12} /> Upload Assets
+                  </button>
+                  {selected.size > 0 && (
+                    <button onClick={() => { showToast(`Preparing ${selected.size} files for download...`); setSelected(new Set()) }} className="flex items-center gap-1.5 bg-white/5 hover:bg-white/8 text-white text-xs px-3 py-2 rounded-lg transition">
+                      <Download size={12} /> Download Selected
+                    </button>
+                  )}
+                </div>
+
+                {/* Folder grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {DEMO_FOLDERS.map(folder => (
+                    <FolderCard
+                      key={folder.id}
+                      folder={folder}
+                      items={folderItems(folder.id)}
+                      totalComments={folderComments(folder.id)}
+                      onClick={() => { setActiveFolder(folder); setActiveItem(null) }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* ── Inside a folder ── */}
+          {studioView === 'folders' && activeFolder && (() => {
+            const folderContents = activeFolder.id === 'client-uploads'
+              ? []
+              : filteredItems.filter(i => itemFolderId(i) === activeFolder.id)
+
+            return (
+              <div className="space-y-4">
+                {/* Folder header */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => { setActiveFolder(null); setActiveItem(null); setSelected(new Set()) }}
+                    className="flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition"
+                  >
+                    <ArrowLeft size={15} /> Folders
+                  </button>
+                  <span className="text-white/20">/</span>
+                  <span className="text-white font-semibold text-sm">{activeFolder.name}</span>
+                  <StatusBadge status={activeFolder.status} />
+                  <div className="flex-1" />
+                  <button onClick={() => role === 'client' ? setClientUploadOpen(true) : setBulkUploadOpen(true)}
+                    className="flex items-center gap-1.5 bg-[#FF3B1A] text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-[#e02e10] transition">
+                    <Upload size={12} /> Upload Assets
+                  </button>
+                  <button onClick={() => showToast('Preparing folder download...')}
+                    className="flex items-center gap-1.5 bg-white/5 hover:bg-white/8 text-white/60 text-xs px-3 py-2 rounded-lg transition">
+                    <Download size={12} /> Download Folder
+                  </button>
+                </div>
+
+                <p className="text-white/35 text-xs">{activeFolder.description}</p>
+
+                {/* Folder toolbar */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative">
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
+                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-[#FF3B1A] w-36" />
+                  </div>
+                  <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-[#FF3B1A]">
+                    <option value="all">All Status</option>
+                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
+                  </select>
+                  <select value={mediaFilter} onChange={e => setMediaFilter(e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-white text-xs focus:outline-none focus:border-[#FF3B1A]">
+                    <option value="all">All Media</option>
+                    <option value="photo">Photo</option>
+                    <option value="video">Video</option>
+                    <option value="graphic">Graphic</option>
+                    <option value="carousel">Carousel</option>
+                  </select>
+                  <div className="flex-1" />
+                  {selected.size > 0 && (
+                    <>
+                      <span className="text-white/40 text-xs">{selected.size} selected</span>
+                      <button onClick={() => { showToast(`Preparing ${selected.size} files for download...`); setSelected(new Set()) }}
+                        className="flex items-center gap-1.5 bg-white/8 hover:bg-white/12 text-white text-xs px-2.5 py-1.5 rounded-lg transition">
+                        <Download size={11} /> Download Selected
+                      </button>
+                      {role === 'client' && (
+                        <button onClick={() => { folderContents.filter(i => selected.has(i.id)).forEach(i => updateStatus(i.id, 'approved')); showToast('Approved selected.'); setSelected(new Set()) }}
+                          className="flex items-center gap-1.5 bg-green-500/15 hover:bg-green-500/25 text-green-300 text-xs px-2.5 py-1.5 rounded-lg transition">
+                          <CheckCircle2 size={11} /> Approve Selected
+                        </button>
+                      )}
+                      {role === 'admin' && (
+                        <>
+                          <button onClick={() => { folderContents.filter(i => selected.has(i.id)).forEach(i => updateStatus(i.id, 'delivered')); showToast('Marked delivered.'); setSelected(new Set()) }}
+                            className="flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-xs px-2.5 py-1.5 rounded-lg transition">
+                            <CheckCheck size={11} /> Mark Delivered
+                          </button>
+                          <button onClick={() => { showToast('Moving files...'); setSelected(new Set()) }}
+                            className="flex items-center gap-1.5 bg-white/5 hover:bg-white/8 text-white/60 text-xs px-2.5 py-1.5 rounded-lg transition">
+                            <FolderIcon size={11} /> Move to Folder
+                          </button>
+                        </>
+                      )}
+                      <button onClick={() => setSelected(new Set())} className="text-white/30 hover:text-white"><X size={13} /></button>
+                    </>
+                  )}
+                  <div className="flex bg-white/5 rounded-lg p-0.5">
+                    <button onClick={() => setLayout('grid')} className={`p-1.5 rounded transition ${layout === 'grid' ? 'bg-white/10 text-white' : 'text-white/35 hover:text-white'}`}><LayoutGrid size={13} /></button>
+                    <button onClick={() => setLayout('list')} className={`p-1.5 rounded transition ${layout === 'list' ? 'bg-white/10 text-white' : 'text-white/35 hover:text-white'}`}><List size={13} /></button>
+                  </div>
+                </div>
+
+                {/* File count */}
+                <p className="text-white/25 text-xs">{folderContents.length} file{folderContents.length !== 1 ? 's' : ''} in {activeFolder.name}</p>
+
+                {/* Empty state */}
+                {folderContents.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 text-white/25">
+                    <FolderOpen size={32} className="mb-3 opacity-30" />
+                    <p className="text-sm">No content in this folder yet.</p>
+                    {role === 'admin' && (
+                      <button onClick={() => setBulkUploadOpen(true)} className="mt-4 flex items-center gap-1.5 bg-[#FF3B1A] text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-[#e02e10] transition">
+                        <Upload size={12} /> Upload Assets
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* File grid */}
+                {layout === 'grid' && folderContents.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {folderContents.map(item => (
+                      <ContentCard
+                        key={item.id}
+                        item={item}
+                        selected={selected.has(item.id)}
+                        commentCount={commentCount(item.id)}
+                        onSelect={() => toggleSelect(item.id)}
+                        onOpen={() => { setActiveItem(item); setChatOpen(false) }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* File list */}
+                {layout === 'list' && folderContents.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-white/8 text-white/25 text-[9px] uppercase tracking-wider">
+                          <th className="text-left py-2 px-2 w-5"><input type="checkbox" className="accent-[#FF3B1A]" onChange={e => setSelected(e.target.checked ? new Set(folderContents.map(i => i.id)) : new Set())} /></th>
+                          <th className="text-left py-2 px-2 w-14">Preview</th>
+                          <th className="text-left py-2 px-2">Title</th>
+                          <th className="text-left py-2 px-2">Type</th>
+                          <th className="text-left py-2 px-2">Status</th>
+                          <th className="text-left py-2 px-2">Week</th>
+                          <th className="text-left py-2 px-2 w-8">Msg</th>
+                          <th className="w-6" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {folderContents.map(item => (
+                          <tr key={item.id} onClick={() => { setActiveItem(item); setChatOpen(false) }}
+                            className={`border-b border-white/5 cursor-pointer hover:bg-white/3 transition ${selected.has(item.id) ? 'bg-[#FF3B1A]/5' : ''}`}>
+                            <td className="py-2.5 px-2" onClick={e => e.stopPropagation()}>
+                              <input type="checkbox" checked={selected.has(item.id)} onChange={() => toggleSelect(item.id)} className="accent-[#FF3B1A]" />
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <div className="w-12 h-8 bg-[#0a0a0a] rounded overflow-hidden"><MediaPreview url={item.file_url} type={item.media_type} className="w-full h-full" /></div>
+                            </td>
+                            <td className="py-2.5 px-2 max-w-[160px]"><p className="text-white font-medium truncate">{item.title}</p></td>
+                            <td className="py-2.5 px-2"><span className="flex items-center gap-1 text-white/45 capitalize"><MediaTypeIcon type={item.media_type} size={11} /> {item.media_type}</span></td>
+                            <td className="py-2.5 px-2"><StatusBadge status={item.status} /></td>
+                            <td className="py-2.5 px-2 text-white/35">{item.week_label?.split(' - ')[0]}</td>
+                            <td className="py-2.5 px-2 text-white/35">{commentCount(item.id) > 0 && <span className="flex items-center gap-0.5"><MessageSquare size={10} />{commentCount(item.id)}</span>}</td>
+                            <td className="py-2.5 px-2"><ChevronRight size={12} className="text-white/20" /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
+          {/* ── All Files view (existing grid) ── */}
+          {studioView === 'files' && (
+          <div className="space-y-4">
           {/* ── Toolbar ── */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
@@ -1362,6 +1679,8 @@ export default function StudioWorkspace({
                 </div>
               )}
             </>
+          )}
+          </div>
           )}
         </div>
       </div>

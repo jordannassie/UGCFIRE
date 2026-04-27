@@ -8,14 +8,13 @@ import { getMyCompany } from '@/lib/data'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY, DEMO_COMPANY } from '@/lib/demoData'
 import type { Company } from '@/lib/types'
 import {
-  Clapperboard, Wand2, Target, User, Wallet, FileCheck, Menu, LogOut, Camera,
+  Clapperboard, Target, User, Wallet, FileCheck, Menu, LogOut, Camera,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 const NAV = [
   { label: 'Studio',      href: '/dashboard/studio',       icon: Clapperboard },
-  { label: 'Create',      href: '/dashboard/create',       icon: Wand2 },
   { label: 'Brand Brief', href: '/dashboard/brand-brief',  icon: Target },
   { label: 'Profile',     href: '/dashboard/profile',      icon: User },
   { label: 'Billing',     href: '/dashboard/billing',      icon: Wallet },
