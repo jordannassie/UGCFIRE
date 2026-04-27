@@ -1607,20 +1607,38 @@ export default function Home() {
                 </a>
               </div>
             </div>
-            {[
+            {([
               {
                 heading: "Product",
-                links: ["How It Works", "Pricing", "Creator Network", "Integrations", "API"],
+                links: [
+                  { label: "How It Works", href: "#how-it-works" },
+                  { label: "Pricing", href: "#plans" },
+                  { label: "Creator Network", href: "#" },
+                  { label: "Integrations", href: "#" },
+                  { label: "API", href: "#" },
+                ],
               },
               {
                 heading: "Resources",
-                links: ["Blog", "Case Studies", "Creator Hub", "Help Center", "Affiliate Program"],
+                links: [
+                  { label: "Blog", href: "#" },
+                  { label: "Case Studies", href: "#results" },
+                  { label: "Creator Hub", href: "#" },
+                  { label: "Help Center", href: "#" },
+                  { label: "Affiliate Program", href: "#" },
+                ],
               },
               {
                 heading: "Legal",
-                links: ["Terms of Service", "Privacy Policy", "Cookie Policy", "AI Terms", "Creator Agreement"],
+                links: [
+                  { label: "Terms of Service", href: "/terms" },
+                  { label: "Privacy Policy", href: "/privacy" },
+                  { label: "Cookie Policy", href: "/privacy" },
+                  { label: "AI Terms", href: "/terms" },
+                  { label: "Creator Agreement", href: "/terms" },
+                ],
               },
-            ].map(({ heading, links }) => (
+            ] as { heading: string; links: { label: string; href: string }[] }[]).map(({ heading, links }) => (
               <div key={heading}>
                 <div style={{
                   fontSize: 11,
@@ -1634,8 +1652,8 @@ export default function Home() {
                 </div>
                 {links.map((l) => (
                   <a
-                    key={l}
-                    href="#"
+                    key={l.label}
+                    href={l.href}
                     style={{
                       display: "block",
                       fontSize: 13,
@@ -1647,7 +1665,7 @@ export default function Home() {
                     onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
                   >
-                    {l}
+                    {l.label}
                   </a>
                 ))}
               </div>
