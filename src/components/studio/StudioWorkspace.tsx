@@ -249,6 +249,7 @@ function BulkUploadModal({ companies, onClose, onUploaded }: {
   const [batchName, setBatchName] = useState('')
   const [weekLabel, setWeekLabel] = useState('Week 1 - May 2026')
   const [contentType, setContentType] = useState(CONTENT_TYPES[0])
+  const [uploadStatus, setUploadStatus] = useState<Status>('ready_for_review')
   const [showcase, setShowcase] = useState(true)
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -331,6 +332,12 @@ function BulkUploadModal({ companies, onClose, onUploaded }: {
               <label className="text-white/40 text-xs mb-1 block">Content Type</label>
               <select value={contentType} onChange={e => setContentType(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A]">
                 {CONTENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-white/40 text-xs mb-1 block">Initial Status</label>
+              <select value={uploadStatus} onChange={e => setUploadStatus(e.target.value as Status)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A]">
+                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
               </select>
             </div>
           </div>
@@ -439,6 +446,8 @@ function ChatPanel({
 
 // ─── Detail Drawer ────────────────────────────────────────────────────────────
 
+type DrawerTab = 'details' | 'comments' | 'notes' | 'versions'
+
 function DetailDrawer({
   item, role, comments, onClose, onStatusChange, onToast,
 }: {
@@ -449,35 +458,43 @@ function DetailDrawer({
   onStatusChange: (id: string, status: Status) => void
   onToast: (msg: string) => void
 }) {
+  const [tab, setTab]                     = useState<DrawerTab>('details')
   const [localComments, setLocalComments] = useState<ContentComment[]>(comments)
-  const [msg, setMsg] = useState('')
-  const [internal, setInternal] = useState(false)
+  const [msg, setMsg]                     = useState('')
+  const [internal, setInternal]           = useState(false)
   const [showRevisionInput, setShowRevisionInput] = useState(false)
-  const [revisionNote, setRevisionNote] = useState('')
-  const [status, setStatus] = useState<Status>(item.status)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const [revisionNote, setRevisionNote]   = useState('')
+  const [status, setStatus]               = useState<Status>(item.status)
+  const [noteText, setNoteText]           = useState('')
+  const [notes, setNotes]                 = useState<{ id: string; text: string; created_at: string }[]>([])
+  const bottomRef                         = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setLocalComments(comments) }, [comments])
-  useEffect(() => { setStatus(item.status) }, [item.status])
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [localComments])
+  useEffect(() => { setStatus(item.status); setTab('details') }, [item.id, item.status])
+  useEffect(() => { if (tab === 'comments') bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [localComments, tab])
 
-  function sendComment(message: string, isInternal: boolean) {
+  const tabs: { id: DrawerTab; label: string }[] = [
+    { id: 'details',  label: 'Details' },
+    { id: 'comments', label: `Comments${localComments.filter(c => !c.is_internal).length > 0 ? ` (${localComments.filter(c => !c.is_internal).length})` : ''}` },
+    ...(role === 'admin' ? [
+      { id: 'notes' as DrawerTab,    label: 'Notes' },
+      { id: 'versions' as DrawerTab, label: 'Versions' },
+    ] : []),
+  ]
+
+  function addComment(message: string, isInternal: boolean) {
     if (!message.trim()) return
-    const newC: ContentComment = {
+    setLocalComments(p => [...p, {
       id: `c-${Date.now()}`,
       content_item_id: item.id,
       sender_role: role,
       message: message.trim(),
       is_internal: isInternal,
       created_at: new Date().toISOString(),
-    }
-    setLocalComments(p => [...p, newC])
+    }])
   }
 
-  function submitComment() {
-    sendComment(msg, internal)
-    setMsg('')
-  }
+  function submitComment() { addComment(msg, internal); setMsg('') }
 
   function approve() {
     onStatusChange(item.id, 'approved')
@@ -487,7 +504,7 @@ function DetailDrawer({
 
   function submitRevision() {
     if (!revisionNote.trim()) return
-    sendComment(revisionNote, false)
+    addComment(revisionNote, false)
     onStatusChange(item.id, 'revision_requested')
     setStatus('revision_requested')
     setRevisionNote('')
@@ -495,13 +512,23 @@ function DetailDrawer({
     onToast('Revision request submitted.')
   }
 
+  function addNote() {
+    if (!noteText.trim()) return
+    setNotes(p => [...p, { id: `n-${Date.now()}`, text: noteText.trim(), created_at: new Date().toISOString() }])
+    setNoteText('')
+    onToast('Internal note saved.')
+  }
+
   const isVideo = item.media_type === 'video'
   const hasFile = !!item.file_url
+  const publicComments = localComments.filter(c => !c.is_internal)
+  const internalComments = localComments.filter(c => c.is_internal)
 
   return (
     <div className="fixed inset-y-0 right-0 w-[420px] bg-[#0d0d0d] border-l border-white/8 flex flex-col z-40 shadow-2xl">
+
       {/* Header */}
-      <div className="flex items-start justify-between px-5 py-4 border-b border-white/8">
+      <div className="flex items-start justify-between px-5 pt-4 pb-3 border-b border-white/8">
         <div className="flex-1 min-w-0 mr-3">
           <p className="text-white font-semibold text-sm leading-snug">{item.title}</p>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -512,150 +539,163 @@ function DetailDrawer({
             )}
           </div>
         </div>
-        <button onClick={onClose} className="text-white/40 hover:text-white transition p-1 shrink-0"><X size={17} /></button>
+        <button onClick={onClose} className="text-white/40 hover:text-white transition p-1 shrink-0 mt-0.5"><X size={17} /></button>
       </div>
 
+      {/* Tab bar */}
+      <div className="flex border-b border-white/8 shrink-0">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 py-2.5 text-[11px] font-medium transition border-b-2 ${
+              tab === t.id
+                ? 'text-white border-[#FF3B1A]'
+                : 'text-white/35 border-transparent hover:text-white/60'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Preview */}
-        <div className="bg-[#080808] aspect-video flex items-center justify-center">
-          {hasFile ? (
-            isVideo
-              ? <video src={item.file_url!} className="w-full h-full object-contain" controls />
-              // eslint-disable-next-line @next/next/no-img-element
-              : <img src={item.file_url!} alt={item.title} className="w-full h-full object-contain" />
-          ) : (
-            <div className="flex flex-col items-center gap-3 text-white/20">
-              <MediaTypeIcon type={item.media_type} size={36} />
-              <span className="text-xs">In production</span>
-            </div>
-          )}
-        </div>
 
-        {/* Metadata */}
-        <div className="px-5 py-3 border-b border-white/8 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          {[
-            ['Content Type', item.content_type],
-            ['Week', item.week_label?.split(' - ')[0]],
-            ['Uploaded', item.uploaded_at ? fmtDate(item.uploaded_at) : null],
-            ['Approved', item.approved_at ? fmtDate(item.approved_at) : null],
-            ['Delivered', item.delivered_at ? fmtDate(item.delivered_at) : null],
-            ['Showcase', item.can_showcase ? 'Yes' : 'No'],
-          ].filter(([, v]) => v).map(([label, value]) => (
-            <div key={label as string}>
-              <p className="text-white/30">{label}</p>
-              <p className="text-white/80">{value}</p>
+        {/* ── Details tab ── */}
+        {tab === 'details' && (
+          <>
+            {/* Preview */}
+            <div className="bg-[#080808] aspect-video flex items-center justify-center">
+              {hasFile ? (
+                isVideo
+                  ? <video src={item.file_url!} className="w-full h-full object-contain" controls />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  : <img src={item.file_url!} alt={item.title} className="w-full h-full object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-white/20">
+                  <MediaTypeIcon type={item.media_type} size={36} />
+                  <span className="text-xs">In production</span>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
 
-        {/* Admin: status selector */}
-        {role === 'admin' && (
-          <div className="px-5 py-3 border-b border-white/8">
-            <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wide mb-2">Change Status</p>
-            <div className="grid grid-cols-2 gap-1">
-              {STATUS_OPTIONS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => { setStatus(s); onStatusChange(item.id, s); onToast(`Status: ${STATUS_META[s].label}`) }}
-                  className={`text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition ${
-                    status === s ? STATUS_META[s].color : 'bg-white/5 text-white/40 hover:text-white hover:bg-white/8'
-                  }`}
-                >
-                  {STATUS_META[s].label}
-                </button>
+            {/* Metadata grid */}
+            <div className="px-5 py-3 border-b border-white/8 grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+              {([
+                ['Content Type', item.content_type],
+                ['Week',         item.week_label?.split(' - ')[0]],
+                ['Uploaded',     item.uploaded_at ? fmtDate(item.uploaded_at) : null],
+                ['Approved',     item.approved_at ? fmtDate(item.approved_at) : null],
+                ['Delivered',    item.delivered_at ? fmtDate(item.delivered_at) : null],
+                ['Showcase',     item.can_showcase ? 'Yes' : 'No'],
+              ] as [string, string | null | undefined][]).filter(([, v]) => v).map(([label, value]) => (
+                <div key={label}>
+                  <p className="text-white/30 text-[10px]">{label}</p>
+                  <p className="text-white/80">{value}</p>
+                </div>
               ))}
             </div>
 
-            {/* Admin quick-send actions */}
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              <button onClick={() => { setStatus('ready_for_review'); onStatusChange(item.id, 'ready_for_review'); onToast('Sent to client for review.') }}
-                className="flex items-center gap-1 bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 text-[11px] px-2.5 py-1.5 rounded-lg transition">
-                <Send size={11} /> Send to Client
-              </button>
-              <button onClick={() => { setStatus('delivered'); onStatusChange(item.id, 'delivered'); onToast('Marked delivered.') }}
-                className="flex items-center gap-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[11px] px-2.5 py-1.5 rounded-lg transition">
-                <CheckCheck size={11} /> Mark Delivered
-              </button>
-              {hasFile && (
-                <button onClick={() => onToast('Preparing download...')}
-                  className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-white/60 text-[11px] px-2.5 py-1.5 rounded-lg transition">
-                  <Download size={11} /> Download
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Client: approve/revision/download actions */}
-        {role === 'client' && (
-          <div className="px-5 py-3 border-b border-white/8 space-y-2">
-            {status === 'ready_for_review' && (
-              <>
-                <button onClick={approve} className="w-full bg-green-500/15 hover:bg-green-500/25 text-green-300 text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
-                  <CheckCircle2 size={15} /> Approve Content
-                </button>
-                {!showRevisionInput ? (
-                  <button onClick={() => setShowRevisionInput(true)} className="w-full bg-white/5 hover:bg-white/8 text-white/60 text-sm py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
-                    <RotateCcw size={14} /> Request Revision
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <textarea
-                      value={revisionNote}
-                      onChange={e => setRevisionNote(e.target.value)}
-                      placeholder="What needs to change?"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-orange-400/60 resize-none h-20"
-                    />
-                    <div className="flex gap-2">
-                      <button onClick={submitRevision} className="flex-1 bg-orange-500/20 text-orange-300 text-xs py-2 rounded-lg hover:bg-orange-500/30 transition">Submit</button>
-                      <button onClick={() => setShowRevisionInput(false)} className="text-white/40 text-xs px-3 hover:text-white transition">Cancel</button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-            {hasFile && (
-              <button onClick={() => onToast('Preparing download...')} className="w-full bg-white/5 hover:bg-white/8 text-white/60 text-sm py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
-                <Download size={14} /> Download
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Comments thread */}
-        <div className="px-5 py-4">
-          <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wide mb-3">Comments</p>
-          <div className="space-y-3 mb-4">
-            {localComments.length === 0 && <p className="text-white/20 text-xs">No comments yet.</p>}
-            {localComments.filter(c => !c.is_internal || role === 'admin').map(c => (
-              <div key={c.id} className={`flex gap-2 ${c.sender_role === role ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${c.sender_role === 'admin' ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-blue-500/20 text-blue-300'}`}>
-                  {c.sender_role === 'admin' ? 'A' : 'C'}
+            {/* Admin: status controls */}
+            {role === 'admin' && (
+              <div className="px-5 py-3 border-b border-white/8 space-y-3">
+                <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wide">Change Status</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {STATUS_OPTIONS.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => { setStatus(s); onStatusChange(item.id, s); onToast(`Status: ${STATUS_META[s].label}`) }}
+                      className={`text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition ${
+                        status === s ? STATUS_META[s].color : 'bg-white/5 text-white/40 hover:text-white hover:bg-white/8'
+                      }`}
+                    >
+                      {STATUS_META[s].label}
+                    </button>
+                  ))}
                 </div>
-                <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
-                  c.is_internal ? 'bg-yellow-500/8 border border-yellow-500/20 text-yellow-200' :
-                  c.sender_role === role ? 'bg-[#FF3B1A]/10 border border-[#FF3B1A]/15 text-white/90' :
-                  'bg-white/5 border border-white/8 text-white/80'
-                }`}>
-                  <p>{c.message}</p>
-                  {c.is_internal && <p className="text-yellow-500/50 text-[9px] mt-0.5">internal note</p>}
+                <div className="flex flex-wrap gap-1.5">
+                  <button onClick={() => { setStatus('ready_for_review'); onStatusChange(item.id, 'ready_for_review'); onToast('Sent to client for review.') }}
+                    className="flex items-center gap-1 bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 text-[11px] px-2.5 py-1.5 rounded-lg transition">
+                    <Send size={11} /> Send to Client
+                  </button>
+                  <button onClick={() => { setStatus('delivered'); onStatusChange(item.id, 'delivered'); onToast('Marked delivered.') }}
+                    className="flex items-center gap-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[11px] px-2.5 py-1.5 rounded-lg transition">
+                    <CheckCheck size={11} /> Mark Delivered
+                  </button>
+                  {hasFile && (
+                    <button onClick={() => onToast('Preparing download...')}
+                      className="flex items-center gap-1 bg-white/5 hover:bg-white/10 text-white/60 text-[11px] px-2.5 py-1.5 rounded-lg transition">
+                      <Download size={11} /> Download
+                    </button>
+                  )}
                 </div>
               </div>
-            ))}
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Add comment */}
-          <div className="space-y-2">
-            {role === 'admin' && (
-              <label className="flex items-center gap-2 cursor-pointer">
-                <div onClick={() => setInternal(p => !p)} className={`w-7 h-4 rounded-full relative transition ${internal ? 'bg-yellow-500/60' : 'bg-white/10'}`}>
-                  <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-all ${internal ? 'left-3.5' : 'left-0.5'}`} />
-                </div>
-                <span className="text-white/35 text-[10px]">Internal note (hidden from client)</span>
-              </label>
             )}
-            <div className="flex gap-2">
+
+            {/* Client: approve / revision / download */}
+            {role === 'client' && (
+              <div className="px-5 py-3 space-y-2">
+                {status === 'ready_for_review' && (
+                  <>
+                    <button onClick={approve} className="w-full bg-green-500/15 hover:bg-green-500/25 text-green-300 text-sm font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
+                      <CheckCircle2 size={15} /> Approve Content
+                    </button>
+                    {!showRevisionInput ? (
+                      <button onClick={() => setShowRevisionInput(true)} className="w-full bg-white/5 hover:bg-white/8 text-white/60 text-sm py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
+                        <RotateCcw size={14} /> Request Revision
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <textarea
+                          value={revisionNote}
+                          onChange={e => setRevisionNote(e.target.value)}
+                          placeholder="What needs to change?"
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none focus:border-orange-400/60 resize-none h-20"
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={submitRevision} className="flex-1 bg-orange-500/20 text-orange-300 text-xs py-2 rounded-lg hover:bg-orange-500/30 transition">Submit</button>
+                          <button onClick={() => setShowRevisionInput(false)} className="text-white/40 text-xs px-3 hover:text-white transition">Cancel</button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+                {hasFile && (
+                  <button onClick={() => onToast('Preparing download...')} className="w-full bg-white/5 hover:bg-white/8 text-white/60 text-sm py-2.5 rounded-lg flex items-center justify-center gap-2 transition">
+                    <Download size={14} /> Download
+                  </button>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Comments tab ── */}
+        {tab === 'comments' && (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              {publicComments.length === 0 && (
+                <p className="text-white/20 text-xs pt-4 text-center">No comments yet.</p>
+              )}
+              {publicComments.map(c => (
+                <div key={c.id} className={`flex gap-2 ${c.sender_role === role ? 'flex-row-reverse' : ''}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${c.sender_role === 'admin' ? 'bg-[#FF3B1A]/20 text-[#FF3B1A]' : 'bg-blue-500/20 text-blue-300'}`}>
+                    {c.sender_role === 'admin' ? 'A' : 'C'}
+                  </div>
+                  <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
+                    c.sender_role === role
+                      ? 'bg-[#FF3B1A]/10 border border-[#FF3B1A]/15 text-white/90'
+                      : 'bg-white/5 border border-white/8 text-white/80'
+                  }`}>
+                    <p>{c.message}</p>
+                    <p className="text-[9px] mt-1 opacity-40">{fmtRelative(c.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
+            <div className="p-4 border-t border-white/8 flex gap-2 shrink-0">
               <input
                 value={msg}
                 onChange={e => setMsg(e.target.value)}
@@ -666,7 +706,72 @@ function DetailDrawer({
               <button onClick={submitComment} className="bg-[#FF3B1A] text-white px-3 py-2 rounded-lg text-xs hover:bg-[#e02e10] transition">Send</button>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* ── Notes tab (admin only) ── */}
+        {tab === 'notes' && role === 'admin' && (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              <p className="text-yellow-500/50 text-[10px] font-medium">Internal notes are never visible to the client.</p>
+              {internalComments.length === 0 && notes.length === 0 && (
+                <p className="text-white/20 text-xs pt-2 text-center">No internal notes yet.</p>
+              )}
+              {internalComments.map(c => (
+                <div key={c.id} className="bg-yellow-500/8 border border-yellow-500/20 rounded-xl px-3 py-2.5">
+                  <p className="text-yellow-200 text-xs">{c.message}</p>
+                  <p className="text-yellow-500/40 text-[9px] mt-1">{fmtRelative(c.created_at)}</p>
+                </div>
+              ))}
+              {notes.map(n => (
+                <div key={n.id} className="bg-yellow-500/8 border border-yellow-500/20 rounded-xl px-3 py-2.5">
+                  <p className="text-yellow-200 text-xs">{n.text}</p>
+                  <p className="text-yellow-500/40 text-[9px] mt-1">{fmtRelative(n.created_at)}</p>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-white/8 space-y-2 shrink-0">
+              <textarea
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Add an internal note..."
+                className="w-full bg-white/5 border border-yellow-500/20 rounded-lg px-3 py-2 text-yellow-100 text-xs placeholder:text-yellow-500/30 focus:outline-none focus:border-yellow-500/40 resize-none h-20"
+              />
+              <button onClick={addNote} disabled={!noteText.trim()} className="w-full bg-yellow-500/15 hover:bg-yellow-500/25 text-yellow-300 text-xs font-semibold py-2 rounded-lg transition disabled:opacity-40">
+                Save Note
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Versions tab (admin only) ── */}
+        {tab === 'versions' && role === 'admin' && (
+          <div className="p-5 space-y-4">
+            <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wide">Version History</p>
+            {/* Current version */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-white text-xs font-semibold">Version 1 (current)</span>
+                <span className="text-[10px] bg-[#FF3B1A]/20 text-[#FF3B1A] px-1.5 py-0.5 rounded-full">Current</span>
+              </div>
+              <p className="text-white/40 text-[11px]">Uploaded {item.uploaded_at ? fmtDate(item.uploaded_at) : '—'}</p>
+              {hasFile && (
+                <button onClick={() => onToast('Preparing download...')} className="flex items-center gap-1 text-white/50 hover:text-white text-[11px] transition">
+                  <Download size={11} /> Download this version
+                </button>
+              )}
+            </div>
+
+            {/* Upload new version */}
+            <div className="border border-dashed border-white/10 rounded-xl p-4 text-center space-y-2">
+              <Upload size={18} className="text-white/20 mx-auto" />
+              <p className="text-white/35 text-xs">Upload a new version</p>
+              <button onClick={() => onToast('Version upload coming soon.')} className="text-[#FF3B1A] text-xs hover:underline">
+                Select file
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
@@ -746,14 +851,14 @@ function AdminClientPanel({
   }
 
   return (
-    <div className="w-48 shrink-0 border-r border-white/8 pr-4 space-y-0.5 overflow-y-auto">
-      <p className="text-white/25 text-[9px] font-semibold uppercase tracking-widest px-2 mb-3">Clients</p>
+    <div className="w-52 shrink-0 border-r border-white/8 pr-4 space-y-0.5 overflow-y-auto">
+      <p className="text-white/25 text-[9px] font-semibold uppercase tracking-widest px-2 mb-3">Client Studios</p>
       <button
         onClick={() => onSelect('all')}
-        className={`w-full text-left px-2.5 py-2 rounded-lg text-sm transition ${selected === 'all' ? 'bg-[#FF3B1A]/15 text-white border border-[#FF3B1A]/20' : 'text-white/45 hover:text-white hover:bg-white/5'}`}
+        className={`w-full text-left px-2.5 py-2.5 rounded-lg transition ${selected === 'all' ? 'bg-[#FF3B1A]/15 text-white border border-[#FF3B1A]/20' : 'text-white/45 hover:text-white hover:bg-white/5'}`}
       >
-        <span className="text-[12px] font-medium">All Clients</span>
-        <span className="ml-1.5 text-white/25 text-[10px]">({allContent.length})</span>
+        <p className="text-[12px] font-semibold">All Client Studios</p>
+        <p className="text-white/30 text-[10px] mt-0.5">{allContent.length} items total</p>
       </button>
       {companies.map(co => {
         const s = stats(co.id)
@@ -762,15 +867,14 @@ function AdminClientPanel({
           <button
             key={co.id}
             onClick={() => onSelect(co.id)}
-            className={`w-full text-left px-2.5 py-2 rounded-lg text-sm transition ${isSelected ? 'bg-[#FF3B1A]/15 text-white border border-[#FF3B1A]/20' : 'text-white/45 hover:text-white hover:bg-white/5'}`}
+            className={`w-full text-left px-2.5 py-2.5 rounded-lg transition ${isSelected ? 'bg-[#FF3B1A]/15 text-white border border-[#FF3B1A]/20' : 'text-white/45 hover:text-white hover:bg-white/5'}`}
           >
-            <p className="text-[12px] font-medium truncate">{co.name}</p>
-            {(s.review > 0 || s.revisions > 0) && (
-              <div className="flex gap-1 mt-1 flex-wrap">
-                {s.review > 0 && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded-full">{s.review} review</span>}
-                {s.revisions > 0 && <span className="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded-full">{s.revisions} rev</span>}
-              </div>
-            )}
+            <p className="text-[12px] font-semibold truncate">{co.name} Studio</p>
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <span className="text-white/25 text-[10px]">{s.total} items</span>
+              {s.review > 0 && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded-full">{s.review} review</span>}
+              {s.revisions > 0 && <span className="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded-full">{s.revisions} rev</span>}
+            </div>
           </button>
         )
       })}

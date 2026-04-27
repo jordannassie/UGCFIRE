@@ -8,19 +8,17 @@ import { getMyCompany } from '@/lib/data'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY, DEMO_COMPANY } from '@/lib/demoData'
 import type { Company } from '@/lib/types'
 import {
-  Home, Clapperboard, Target, User, Wallet, FileCheck, ShoppingCart, Menu, LogOut, Camera,
+  Clapperboard, Target, User, Wallet, FileCheck, Menu, LogOut, Camera,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 const NAV = [
-  { label: 'Home',        href: '/dashboard',              icon: Home },
   { label: 'Studio',      href: '/dashboard/studio',       icon: Clapperboard },
   { label: 'Brand Brief', href: '/dashboard/brand-brief',  icon: Target },
   { label: 'Profile',     href: '/dashboard/profile',      icon: User },
   { label: 'Billing',     href: '/dashboard/billing',      icon: Wallet },
   { label: 'Agreement',   href: '/dashboard/agreement',    icon: FileCheck },
-  { label: 'Checkout',    href: '/dashboard/checkout',     icon: ShoppingCart },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -155,7 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
           {NAV.map(item => {
-            const active = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href)
+            const active = pathname.startsWith(item.href)
             const Icon = item.icon
             return (
               <Link
