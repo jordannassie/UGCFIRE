@@ -1040,6 +1040,16 @@ export default function Home() {
         <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
           <div className="booking-left" style={{ flex: "1 1 340px" }}>
+            <div style={{ marginBottom: 16 }}>
+              <Image
+                src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
+                alt="UGC Fire"
+                width={180}
+                height={72}
+                style={{ objectFit: "contain" }}
+                unoptimized
+              />
+            </div>
             <h2 style={{
               fontFamily: "var(--font-bebas)",
               fontSize: "clamp(48px, 5vw, 80px)",
@@ -1048,7 +1058,7 @@ export default function Home() {
               lineHeight: 1,
               marginBottom: 12,
             }}>
-              See if UGCFire<br />is the right fit<br />
+              Is the right fit<br />
               <span style={{ fontStyle: "italic", fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(28px, 3vw, 46px)", fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>
                 (it totally is)
               </span>
