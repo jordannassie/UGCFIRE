@@ -314,7 +314,7 @@ function ReelCard({
   );
 }
 
-const PHOTO_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/368e8a5f-3257-42c7-88ad-037b92f99d85.png";
+const PHOTO_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/1a75fdad-d79b-4df6-a855-d10aa65335c7.png";
 
 const PHOTO_CARDS = [
   { label: "Product lifestyle photo" },
