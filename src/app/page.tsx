@@ -314,6 +314,57 @@ function ReelCard({
   );
 }
 
+const PHOTO_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/368e8a5f-3257-42c7-88ad-037b92f99d85.png";
+
+const PHOTO_CARDS = [
+  { label: "Product lifestyle photo" },
+  { label: "UGC brand shot" },
+  { label: "Founder content photo" },
+  { label: "Ad creative still" },
+  { label: "Social media photo" },
+  { label: "Brand campaign shot" },
+];
+
+function PhotoCard({ label }: { label: string }) {
+  return (
+    <div style={{
+      background: "#141414",
+      border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 16,
+      overflow: "hidden",
+      width: 220,
+      flexShrink: 0,
+    }}>
+      <div style={{ position: "relative", height: 280 }}>
+        <Image
+          src={PHOTO_URL}
+          alt={label}
+          fill
+          style={{ objectFit: "cover" }}
+          unoptimized
+        />
+        <div style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          background: "#FF3B1A",
+          color: "#fff",
+          fontSize: 10,
+          fontWeight: 700,
+          padding: "3px 8px",
+          borderRadius: 20,
+          letterSpacing: "0.05em",
+        }}>
+          PHOTO
+        </div>
+      </div>
+      <div style={{ padding: "12px 14px" }}>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -524,6 +575,16 @@ export default function Home() {
           gap: 16px;
           animation: scroll-left 20s linear infinite;
           width: max-content;
+        }
+        .photo-scroll {
+          display: flex;
+          gap: 16px;
+          animation: scroll-right 24s linear infinite;
+          width: max-content;
+        }
+        @keyframes scroll-right {
+          from { transform: translateX(-50%); }
+          to { transform: translateX(0); }
         }
         .btn-fire {
           background: #FF3B1A;
@@ -943,10 +1004,19 @@ export default function Home() {
             Short-form content built for ads, organic posts, landing pages, and social media.
           </p>
         </div>
+        {/* Video row — scrolls left */}
         <div style={{ overflow: "hidden", padding: "0 0 16px" }}>
-          <div className="reel-scroll" style={{ padding: "8px 3rem" }}>
+          <div className="reel-scroll" style={{ padding: "8px 0" }}>
             {[...REEL_CARDS, ...REEL_CARDS].map((card, i) => (
               <ReelCard key={i} {...card} />
+            ))}
+          </div>
+        </div>
+        {/* Photo row — scrolls right (opposite direction) */}
+        <div style={{ overflow: "hidden", padding: "8px 0 0" }}>
+          <div className="photo-scroll" style={{ padding: "8px 0" }}>
+            {[...PHOTO_CARDS, ...PHOTO_CARDS].map((card, i) => (
+              <PhotoCard key={i} {...card} />
             ))}
           </div>
         </div>
