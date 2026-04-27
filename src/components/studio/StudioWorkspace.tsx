@@ -15,6 +15,7 @@ import {
   MessageSquare, RotateCcw, Star, Send, ChevronRight,
   Paperclip, Eye, SlidersHorizontal, MessageCircle, Plus,
   Folder as FolderIcon, FolderOpen, FolderPlus, ArrowLeft,
+  StickyNote, Pin, PinOff, Pencil, BookOpen,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -92,6 +93,71 @@ interface DemoFolder {
   description: string
   status: string
 }
+
+type NoteStatus = 'open' | 'in_progress' | 'done' | 'archived'
+
+interface StudioNote {
+  id: string
+  title: string
+  body: string
+  folderId: string
+  status: NoteStatus
+  pinned: boolean
+  createdBy: string
+  createdAt: string
+}
+
+const NOTE_STATUS_META: Record<NoteStatus, { label: string; color: string }> = {
+  open:        { label: 'Open',        color: 'bg-blue-500/20 text-blue-300' },
+  in_progress: { label: 'In Progress', color: 'bg-orange-500/20 text-orange-300' },
+  done:        { label: 'Done',        color: 'bg-green-500/20 text-green-300' },
+  archived:    { label: 'Archived',    color: 'bg-gray-500/20 text-gray-400' },
+}
+
+const NOTE_STATUSES: NoteStatus[] = ['open', 'in_progress', 'done', 'archived']
+
+const DEMO_NOTES: StudioNote[] = [
+  {
+    id: 'n1',
+    title: 'Use logo for merch designs',
+    body: 'In Brand Assets folder: use the logo and create T-shirt designs and hats too. Keep the icon treatment minimal — let the logo breathe.',
+    folderId: 'brand-assets',
+    status: 'open',
+    pinned: true,
+    createdBy: 'Admin',
+    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+  },
+  {
+    id: 'n2',
+    title: 'Content style direction',
+    body: 'Keep videos clean, real, and lifestyle-focused. Avoid anything that feels too fake or overproduced. Natural lighting preferred. No AI-looking people.',
+    folderId: 'client-uploads',
+    status: 'open',
+    pinned: true,
+    createdBy: 'Client',
+    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+  {
+    id: 'n3',
+    title: 'Next delivery priority',
+    body: 'For the next batch, prioritize product demo videos, founder-style hooks, and social ad photo creatives. Use photoshoot images from Client Uploads folder.',
+    folderId: 'week2-delivery',
+    status: 'in_progress',
+    pinned: false,
+    createdBy: 'Admin',
+    createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+  },
+  {
+    id: 'n4',
+    title: 'Brand colors',
+    body: 'Always use orange and black brand colors. Avoid heavy filters or pastel overlays — the brand is bold and direct.',
+    folderId: '',
+    status: 'open',
+    pinned: false,
+    createdBy: 'Client',
+    createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
+  },
+]
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1002,8 +1068,13 @@ export default function StudioWorkspace({
   const [clientUploadOpen, setClientUploadOpen] = useState(false)
   const [bulkUploadOpen, setBulkUploadOpen] = useState(initialMode === 'bulk_upload')
   const [toast, setToast]               = useState('')
-  const [studioView, setStudioView]     = useState<'folders' | 'files'>('folders')
+  const [studioView, setStudioView]     = useState<'folders' | 'files' | 'notes'>('folders')
   const [activeFolder, setActiveFolder] = useState<DemoFolder | null>(null)
+  const [notes, setNotes]               = useState<StudioNote[]>(DEMO_NOTES)
+  const [addingNote, setAddingNote]     = useState(false)
+  const [noteForm, setNoteForm]         = useState<{ title: string; body: string; folderId: string; status: NoteStatus; pinned: boolean }>({
+    title: '', body: '', folderId: '', status: 'open', pinned: false,
+  })
 
   function showToast(msg: string) {
     setToast(msg)
@@ -1237,7 +1308,7 @@ export default function StudioWorkspace({
         {/* Center content */}
         <div className="min-w-0 space-y-4">
 
-          {/* ── Studio tabs: Folders / All Files ── */}
+          {/* ── Studio tabs: Folders / All Files / Notes ── */}
           <div className="flex items-center gap-0 border-b border-white/8">
             <button
               onClick={() => { setStudioView('folders'); setActiveFolder(null); setActiveItem(null) }}
@@ -1250,6 +1321,15 @@ export default function StudioWorkspace({
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition ${studioView === 'files' ? 'text-white border-[#FF3B1A]' : 'text-white/40 border-transparent hover:text-white/70'}`}
             >
               <LayoutGrid size={13} /> All Files
+            </button>
+            <button
+              onClick={() => { setStudioView('notes'); setActiveFolder(null); setActiveItem(null) }}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition ${studioView === 'notes' ? 'text-white border-[#FF3B1A]' : 'text-white/40 border-transparent hover:text-white/70'}`}
+            >
+              <StickyNote size={13} /> Notes
+              {notes.filter(n => n.status !== 'archived').length > 0 && (
+                <span className="bg-white/10 text-white/50 text-[9px] px-1.5 py-0.5 rounded-full">{notes.filter(n => n.status !== 'archived').length}</span>
+              )}
             </button>
           </div>
 
@@ -1682,6 +1762,195 @@ export default function StudioWorkspace({
           )}
           </div>
           )}
+
+          {/* ── Notes view ── */}
+          {studioView === 'notes' && (() => {
+            const visibleNotes = notes.filter(n => n.status !== 'archived' || role === 'admin')
+            const pinned   = visibleNotes.filter(n => n.pinned)
+            const unpinned = visibleNotes.filter(n => !n.pinned)
+            const ordered  = [...pinned, ...unpinned]
+
+            function saveNote() {
+              if (!noteForm.title.trim() && !noteForm.body.trim()) return
+              setNotes(p => [{
+                id: `n-${Date.now()}`,
+                title: noteForm.title.trim() || 'Untitled note',
+                body: noteForm.body.trim(),
+                folderId: noteForm.folderId,
+                status: noteForm.status,
+                pinned: noteForm.pinned,
+                createdBy: role === 'admin' ? 'Admin' : 'Client',
+                createdAt: new Date().toISOString(),
+              }, ...p])
+              setNoteForm({ title: '', body: '', folderId: '', status: 'open', pinned: false })
+              setAddingNote(false)
+            }
+
+            function cycleStatus(id: string) {
+              setNotes(p => p.map(n => {
+                if (n.id !== id) return n
+                const cycle: NoteStatus[] = ['open', 'in_progress', 'done']
+                const next = cycle[(cycle.indexOf(n.status) + 1) % cycle.length]
+                return { ...n, status: next }
+              }))
+            }
+
+            function togglePin(id: string) {
+              setNotes(p => p.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n))
+            }
+
+            function archiveNote(id: string) {
+              setNotes(p => p.map(n => n.id === id ? { ...n, status: 'archived' } : n))
+            }
+
+            return (
+              <div className="space-y-5 max-w-2xl">
+                {/* Header */}
+                <div>
+                  <h2 className="text-white font-bold text-lg">Studio Notes</h2>
+                  <p className="text-white/40 text-sm mt-0.5">Shared instructions, ideas, and creative direction for this client studio.</p>
+                </div>
+
+                {/* Callout */}
+                <div className="flex items-start gap-2.5 bg-white/4 border border-white/8 rounded-xl px-4 py-3">
+                  <BookOpen size={14} className="text-white/35 mt-0.5 shrink-0" />
+                  <p className="text-white/50 text-xs leading-relaxed">
+                    Use <span className="text-white/75 font-medium">Notes</span> for general studio instructions and creative direction.{' '}
+                    Use <span className="text-white/75 font-medium">Comments</span> (inside a file) for feedback on a specific asset.
+                  </p>
+                </div>
+
+                {/* Add note button */}
+                {!addingNote && (
+                  <button
+                    onClick={() => setAddingNote(true)}
+                    className="flex items-center gap-2 bg-[#FF3B1A] text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-[#e02e10] transition"
+                  >
+                    <Plus size={14} /> Add Note
+                  </button>
+                )}
+
+                {/* Add note form */}
+                {addingNote && (
+                  <div className="bg-[#111] border border-[#FF3B1A]/30 rounded-xl p-4 space-y-3">
+                    <p className="text-white font-semibold text-sm">New Note</p>
+                    <input
+                      value={noteForm.title}
+                      onChange={e => setNoteForm(p => ({ ...p, title: e.target.value }))}
+                      placeholder="Note title..."
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-[#FF3B1A]"
+                    />
+                    <textarea
+                      value={noteForm.body}
+                      onChange={e => setNoteForm(p => ({ ...p, body: e.target.value }))}
+                      placeholder="Write your note here..."
+                      rows={4}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-[#FF3B1A] resize-none"
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-white/35 text-[10px] mb-1 block">Linked Folder</label>
+                        <select value={noteForm.folderId} onChange={e => setNoteForm(p => ({ ...p, folderId: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-[#FF3B1A]">
+                          <option value="">No folder</option>
+                          {DEMO_FOLDERS.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-white/35 text-[10px] mb-1 block">Status</label>
+                        <select value={noteForm.status} onChange={e => setNoteForm(p => ({ ...p, status: e.target.value as NoteStatus }))} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-[#FF3B1A]">
+                          {NOTE_STATUSES.map(s => <option key={s} value={s}>{NOTE_STATUS_META[s].label}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                      <div onClick={() => setNoteForm(p => ({ ...p, pinned: !p.pinned }))} className={`w-9 h-5 rounded-full relative transition ${noteForm.pinned ? 'bg-[#FF3B1A]' : 'bg-white/10'}`}>
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${noteForm.pinned ? 'left-4' : 'left-0.5'}`} />
+                      </div>
+                      <span className="text-white/45 text-xs">Pin this note</span>
+                    </label>
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={saveNote} className="flex-1 bg-[#FF3B1A] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-[#e02e10] transition">Save Note</button>
+                      <button onClick={() => setAddingNote(false)} className="px-4 text-white/40 hover:text-white text-sm transition">Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes list */}
+                {ordered.length === 0 && (
+                  <div className="text-center py-16 text-white/25">
+                    <StickyNote size={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">No notes yet.</p>
+                    <p className="text-xs mt-1 text-white/15">Add your first studio note above.</p>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {ordered.map(note => {
+                    const sm = NOTE_STATUS_META[note.status]
+                    const linkedFolder = DEMO_FOLDERS.find(f => f.id === note.folderId)
+                    return (
+                      <div
+                        key={note.id}
+                        className={`bg-[#111] border rounded-xl p-4 space-y-2.5 transition ${
+                          note.pinned ? 'border-[#FF3B1A]/25 ring-1 ring-[#FF3B1A]/10' : 'border-white/8'
+                        }`}
+                      >
+                        {/* Note header */}
+                        <div className="flex items-start gap-2">
+                          {note.pinned && <Pin size={12} className="text-[#FF3B1A] mt-1 shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-semibold text-sm leading-snug">{note.title}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => togglePin(note.id)}
+                              title={note.pinned ? 'Unpin' : 'Pin'}
+                              className="text-white/25 hover:text-[#FF3B1A] transition p-1"
+                            >
+                              {note.pinned ? <PinOff size={13} /> : <Pin size={13} />}
+                            </button>
+                            <button
+                              onClick={() => cycleStatus(note.id)}
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold transition hover:opacity-80 ${sm.color}`}
+                            >
+                              {sm.label}
+                            </button>
+                            {role === 'admin' && note.status !== 'archived' && (
+                              <button onClick={() => archiveNote(note.id)} className="text-white/20 hover:text-white/50 transition p-1" title="Archive">
+                                <Archive size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Note body */}
+                        <p className="text-white/65 text-sm leading-relaxed">{note.body}</p>
+
+                        {/* Note footer */}
+                        <div className="flex items-center gap-3 text-white/25 text-[10px] flex-wrap pt-0.5">
+                          <span>{note.createdBy}</span>
+                          <span>·</span>
+                          <span>{fmtRelative(note.createdAt)}</span>
+                          {linkedFolder && (
+                            <>
+                              <span>·</span>
+                              <button
+                                onClick={() => { setStudioView('folders'); setActiveFolder(linkedFolder) }}
+                                className="flex items-center gap-1 hover:text-[#FF3B1A] transition"
+                              >
+                                <FolderOpen size={9} /> {linkedFolder.name}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+
         </div>
       </div>
     </div>
