@@ -12,14 +12,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const ICON_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/icon/UGCfire.png";
+
 export const metadata: Metadata = {
-  title: "UGCFIRE — UGC Creator Platform",
+  title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
   description:
-    "The fastest way to manage, deliver, and scale user-generated content. Built for modern creators and brands.",
+    "A monthly AI-assisted UGC content subscription for brands that need consistent short-form videos without hiring a full content team.",
+  icons: {
+    icon: ICON_URL,
+    apple: ICON_URL,
+    shortcut: ICON_URL,
+  },
   openGraph: {
-    title: "UGCFIRE",
-    description: "UGC at the speed of fire.",
+    title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
+    description: "Your brand's content team. On subscription.",
     type: "website",
+    url: "https://ugcfire.com",
+    images: [
+      {
+        url: ICON_URL,
+        width: 1024,
+        height: 1024,
+        alt: "UGCFire",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
+    description: "Your brand's content team. On subscription.",
+    images: [ICON_URL],
   },
 };
 
