@@ -675,12 +675,6 @@ export default function Home() {
           ))}
         </div>
         <div className="nav-btns-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <a href="https://www.instagram.com/ugcfire" target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", color: "rgba(255,255,255,0.5)", transition: "color 0.2s" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#FF3B1A")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
-          >
-            <InstagramIcon size={18} />
-          </a>
           <a href="/login" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             Sign In
           </a>
