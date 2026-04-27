@@ -249,16 +249,17 @@ function FeatureCard({ icon, title, desc }: FeatureCardProps) {
   );
 }
 
+const REEL_VIDEO_URL = "https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128_httpss.mj.runVArsopscz9I_slow_motion_pers_c2fb5354-bceb-4ae0-8069-d65e46035d16_1.mp4";
+
 function ReelCard({
-  views,
-  revenue,
-  delta,
   label,
+  videoSrc,
 }: {
-  views: string;
-  revenue: string;
-  delta: string;
+  views?: string;
+  revenue?: string;
+  delta?: string;
   label: string;
+  videoSrc?: string;
 }) {
   return (
     <div
@@ -271,60 +272,32 @@ function ReelCard({
         flexShrink: 0,
       }}
     >
-      <div
-        style={{
-          height: 280,
-          background: "linear-gradient(145deg, #1f0a00, #2d1200, #1a1a1a)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
-        }}
-      >
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            background: "rgba(255,59,26,0.8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 18,
-          }}
-        >
-          ▶
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            background: "#22c55e",
-            color: "#fff",
-            fontSize: 10,
-            fontWeight: 700,
-            padding: "3px 8px",
-            borderRadius: 20,
-            letterSpacing: "0.05em",
-          }}
-        >
-          ACTIVE
+      <div style={{ position: "relative", height: 320 }}>
+        <video
+          src={videoSrc ?? REEL_VIDEO_URL}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+        <div style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          background: "#22c55e",
+          color: "#fff",
+          fontSize: 10,
+          fontWeight: 700,
+          padding: "3px 8px",
+          borderRadius: 20,
+          letterSpacing: "0.05em",
+        }}>
+          LIVE
         </div>
       </div>
       <div style={{ padding: "12px 14px" }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>{label}</div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Views</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{views}</div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Revenue</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{revenue}</div>
-            <div style={{ fontSize: 10, color: "#4ade80", fontWeight: 600 }}>{delta}</div>
-          </div>
-        </div>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.4 }}>{label}</div>
       </div>
     </div>
   );
