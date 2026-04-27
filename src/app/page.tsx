@@ -8,7 +8,7 @@ const BOOKING_URL = "#booking";
 
 interface StatCardProps {
   value: string;
-  label: string;
+  label?: string;
   delta?: string;
 }
 
@@ -208,10 +208,7 @@ function StatCard({ value, label, delta }: StatCardProps) {
       >
         {value}
       </div>
-      {delta && (
-        <div style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, marginBottom: 2 }}>{delta}</div>
-      )}
-      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, marginTop: 4 }}>{delta ?? label}</div>
     </div>
   );
 }
@@ -510,8 +507,8 @@ export default function Home() {
           <Image
             src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
             alt="UGC Fire"
-            width={240}
-            height={96}
+            width={160}
+            height={64}
             style={{ objectFit: "contain" }}
             unoptimized
           />
@@ -558,7 +555,7 @@ export default function Home() {
         minHeight: "100vh",
         display: "flex",
         alignItems: "flex-end",
-        padding: "0 3rem 5rem",
+        padding: "120px 3rem 5rem",
         overflow: "hidden",
       }}>
         <div style={{
@@ -624,7 +621,7 @@ export default function Home() {
         <div style={{ position: "relative", zIndex: 2, maxWidth: 1200, width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
             <span style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>
-              Monthly AI-assisted UGC content for brands
+              Monthly AI-Assisted Content For Brands
             </span>
           </div>
           <h1 style={{
@@ -636,9 +633,9 @@ export default function Home() {
             marginBottom: 32,
             maxWidth: 760,
           }}>
-            UGC Content<br />
-            Without Hiring<br />
-            <span style={fireStyle}>A Content Team.</span>
+            Your Brand&apos;s<br />
+            Content Team.<br />
+            <span style={fireStyle}>On Subscription.</span>
           </h1>
           <div style={{
             display: "flex",
@@ -654,21 +651,21 @@ export default function Home() {
                 lineHeight: 1.7,
                 marginBottom: 28,
               }}>
-                A monthly AI-assisted UGC subscription for brands that need scroll-stopping short-form videos, fresh creative, and content that matches their voice.
+                Monthly AI-assisted UGC content for brands that need consistent short-form videos, creative direction, and done-for-you content production.
               </p>
               <div style={{ display: "flex", gap: 14 }}>
                 <a href={BOOKING_URL} className="btn-fire" style={{ fontSize: 16, padding: "15px 36px", textDecoration: "none" }}>
-                  Book a Discovery Call
+                  Book a Call
                 </a>
                 <a href="#plans" className="btn-ghost" style={{ fontSize: 15, textDecoration: "none" }}>
-                  View Plans →
+                  See Plans →
                 </a>
               </div>
             </div>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <StatCard value="8 Videos" label="Growth Plan" />
-              <StatCard value="20 Videos" label="Scale Plan" />
-              <StatCard value="Monthly" label="Cancel Anytime" />
+              <StatCard value="8 VIDEOS" delta="Growth Plan" />
+              <StatCard value="20 VIDEOS" delta="Scale Plan" />
+              <StatCard value="MONTHLY" delta="Cancel Anytime" />
             </div>
           </div>
         </div>
