@@ -304,7 +304,7 @@ function ReelCard({
           borderRadius: 20,
           letterSpacing: "0.05em",
         }}>
-          LIVE
+          VIDEO
         </div>
       </div>
       <div style={{ padding: "12px 14px" }}>
