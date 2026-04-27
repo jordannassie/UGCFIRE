@@ -83,8 +83,22 @@ export default function SignupPage() {
   const btnPrimary = 'w-full bg-[#FF3B1A] text-white font-bold py-3 rounded-lg text-sm hover:bg-[#e02e10] transition disabled:opacity-50'
 
   return (
-    <div className="min-h-screen bg-[#080808] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+
+      {/* Fire background video */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+        style={{ opacity: 0.35 }}
+        src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/alluring_swan_07128__--ar_9151_--bs_1_--motion_high_--video_1_9a3a1ff2-5c55-4a2a-bc02-824ad4a0d14d_0.mp4"
+      />
+      {/* Dark gradient overlay */}
+      <div className="absolute inset-0 z-0" style={{ background: 'linear-gradient(135deg, rgba(8,8,8,0.88) 0%, rgba(8,8,8,0.78) 100%)' }} />
+
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <Link href="/">
             <Image
@@ -99,7 +113,7 @@ export default function SignupPage() {
           <p className="text-white/40 text-sm mt-2">Monthly AI-assisted UGC content</p>
         </div>
 
-        <div className="bg-[#111] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#111]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-8">
 
           {/* ── Forgot password view ── */}
           {mode === 'reset' && (
