@@ -1,7 +1,8 @@
 'use client';
 
 import Image from "next/image";
-import { useState, useEffect, type CSSProperties } from "react";
+import React, { useState, useEffect, type CSSProperties } from "react";
+import { Phone, Inbox, MessageSquare, CreditCard } from "lucide-react";
 
 // Later: replace this with your Google Calendar appointment link.
 const BOOKING_URL = "#booking";
@@ -815,146 +816,115 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="sec sec-v" style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
-        <div style={sectionHead}>
-          <div style={{ fontSize: 12, letterSpacing: "0.14em", color: "#FF3B1A", textTransform: "uppercase", fontWeight: 600, marginBottom: 12 }}>
-            How It Works
-          </div>
-          <h2 style={{ fontFamily: "var(--font-bebas)", fontSize: "clamp(48px, 5vw, 72px)", letterSpacing: "0.02em", color: "#fff", lineHeight: 1 }}>
-            A simple weekly content<br />
-            <span style={fireStyle}>system for your brand.</span>
-          </h2>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
-          {[
-            {
-              step: "01",
-              title: "Book a Discovery Call",
-              desc: "We learn your brand, offer, audience, voice, goals, and what type of content you need each month.",
-            },
-            {
-              step: "02",
-              title: "We Build Your Content Direction",
-              desc: "We create your hooks, angles, scripts, creative direction, and content plan so every video feels on-brand.",
-            },
-            {
-              step: "03",
-              title: "Content Is Uploaded Weekly",
-              desc: "Every week, your new UGC-style videos are uploaded into your client dashboard for review.",
-            },
-            {
-              step: "04",
-              title: "Review, Approve, and Post",
-              desc: "Review each video, request edits, approve final assets, and post across TikTok, Reels, Shorts, ads, landing pages, and social.",
-            },
-          ].map(({ step, title, desc }, i) => (
-            <div
-              key={i}
-              style={{
-                position: "relative",
-                padding: "32px 28px",
-                background: "rgba(255,255,255,0.025)",
-                border: "1px solid rgba(255,255,255,0.07)",
-                borderRadius: 16,
-              }}
-            >
-              <div style={{
-                fontFamily: "var(--font-bebas)",
-                fontSize: 72,
-                color: "rgba(255,59,26,0.12)",
-                lineHeight: 1,
-                position: "absolute",
-                top: 16,
-                right: 20,
-                letterSpacing: "-0.02em",
-                userSelect: "none",
-              }}>
-                {step}
-              </div>
-              <div style={{ fontSize: 13, color: "#FF3B1A", fontWeight: 600, marginBottom: 12, letterSpacing: "0.04em" }}>
-                Step {step}
-              </div>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 12, color: "#fff", lineHeight: 1.3 }}>
-                {title}
-              </div>
-              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CLIENT DASHBOARD ── */}
-      <section id="client-dashboard" className="sec sec-v" style={{
+      {/* ── HOW IT WORKS (merged) ── */}
+      <section id="how-it-works" className="sec sec-v" style={{
         padding: "100px 3rem",
         background: "linear-gradient(180deg, transparent 0%, rgba(255,59,26,0.03) 50%, transparent 100%)",
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={sectionHead}>
             <div style={{ fontSize: 12, letterSpacing: "0.14em", color: "#FF3B1A", textTransform: "uppercase", fontWeight: 600, marginBottom: 12 }}>
-              Client Dashboard
+              How It Works
             </div>
             <h2 style={{ fontFamily: "var(--font-bebas)", fontSize: "clamp(48px, 5vw, 72px)", letterSpacing: "0.02em", color: "#fff", lineHeight: 1 }}>
               Everything in <span style={fireStyle}>one place.</span>
             </h2>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.45)", marginTop: 16, maxWidth: 560, margin: "16px auto 0" }}>
-              When your brand signs in, you&apos;ll have a simple dashboard to manage your monthly content subscription, review weekly uploads, chat with our team, and see billing.
+              From discovery call to weekly content uploads, UGCFire gives your brand one simple place to manage content, feedback, and billing.
             </p>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20 }}>
-            {[
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, marginTop: 64 }}>
+            {([
               {
-                icon: "🗂️",
-                title: "Content Bins",
-                desc: "See your videos organized by status: Requested, In Production, Ready for Review, Approved, and Delivered.",
+                step: "01",
+                Icon: Phone,
+                title: "Discovery Call",
+                desc: "Start with a call so we can learn your brand, goals, offer, voice, and content needs.",
               },
               {
-                icon: "📥",
+                step: "02",
+                Icon: Inbox,
                 title: "Weekly Uploads",
-                desc: "New videos are uploaded each week so your brand always has fresh content ready to review and post.",
+                desc: "Fresh videos are uploaded each week into your dashboard, organized and ready for review.",
               },
               {
-                icon: "💬",
-                title: "Team Chat",
-                desc: "Message the UGCFire team, request changes, ask questions, and give feedback — all in one place.",
+                step: "03",
+                Icon: MessageSquare,
+                title: "Review & Team Chat",
+                desc: "Approve content, request edits, and message our team in one place so nothing gets lost.",
               },
               {
-                icon: "💳",
+                step: "04",
+                Icon: CreditCard,
                 title: "Billing & Invoices",
-                desc: "View your plan, invoices, billing history, and subscription details from your client portal.",
+                desc: "View your subscription, invoices, and billing details from your client dashboard anytime.",
               },
-            ].map(({ icon, title, desc }, i) => (
+            ] as { step: string; Icon: React.ElementType; title: string; desc: string }[]).map(({ step, Icon, title, desc }, i) => (
               <div
                 key={i}
                 style={{
-                  background: "rgba(255,255,255,0.03)",
+                  position: "relative",
+                  background: "rgba(255,255,255,0.025)",
                   border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: 16,
-                  padding: "28px 24px",
+                  borderRadius: 18,
+                  padding: "36px 28px 32px",
                   transition: "border-color 0.2s, background 0.2s",
+                  overflow: "hidden",
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,80,40,0.35)";
-                  (e.currentTarget as HTMLDivElement).style.background = "rgba(255,59,26,0.04)";
+                  (e.currentTarget as HTMLDivElement).style.background = "rgba(255,59,26,0.045)";
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)";
-                  (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.03)";
+                  (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.025)";
                 }}
               >
-                <div style={{ fontSize: 28, marginBottom: 14 }}>{icon}</div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 8, color: "#fff" }}>
+                {/* Ghost step number */}
+                <div style={{
+                  fontFamily: "var(--font-bebas)",
+                  fontSize: 96,
+                  color: "rgba(255,59,26,0.08)",
+                  lineHeight: 1,
+                  position: "absolute",
+                  bottom: -8,
+                  right: 16,
+                  letterSpacing: "-0.02em",
+                  userSelect: "none",
+                  pointerEvents: "none",
+                }}>
+                  {step}
+                </div>
+                {/* Icon */}
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "rgba(255,59,26,0.12)",
+                  border: "1px solid rgba(255,59,26,0.25)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 20,
+                }}>
+                  <Icon size={20} color="#FF3B1A" strokeWidth={1.75} />
+                </div>
+                {/* Step label */}
+                <div style={{ fontSize: 11, color: "#FF3B1A", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+                  Step {step}
+                </div>
+                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 10, lineHeight: 1.3 }}>
                   {title}
                 </div>
-                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>{desc}</div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.75 }}>{desc}</div>
               </div>
             ))}
           </div>
-          <div style={{ textAlign: "center", marginTop: 48 }}>
-            <a href="#login" className="btn-ghost" style={{ fontSize: 14, padding: "12px 28px", textDecoration: "none" }}>
-              Sign In to Your Dashboard
-            </a>
-          </div>
+
+          <p style={{ textAlign: "center", marginTop: 40, fontSize: 13, color: "rgba(255,255,255,0.25)" }}>
+            Your dashboard also includes content bins so videos stay organized by status.
+          </p>
         </div>
       </section>
 
