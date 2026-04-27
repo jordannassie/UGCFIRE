@@ -410,6 +410,7 @@ function TestimonialCard({ quote, name, handle, revenue }: TestimonialProps) {
 
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const fireStyle: CSSProperties = { color: "#FF3B1A" };
   const sectionHead: CSSProperties = {
     textAlign: "center",
@@ -483,6 +484,80 @@ export default function Home() {
           transition: border-color 0.2s, color 0.2s;
         }
         .btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+
+        /* ── Mobile nav drawer ── */
+        .mobile-menu {
+          display: none;
+          position: fixed;
+          top: 68px;
+          left: 0;
+          right: 0;
+          background: rgba(8,8,8,0.97);
+          backdropFilter: blur(16px);
+          padding: 24px 1.5rem 32px;
+          z-index: 99;
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+          flex-direction: column;
+          gap: 20px;
+        }
+        .mobile-menu.open { display: flex; }
+        .mobile-menu a {
+          font-size: 18px;
+          color: rgba(255,255,255,0.7);
+          text-decoration: none;
+          font-weight: 500;
+        }
+        .mobile-menu a:hover { color: #fff; }
+        .hamburger {
+          display: none;
+          flex-direction: column;
+          gap: 5px;
+          cursor: pointer;
+          padding: 4px;
+          background: none;
+          border: none;
+        }
+        .hamburger span {
+          display: block;
+          width: 22px;
+          height: 2px;
+          background: #fff;
+          border-radius: 2px;
+          transition: all 0.2s;
+        }
+
+        @media (max-width: 768px) {
+          /* Nav */
+          .nav-links { display: none !important; }
+          .nav-btns-desktop { display: none !important; }
+          .hamburger { display: flex !important; }
+          .hamburger-cta { display: inline-flex !important; }
+
+          /* Hero */
+          .hero-badge { display: none !important; }
+          .hero-bottom { flex-direction: column !important; align-items: flex-start !important; }
+          .hero-stats { width: 100% !important; justify-content: flex-start !important; }
+          .stat-card { min-width: 0 !important; flex: 1 1 calc(33% - 12px) !important; }
+
+          /* Section padding */
+          .sec { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+          .sec-v { padding-top: 64px !important; padding-bottom: 64px !important; }
+
+          /* Plans */
+          .plans-grid { grid-template-columns: 1fr !important; }
+
+          /* Booking */
+          .booking-inner { flex-direction: column !important; gap: 40px !important; }
+          .booking-left { flex: 1 1 100% !important; }
+          .booking-right { flex: 1 1 100% !important; max-width: 100% !important; width: 100% !important; }
+
+          /* Footer */
+          .footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .footer-wrap { padding: 48px 1.5rem 24px !important; }
+
+          /* Testimonials + FAQ */
+          .proof-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       <nav
@@ -513,7 +588,7 @@ export default function Home() {
             unoptimized
           />
         </a>
-        <div style={{ display: "flex", alignItems: "center", gap: 40 }}>
+        <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 40 }}>
           {[
             { label: "How It Works", href: "#how-it-works" },
             { label: "Plans", href: "#plans" },
@@ -537,7 +612,7 @@ export default function Home() {
             </a>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="nav-btns-desktop" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <a href="#login" className="btn-ghost" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none" }}>
             Sign In
           </a>
@@ -548,9 +623,40 @@ export default function Home() {
             Book a Call
           </a>
         </div>
+        {/* Mobile: Book a Call + Hamburger */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <a href={BOOKING_URL} className="btn-fire hamburger-cta" style={{ fontSize: 13, padding: "9px 18px", textDecoration: "none", display: "none" }}>
+            Book a Call
+          </a>
+          <button
+            className="hamburger"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span style={{ transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
+            <span style={{ opacity: menuOpen ? 0 : 1 }} />
+            <span style={{ transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />
+          </button>
+        </div>
       </nav>
 
-      <section style={{
+      {/* Mobile menu drawer */}
+      <div className={`mobile-menu${menuOpen ? " open" : ""}`}>
+        {[
+          { label: "How It Works", href: "#how-it-works" },
+          { label: "Plans", href: "#plans" },
+          { label: "Results", href: "#results" },
+          { label: "FAQ", href: "#faq" },
+        ].map(({ label, href }) => (
+          <a key={label} href={href} onClick={() => setMenuOpen(false)}>{label}</a>
+        ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+          <a href="#login" className="btn-ghost" style={{ textDecoration: "none", textAlign: "center" }}>Sign In</a>
+          <a href={BOOKING_URL} className="btn-fire" style={{ textDecoration: "none", textAlign: "center" }} onClick={() => setMenuOpen(false)}>Book a Call</a>
+        </div>
+      </div>
+
+      <section className="sec sec-v" style={{
         position: "relative",
         minHeight: "100vh",
         display: "flex",
@@ -586,7 +692,7 @@ export default function Home() {
           zIndex: 1,
           background: "linear-gradient(to bottom, transparent 30%, rgba(8,8,8,0.95) 100%)",
         }} />
-        <div style={{
+        <div className="hero-badge" style={{
           position: "absolute",
           top: 90,
           right: "3rem",
@@ -647,7 +753,7 @@ export default function Home() {
             Content Team.<br />
             <span style={fireStyle}>On Subscription.</span>
           </h1>
-          <div style={{
+          <div className="hero-bottom" style={{
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "space-between",
@@ -672,7 +778,7 @@ export default function Home() {
                 </a>
               </div>
             </div>
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <div className="hero-stats" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <StatCard value="8 VIDEOS" delta="Growth Plan" />
               <StatCard value="20 VIDEOS" delta="Scale Plan" />
               <StatCard value="MONTHLY" delta="Cancel Anytime" />
@@ -703,8 +809,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section style={{ padding: "100px 0", overflow: "hidden" }}>
-        <div style={{ textAlign: "center", marginBottom: 56, padding: "0 3rem" }}>
+      <section className="sec-v" style={{ padding: "100px 0", overflow: "hidden" }}>
+        <div className="sec" style={{ textAlign: "center", marginBottom: 56, padding: "0 3rem" }}>
           <div style={{
             fontSize: 12,
             letterSpacing: "0.14em",
@@ -736,7 +842,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="plans" style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
+      <section id="plans" className="sec sec-v" style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
         <div style={sectionHead}>
           <div style={{
             fontSize: 12,
@@ -764,7 +870,7 @@ export default function Home() {
         </div>
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           gap: 24,
           alignItems: "start",
         }}>
@@ -828,7 +934,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section style={{
+      <section className="sec sec-v" style={{
         padding: "100px 3rem",
         background: "linear-gradient(180deg, transparent 0%, rgba(255,59,26,0.04) 50%, transparent 100%)",
       }}>
@@ -857,9 +963,9 @@ export default function Home() {
           </div>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: 20,
-          }}>
+          }} className="proof-grid">
             {TESTIMONIALS_NEW.map((t, i) => (
               <div
                 key={i}
@@ -897,7 +1003,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="faq" style={{ padding: "100px 3rem", maxWidth: 860, margin: "0 auto" }}>
+      <section id="faq" className="sec sec-v" style={{ padding: "100px 3rem", maxWidth: 860, margin: "0 auto" }}>
         <div style={{ ...sectionHead, textAlign: "left", marginBottom: 48 }}>
           <div style={{
             fontSize: 12,
@@ -925,15 +1031,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="booking" style={{
+      <section id="booking" className="sec sec-v" style={{
         padding: "100px 3rem",
         background: "linear-gradient(135deg, rgba(255,59,26,0.08) 0%, rgba(255,59,26,0.02) 100%)",
         borderTop: "1px solid rgba(255,59,26,0.15)",
         borderBottom: "1px solid rgba(255,59,26,0.15)",
       }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="booking-inner" style={{ maxWidth: 1200, margin: "0 auto", display: "flex", gap: 64, flexWrap: "wrap", alignItems: "center" }}>
           {/* Left: copy */}
-          <div style={{ flex: "1 1 340px" }}>
+          <div className="booking-left" style={{ flex: "1 1 340px" }}>
             <h2 style={{
               fontFamily: "var(--font-bebas)",
               fontSize: "clamp(48px, 5vw, 80px)",
@@ -944,7 +1050,7 @@ export default function Home() {
             }}>
               See if UGCFire<br />is the right fit<br />
               <span style={{ fontStyle: "italic", fontFamily: "'DM Sans', sans-serif", fontSize: "clamp(28px, 3vw, 46px)", fontWeight: 400, color: "rgba(255,255,255,0.55)" }}>
-                (it probably is)
+                (it totally is)
               </span>
             </h2>
             <p style={{ fontSize: 16, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 32, maxWidth: 400 }}>
@@ -956,7 +1062,7 @@ export default function Home() {
           </div>
 
           {/* Right: calendar mock */}
-          <div style={{
+          <div className="booking-right" style={{
             flex: "1 1 320px",
             background: "rgba(20,20,20,0.95)",
             border: "1px solid rgba(255,255,255,0.1)",
@@ -1017,13 +1123,13 @@ export default function Home() {
         </div>
       </section>
 
-      <footer style={{
+      <footer className="footer-wrap" style={{
         background: "#060606",
         borderTop: "1px solid rgba(255,255,255,0.06)",
         padding: "64px 3rem 32px",
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{
+          <div className="footer-grid" style={{
             display: "grid",
             gridTemplateColumns: "2fr 1fr 1fr 1fr",
             gap: 48,
