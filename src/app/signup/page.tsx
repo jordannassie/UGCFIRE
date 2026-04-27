@@ -60,11 +60,11 @@ export default function SignupPage() {
     const seedRes = await fetch('/api/demo/seed', { method: 'POST' })
     const seedJson = await seedRes.json()
     if (!seedRes.ok || !seedJson.success) {
-      setError(
-        seedJson.error?.includes('SUPABASE_SERVICE_ROLE_KEY')
-          ? 'Demo seed needs SUPABASE_SERVICE_ROLE_KEY in your environment. Add it to .env.local and Netlify.'
-          : `Demo setup failed: ${seedJson.error ?? 'Unknown error. Check Supabase connection and service role key.'}`
-      )
+      const debug = seedJson.debug
+      const debugMsg = debug
+        ? ` (hasURL:${debug.hasSupabaseUrl} hasKey:${debug.hasServiceRoleKey} keyLen:${debug.serviceRoleKeyLength})`
+        : ''
+      setError(`Demo setup failed: ${seedJson.error ?? 'Unknown error.'}${debugMsg}`)
       setDemoStatus('')
       setLoading(false)
       return

@@ -9,20 +9,67 @@ const ADMIN_PASSWORD = 'admin123456'
 const CLIENT_EMAIL = 'demo@ugcfire.com'
 const CLIENT_PASSWORD = 'demo123456'
 
+function getEnv() {
+  const supabaseUrl =
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  return { supabaseUrl, serviceRoleKey }
+}
+
 function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set. Add it to your environment variables (never in browser code).')
+  const { supabaseUrl, serviceRoleKey } = getEnv()
+  if (!supabaseUrl || !serviceRoleKey) {
+    const { supabaseUrl: u, serviceRoleKey: k } = getEnv()
+    throw Object.assign(new Error('Missing env vars'), {
+      debug: {
+        hasSupabaseUrl: Boolean(u),
+        hasServiceRoleKey: Boolean(k),
+        serviceRoleKeyLength: k ? k.length : 0,
+      },
+    })
   }
-  return createClient(url, serviceKey, {
+  return createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }
 
+// GET /api/demo/seed — debug env check (never returns actual key values)
+export async function GET() {
+  const { supabaseUrl, serviceRoleKey } = getEnv()
+  return NextResponse.json({
+    hasSupabaseUrl: Boolean(supabaseUrl),
+    hasServiceRoleKey: Boolean(serviceRoleKey),
+    serviceRoleKeyLength: serviceRoleKey ? serviceRoleKey.length : 0,
+    ready: Boolean(supabaseUrl && serviceRoleKey),
+  })
+}
+
 export async function POST() {
+  const { supabaseUrl, serviceRoleKey } = getEnv()
+
+  // Return debug-safe diagnostic instead of a generic error
+  if (!supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Missing required environment variables on the server.',
+        debug: {
+          hasSupabaseUrl: Boolean(supabaseUrl),
+          hasServiceRoleKey: Boolean(serviceRoleKey),
+          serviceRoleKeyLength: serviceRoleKey ? serviceRoleKey.length : 0,
+        },
+      },
+      { status: 500 }
+    )
+  }
+
   try {
-    const supabase = getAdminClient()
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
     const results: string[] = []
 
     // ── 1. Ensure plans ────────────────────────────────────────────────────
