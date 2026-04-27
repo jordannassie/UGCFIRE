@@ -5,6 +5,7 @@ import React, { useState, useEffect, type CSSProperties } from "react";
 import { Phone, Inbox, MessageSquare, CreditCard, Star } from "lucide-react";
 
 const BOOKING_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ1r9yLOh-Z6nt5dZAgnKaR9iXZ6ea-kOkrJxLqctzq_0C4uLmNgX2FpB6zTQl26FqmN21-zAquz?gv=true";
+const SUPABASE_URL = "https://yawgvntvhpgittvntihx.supabase.co";
 
 interface StatCardProps {
   value: string;
@@ -398,6 +399,20 @@ function StarRating() {
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Calendar booking state
+  interface CalSlot { iso: string; label: string }
+  const [calSlots, setCalSlots] = useState<CalSlot[]>([]);
+  const [calLoading, setCalLoading] = useState(true);
+  const [selectedSlot, setSelectedSlot] = useState<CalSlot | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [bookName, setBookName] = useState("");
+  const [bookEmail, setBookEmail] = useState("");
+  const [bookBrand, setBookBrand] = useState("");
+  const [bookStatus, setBookStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [bookMeetLink, setBookMeetLink] = useState<string | null>(null);
+  const [bookError, setBookError] = useState<string | null>(null);
+
   const fireStyle: CSSProperties = { color: "#FF3B1A" };
   const sectionHead: CSSProperties = {
     textAlign: "center",
@@ -409,6 +424,54 @@ export default function Home() {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Load real availability from Supabase Edge Function
+  useEffect(() => {
+    const today = new Date();
+    // Default to the next weekday for demo
+    const next = new Date(today);
+    if (next.getDay() === 0) next.setDate(next.getDate() + 1);
+    if (next.getDay() === 6) next.setDate(next.getDate() + 2);
+    const iso = next.toISOString().split("T")[0];
+
+    setCalLoading(true);
+    fetch(`${SUPABASE_URL}/functions/v1/calendar-availability?date=${iso}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setCalSlots(data.slots ?? []);
+        setCalLoading(false);
+      })
+      .catch(() => {
+        setCalSlots([]);
+        setCalLoading(false);
+      });
+  }, []);
+
+  async function handleBookSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedSlot || !bookName || !bookEmail) return;
+    setBookStatus("loading");
+    setBookError(null);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/book-call`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slotIso: selectedSlot.iso,
+          name: bookName,
+          email: bookEmail,
+          brandName: bookBrand,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Booking failed");
+      setBookMeetLink(data.meetLink ?? null);
+      setBookStatus("success");
+    } catch (err) {
+      setBookError((err as Error).message);
+      setBookStatus("error");
+    }
+  }
 
   return (
     <>
@@ -1242,50 +1305,173 @@ export default function Home() {
 
             {/* Time slot label */}
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
-              Available Times — Wed 14
+              {calLoading ? "Loading availability…" : calSlots.length > 0 ? "Available Times" : "No slots — pick another day"}
             </div>
 
-            {/* Clickable time slots */}
-            {["10:00am","10:30am","11:00am","1:00pm"].map(t => (
+            {/* Dynamic time slots from Edge Function */}
+            {calLoading ? (
+              <div style={{ textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Checking calendar…</div>
+            ) : calSlots.length > 0 ? (
+              calSlots.map((slot) => (
+                <button
+                  key={slot.iso}
+                  onClick={() => { setSelectedSlot(slot); setShowModal(true); setBookStatus("idle"); setBookName(""); setBookEmail(""); setBookBrand(""); setBookMeetLink(null); setBookError(null); }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: "11px 14px",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 10,
+                    marginBottom: 8,
+                    fontSize: 14,
+                    color: "rgba(255,255,255,0.7)",
+                    textAlign: "center",
+                    background: "transparent",
+                    cursor: "pointer",
+                    transition: "border-color 0.2s, background 0.2s, color 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,59,26,0.5)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,59,26,0.08)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.08)";
+                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.7)";
+                  }}
+                >
+                  {slot.label}
+                </button>
+              ))
+            ) : (
               <a
-                key={t}
                 href={BOOKING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: "block",
-                  padding: "11px 14px",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 10,
-                  marginBottom: 8,
-                  fontSize: 14,
-                  color: "rgba(255,255,255,0.7)",
-                  textAlign: "center",
-                  textDecoration: "none",
-                  transition: "border-color 0.2s, background 0.2s, color 0.2s",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,59,26,0.5)";
-                  (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,59,26,0.08)";
-                  (e.currentTarget as HTMLAnchorElement).style.color = "#fff";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.08)";
-                  (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
-                  (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)";
-                }}
+                style={{ display: "block", padding: "11px 14px", border: "1px solid rgba(255,59,26,0.3)", borderRadius: 10, marginBottom: 8, fontSize: 14, color: "#FF3B1A", textAlign: "center", textDecoration: "none" }}
               >
-                {t}
+                Open Google Calendar →
               </a>
-            ))}
+            )}
 
             <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
-              Select a time to book through Google Calendar.
+              Select a time to confirm your discovery call.
             </p>
           </div>
         </div>
       </section>
+
+      {/* Booking Modal */}
+      {showModal && (
+        <div
+          onClick={() => setShowModal(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#111", border: "1px solid rgba(255,59,26,0.2)",
+              borderRadius: 20, padding: "36px 32px", maxWidth: 440, width: "100%",
+              boxShadow: "0 0 80px rgba(255,59,26,0.15)",
+            }}
+          >
+            {bookStatus === "success" ? (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🔥</div>
+                <h3 style={{ fontFamily: "var(--font-bebas)", fontSize: 32, color: "#fff", marginBottom: 8 }}>You&apos;re Booked!</h3>
+                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 15, marginBottom: 8, lineHeight: 1.6 }}>
+                  Your 20-minute discovery call is confirmed. Check your email for the invite.
+                </p>
+                {bookMeetLink && (
+                  <a
+                    href={bookMeetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-block", marginTop: 8, padding: "12px 24px", background: "#FF3B1A", color: "#fff", borderRadius: 10, textDecoration: "none", fontWeight: 600, fontSize: 14 }}
+                  >
+                    Open Google Meet Link
+                  </a>
+                )}
+                <button
+                  onClick={() => setShowModal(false)}
+                  style={{ display: "block", margin: "20px auto 0", background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", fontSize: 13, cursor: "pointer" }}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                <h3 style={{ fontFamily: "var(--font-bebas)", fontSize: 28, color: "#fff", marginBottom: 4 }}>
+                  Book Your Discovery Call
+                </h3>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>
+                  {selectedSlot?.label} — 20 min via Google Meet
+                </p>
+                <form onSubmit={handleBookSubmit}>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Your Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={bookName}
+                      onChange={(e) => setBookName(e.target.value)}
+                      placeholder="Jane Smith"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Email Address *</label>
+                    <input
+                      type="email"
+                      required
+                      value={bookEmail}
+                      onChange={(e) => setBookEmail(e.target.value)}
+                      placeholder="you@brand.com"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Brand Name</label>
+                    <input
+                      type="text"
+                      value={bookBrand}
+                      onChange={(e) => setBookBrand(e.target.value)}
+                      placeholder="Your brand or company"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }}
+                    />
+                  </div>
+                  {bookError && (
+                    <p style={{ color: "#FF3B1A", fontSize: 13, marginBottom: 14, textAlign: "center" }}>{bookError}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={bookStatus === "loading"}
+                    style={{
+                      width: "100%", padding: "14px", background: bookStatus === "loading" ? "rgba(255,59,26,0.5)" : "#FF3B1A",
+                      color: "#fff", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: bookStatus === "loading" ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {bookStatus === "loading" ? "Booking…" : "Confirm Discovery Call"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    style={{ display: "block", margin: "14px auto 0", background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 13, cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <footer className="footer-wrap" style={{
         background: "#060606",
