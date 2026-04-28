@@ -981,239 +981,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Strategy AI Section ───────────────────────────────────────────── */}
-      <section style={{ background: "#FF3B1A", padding: "90px 0 80px" }}>
-        <div className="sec" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 2rem" }}>
-          <div style={{
-            display: "flex",
-            gap: 72,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}>
-
-            {/* ── Left column ── */}
-            <div style={{ flex: "1 1 340px", minWidth: 0 }}>
-
-              {/* Eyebrow */}
-              <div style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(0,0,0,0.22)",
-                border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: 999,
-                padding: "5px 14px",
-                marginBottom: 24,
-              }}>
-                <span style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: "#fff", display: "inline-block",
-                }} />
-                <span style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  color: "#fff",
-                  textTransform: "uppercase",
-                }}>Our Process</span>
-              </div>
-
-              {/* Headline */}
-              <h2 style={{
-                fontFamily: "var(--font-bebas)",
-                fontSize: "clamp(52px, 5.5vw, 84px)",
-                letterSpacing: "0.01em",
-                color: "#fff",
-                lineHeight: 0.95,
-                marginBottom: 20,
-              }}>
-                How Strategy AI<br />Works
-              </h2>
-
-              {/* Subheadline */}
-              <p style={{
-                fontSize: 17,
-                color: "rgba(255,255,255,0.82)",
-                lineHeight: 1.6,
-                marginBottom: 36,
-                maxWidth: 420,
-              }}>
-                Strategy AI turns your brand, content, and competition into a clear content plan and marketing direction.
-              </p>
-
-              {/* Feature cards */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 40 }}>
-                {[
-                  {
-                    Icon: Video,
-                    title: "Content Strategy",
-                    desc: "We analyze your brand, audience, and goals to build content that actually moves your business forward.",
-                  },
-                  {
-                    Icon: Users,
-                    title: "Competitor Insights",
-                    desc: "We review your competitors and category to find opportunities, winning angles, and content gaps.",
-                  },
-                  {
-                    Icon: TrendingUp,
-                    title: "Marketing Direction",
-                    desc: "Every video comes with strategic direction — hooks, CTA ideas, content goals, and how to market it online.",
-                  },
-                ].map(({ Icon, title, desc }) => (
-                  <div key={title} style={{
-                    background: "rgba(0,0,0,0.18)",
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: 14,
-                    padding: "16px 20px",
-                    display: "flex",
-                    gap: 16,
-                    alignItems: "flex-start",
-                  }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: "rgba(0,0,0,0.25)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0,
-                    }}>
-                      <Icon size={18} color="#fff" />
-                    </div>
-                    <div>
-                      <p style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontWeight: 700,
-                        fontSize: 13,
-                        letterSpacing: "0.06em",
-                        color: "#fff",
-                        textTransform: "uppercase",
-                        marginBottom: 4,
-                      }}>{title}</p>
-                      <p style={{ fontSize: 13.5, color: "rgba(255,255,255,0.72)", lineHeight: 1.55 }}>{desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <a
-                href={BOOKING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 10,
-                  background: "#fff",
-                  color: "#FF3B1A",
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 15,
-                  letterSpacing: "0.04em",
-                  padding: "14px 30px",
-                  borderRadius: 10,
-                  textDecoration: "none",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
-                  transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)"
-                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.24)"
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLAnchorElement).style.transform = ""
-                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.18)"
-                }}
-              >
-                Book a Call →
-              </a>
-            </div>
-
-            {/* ── Right column: Funnel ── */}
-            <div style={{
-              flex: "1 1 320px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              minWidth: 0,
-            }}>
-
-              {/* Down-arrows feeding into funnel */}
-              <div style={{ display: "flex", gap: 28, marginBottom: 10 }}>
-                {[0,1,2,3,4].map(i => (
-                  <svg key={i} width="16" height="22" viewBox="0 0 16 22" fill="none">
-                    <path d="M8 0 L8 16 M2 10 L8 18 L14 10" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                ))}
-              </div>
-
-              {/* Funnel layers — each is a full-width div clipped to a trapezoid */}
-              <div style={{ width: "100%", maxWidth: 380, position: "relative" }}>
-                {[
-                  { label: "BRAND",       Icon: Building2,  tl: 0,  tr: 100, bl: 8,  br: 92  },
-                  { label: "COMPETITORS", Icon: Users,       tl: 8,  tr: 92,  bl: 16, br: 84  },
-                  { label: "CONTENT",     Icon: Video,       tl: 16, tr: 84,  bl: 24, br: 76  },
-                  { label: "STRATEGY",    Icon: Brain,       tl: 24, tr: 76,  bl: 32, br: 68  },
-                  { label: "GROWTH",      Icon: TrendingUp,  tl: 32, tr: 68,  bl: 40, br: 60  },
-                ].map(({ label, Icon, tl, tr, bl, br }, i) => (
-                  <div
-                    key={label}
-                    style={{
-                      clipPath: `polygon(${tl}% 0, ${tr}% 0, ${br}% 100%, ${bl}% 100%)`,
-                      background: i % 2 === 0 ? "#ffffff" : "#f2f2f2",
-                      height: 78,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 11,
-                      marginTop: i > 0 ? -1 : 0,
-                      position: "relative",
-                    }}
-                  >
-                    <Icon size={17} color="#FF3B1A" />
-                    <span style={{
-                      fontFamily: "var(--font-bebas)",
-                      fontSize: 22,
-                      letterSpacing: "0.08em",
-                      color: "#111",
-                    }}>{label}</span>
-                  </div>
-                ))}
-
-                {/* Bottom glow / output */}
-                <div style={{
-                  margin: "0 auto",
-                  width: "20%",
-                  height: 28,
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%)",
-                  clipPath: "polygon(0% 0, 100% 0, 80% 100%, 20% 100%)",
-                }} />
-                <div style={{ display: "flex", justifyContent: "center", marginTop: -6 }}>
-                  <div style={{
-                    width: 80,
-                    height: 18,
-                    borderRadius: "50%",
-                    background: "radial-gradient(ellipse at center, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 75%)",
-                    filter: "blur(4px)",
-                  }} />
-                </div>
-              </div>
-
-              {/* Tagline below funnel */}
-              <p style={{
-                marginTop: 24,
-                fontSize: 13,
-                color: "rgba(255,255,255,0.60)",
-                textAlign: "center",
-                letterSpacing: "0.04em",
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 600,
-                textTransform: "uppercase",
-              }}>Brand → Strategy → Growth</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* ── End Strategy AI Section ─────────────────────────────────────────── */}
 
       <section id="results" className="sec-v" style={{ padding: "100px 0", overflow: "hidden" }}>
         <div className="sec" style={{ textAlign: "center", marginBottom: 56, padding: "0 3rem" }}>
@@ -1368,6 +1135,142 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      {/* ── Strategy AI Section ───────────────────────────────────────────── */}
+      <section style={{ background: "#FF3B1A", padding: "100px 0" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 2rem" }}>
+          <div style={{ display: "flex", gap: 80, alignItems: "center", flexWrap: "wrap" }}>
+
+            {/* ── Left column ── */}
+            <div style={{ flex: "1 1 360px", minWidth: 0 }}>
+
+              {/* Eyebrow */}
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.18)",
+                borderRadius: 999, padding: "5px 14px", marginBottom: 24,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", display: "inline-block" }} />
+                <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "#fff", textTransform: "uppercase" }}>
+                  Our Process
+                </span>
+              </div>
+
+              {/* Headline */}
+              <h2 style={{
+                fontFamily: "var(--font-bebas)", fontSize: "clamp(48px, 5vw, 76px)",
+                letterSpacing: "0.01em", color: "#fff", lineHeight: 0.95, marginBottom: 20,
+              }}>
+                We Build Your Strategy<br />With AI
+              </h2>
+
+              {/* Subheadline */}
+              <p style={{ fontSize: 17, color: "rgba(255,255,255,0.82)", lineHeight: 1.65, marginBottom: 40, maxWidth: 400 }}>
+                Every piece of content starts with strategy — hooks, angles, CTA ideas, and marketing direction.
+              </p>
+
+              {/* Feature cards */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 44 }}>
+                {([
+                  { icon: Video,      title: "Content Strategy",    desc: "We analyze your brand, audience, and goals to build content that actually moves your business forward." },
+                  { icon: Users,      title: "Competitor Insights",  desc: "We review your competitors and category to find opportunities, winning angles, and content gaps." },
+                  { icon: TrendingUp, title: "Marketing Direction",  desc: "Every video comes with strategic direction — hooks, CTA ideas, content goals, and how to market it online." },
+                ] as { icon: React.ElementType; title: string; desc: string }[]).map(({ icon: Icon, title, desc }) => (
+                  <div key={title} style={{
+                    background: "rgba(0,0,0,0.20)", border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: 14, padding: "18px 20px",
+                    display: "flex", gap: 16, alignItems: "flex-start",
+                    boxShadow: "0 2px 16px rgba(0,0,0,0.10)",
+                  }}>
+                    <div style={{
+                      width: 42, height: 42, borderRadius: 10, flexShrink: 0,
+                      background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <Icon size={18} color="#fff" />
+                    </div>
+                    <div>
+                      <p style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: "0.10em", color: "#fff", textTransform: "uppercase", marginBottom: 5 }}>
+                        {title}
+                      </p>
+                      <p style={{ fontSize: 13.5, color: "rgba(255,255,255,0.72)", lineHeight: 1.6 }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <FireButton
+                href={BOOKING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-fire"
+                style={{ fontSize: 15, padding: "14px 32px", textDecoration: "none", display: "inline-block" }}
+              >
+                Book a Call
+              </FireButton>
+            </div>
+
+            {/* ── Right column: Funnel ── */}
+            <div style={{ flex: "1 1 320px", display: "flex", flexDirection: "column", alignItems: "center", minWidth: 0 }}>
+
+              {/* Input arrows */}
+              <div style={{ display: "flex", justifyContent: "space-around", width: "100%", maxWidth: 380, marginBottom: 6 }}>
+                {[0,1,2,3,4].map(i => (
+                  <svg key={i} width="18" height="34" viewBox="0 0 18 34" fill="none">
+                    <line x1="9" y1="0" x2="9" y2="22" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M3 17 L9 25 L15 17" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ))}
+              </div>
+
+              {/* Funnel layers — each wrapper carries the drop-shadow so clip-path doesn't clip it */}
+              <div style={{ width: "100%", maxWidth: 380, display: "flex", flexDirection: "column", gap: 3 }}>
+                {([
+                  { label: "BRAND",       icon: Building2,  tl:  0, tr: 100, bl:  9, br: 91, bg: "linear-gradient(180deg,#ffffff 0%,#ebebeb 100%)" },
+                  { label: "COMPETITORS", icon: Users,       tl:  9, tr:  91, bl: 18, br: 82, bg: "linear-gradient(180deg,#f5f5f5 0%,#e2e2e2 100%)" },
+                  { label: "CONTENT",     icon: Video,       tl: 18, tr:  82, bl: 27, br: 73, bg: "linear-gradient(180deg,#eeeeee 0%,#d8d8d8 100%)" },
+                  { label: "STRATEGY",    icon: Brain,       tl: 27, tr:  73, bl: 36, br: 64, bg: "linear-gradient(180deg,#e6e6e6 0%,#d0d0d0 100%)" },
+                  { label: "GROWTH",      icon: TrendingUp,  tl: 36, tr:  64, bl: 44, br: 56, bg: "linear-gradient(180deg,#dedede 0%,#c8c8c8 100%)" },
+                ] as { label: string; icon: React.ElementType; tl: number; tr: number; bl: number; br: number; bg: string }[]).map(({ label, icon: Icon, tl, tr, bl, br, bg }, i) => (
+                  <div key={label} style={{ filter: `drop-shadow(0px ${8 - i}px ${12 - i}px rgba(0,0,0,${(0.22 - i * 0.02).toFixed(2)}))` }}>
+                    <div style={{
+                      clipPath: `polygon(${tl}% 0,${tr}% 0,${br}% 100%,${bl}% 100%)`,
+                      background: bg,
+                      height: 74,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                    }}>
+                      <Icon size={18} color="#CC2D0F" />
+                      <span style={{ fontFamily: "var(--font-bebas)", fontSize: 22, letterSpacing: "0.08em", color: "#1a1a1a" }}>
+                        {label}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Output glow below funnel */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 0 }}>
+                <div style={{ width: 46, height: 26, background: "linear-gradient(180deg, rgba(222,222,222,0.85) 0%, rgba(255,255,255,0) 100%)" }} />
+                <div style={{
+                  width: 130, height: 18, borderRadius: "50%",
+                  background: "radial-gradient(ellipse at center, rgba(255,255,255,0.50) 0%, transparent 70%)",
+                  filter: "blur(5px)", marginTop: -6,
+                }} />
+              </div>
+
+              {/* Tagline */}
+              <p style={{
+                marginTop: 18, fontSize: 12, color: "rgba(255,255,255,0.55)",
+                fontFamily: "'Syne', sans-serif", fontWeight: 600, letterSpacing: "0.10em",
+                textTransform: "uppercase", textAlign: "center",
+              }}>Brand → Strategy → Growth</p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+      {/* ── End Strategy AI Section ─────────────────────────────────────────── */}
 
       <section id="plans" className="sec sec-v" style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
         <div style={sectionHead}>
