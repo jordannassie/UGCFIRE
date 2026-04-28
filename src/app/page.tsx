@@ -1910,7 +1910,7 @@ export default function Home() {
             gap: 12,
           }}>
             <span style={{ fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
-              © {new Date().getFullYear()} UGC Fire, Inc. All rights reserved.
+              © 2026 Only Good, LLC. All rights reserved.
             </span>
             <span style={{ fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
               Built for performance marketers 🔥
