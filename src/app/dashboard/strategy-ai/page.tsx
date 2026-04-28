@@ -8,6 +8,8 @@ import {
   BarChart2, Eye, Flame, AlertCircle, BookOpen, Send,
 } from 'lucide-react'
 
+// Zap already imported above
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ContentIdea {
@@ -53,7 +55,7 @@ interface BrandBrain {
 
 // ─── Keys ─────────────────────────────────────────────────────────────────────
 
-const BRAIN_KEY  = 'ugcfire_brand_brain'
+const BRAIN_KEY  = 'ugcfire_super_brain'      // new key: Super Brain stores answers
 const RUNS_KEY   = 'ugcfire_strategy_runs'
 const BRIEFS_KEY = 'ugcfire_content_briefs'
 
@@ -229,8 +231,24 @@ export default function StrategyAIPage() {
 
   useEffect(() => {
     try {
+      // Super Brain stores { answers: {...}, updatedAt: '...' }
       const b = localStorage.getItem(BRAIN_KEY)
-      if (b) setBrain(JSON.parse(b))
+      if (b) {
+        const parsed = JSON.parse(b)
+        // Map answers to legacy BrandBrain shape for strategy generation
+        if (parsed.answers) {
+          setBrain({
+            businessName:   parsed.answers[0] ?? '',
+            category:       parsed.answers[1] ?? '',
+            offer:          parsed.answers[1] ?? '',
+            targetCustomer: parsed.answers[2] ?? '',
+            brandVoice:     'Authentic and direct',
+            goal:           'leads',
+          })
+        } else if (parsed.businessName) {
+          setBrain(parsed)
+        }
+      }
       const r = localStorage.getItem(RUNS_KEY)
       if (r) {
         const parsed: StrategyRun[] = JSON.parse(r)
@@ -289,7 +307,7 @@ export default function StrategyAIPage() {
       icon: TrendingUp,
       label: 'This Week\'s Direction',
       value: latest ? 'Strategy Ready' : 'Not Run Yet',
-      sub: latest ? `${new Date(latest.createdAt).toLocaleDateString()}` : 'Run your first strategy',
+      sub: latest ? `${new Date(latest.createdAt).toLocaleDateString()}` : 'Powered by Super Brain',
       color: 'text-[#FF3B1A]',
       bg: 'bg-[#FF3B1A]/8 border-[#FF3B1A]/20',
     },
@@ -297,7 +315,7 @@ export default function StrategyAIPage() {
       icon: Lightbulb,
       label: 'Content Ideas',
       value: latest ? `${latest.contentIdeas.length} ideas` : '—',
-      sub: 'Ready to brief',
+      sub: latest ? 'Ready to brief' : 'From Super Brain memory',
       color: 'text-orange-400',
       bg: 'bg-orange-500/8 border-orange-500/15',
     },
@@ -358,10 +376,16 @@ export default function StrategyAIPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            onClick={() => router.push('/dashboard/strategy-ai/super-brain')}
+            className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-4 py-2.5 rounded-lg transition"
+          >
+            <Brain size={14} /> Super Brain
+          </button>
+          <button
             onClick={() => router.push('/dashboard/strategy-ai/brand-brain')}
             className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-4 py-2.5 rounded-lg transition"
           >
-            <Brain size={14} /> Brand Brain
+            <Zap size={14} /> Brand Brain
           </button>
           <button
             onClick={() => router.push('/dashboard/strategy-ai/briefs')}
@@ -382,19 +406,21 @@ export default function StrategyAIPage() {
         </div>
       </div>
 
-      {/* Brand Brain missing callout */}
+      {/* Super Brain missing callout */}
       {!brain && (
-        <div className="flex items-start gap-3 bg-[#FF3B1A]/8 border border-[#FF3B1A]/20 rounded-xl px-4 py-4">
-          <AlertCircle size={16} className="text-[#FF3B1A] mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="text-white font-medium text-sm">Set up Brand Brain first</p>
-            <p className="text-white/50 text-xs mt-0.5">Tell the AI about your business so it can generate personalized strategies.</p>
+        <div className="bg-[#111] border border-[#FF3B1A]/25 rounded-xl px-5 py-5 flex flex-wrap items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#FF3B1A]/15 flex items-center justify-center shrink-0">
+            <Brain size={18} className="text-[#FF3B1A]" />
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <p className="text-white font-semibold text-sm mb-0.5">Set up Brand Brain first</p>
+            <p className="text-white/50 text-xs leading-relaxed">Tell Strategy AI about your business so it can build your Super Brain and generate personalized content strategy.</p>
           </div>
           <button
             onClick={() => router.push('/dashboard/strategy-ai/brand-brain')}
-            className="flex items-center gap-1 bg-[#FF3B1A] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition hover:bg-[#e02e10] shrink-0"
+            className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition shrink-0"
           >
-            Set Up <ArrowRight size={11} />
+            Set Up Brand Brain <ArrowRight size={13} />
           </button>
         </div>
       )}
@@ -448,18 +474,40 @@ export default function StrategyAIPage() {
 
       {/* No run yet empty state */}
       {!running && !latest && (
-        <div className="bg-[#111] border border-white/8 rounded-xl p-10 text-center space-y-4">
-          <Sparkles size={32} className="mx-auto text-[#FF3B1A] opacity-60" />
+        <div className="bg-[#111] border border-white/8 rounded-xl p-10 text-center space-y-5">
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-[#FF3B1A]/10 flex items-center justify-center">
+              <Sparkles size={26} className="text-[#FF3B1A]" />
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
+              <Brain size={26} className="text-white/40" />
+            </div>
+          </div>
           <div>
             <p className="text-white font-semibold text-lg">What should we create next?</p>
-            <p className="text-white/35 text-sm mt-1.5">Run Strategy AI to get your weekly content direction, hooks, scripts, and action plan.</p>
+            <p className="text-white/35 text-sm mt-1.5 max-w-xs mx-auto">
+              {brain
+                ? 'Super Brain is ready. Run Strategy AI to get your weekly content direction, hooks, scripts, and action plan.'
+                : 'Set up Brand Brain first so Strategy AI can generate a personalized strategy powered by your Super Brain.'}
+            </p>
           </div>
-          <button
-            onClick={runStrategy}
-            className="inline-flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm px-6 py-3 rounded-lg transition"
-          >
-            <Play size={14} /> Run Strategy AI
-          </button>
+          {brain ? (
+            <button
+              onClick={runStrategy}
+              className="inline-flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm px-6 py-3 rounded-lg transition"
+            >
+              <Play size={14} /> Run Strategy AI
+            </button>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => router.push('/dashboard/strategy-ai/brand-brain')}
+                className="inline-flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm px-6 py-3 rounded-lg transition"
+              >
+                <Brain size={14} /> Set Up Brand Brain
+              </button>
+            </div>
+          )}
         </div>
       )}
 
