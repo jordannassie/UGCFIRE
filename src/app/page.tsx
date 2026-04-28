@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useState, useEffect, type CSSProperties } from "react";
-import { Phone, Inbox, MessageSquare, CreditCard, Star } from "lucide-react";
+import { Phone, Inbox, MessageSquare, CreditCard, Star, Building2, Users, Video, Brain, TrendingUp } from "lucide-react";
 import FireButton from "@/components/FireButton";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -980,6 +980,240 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* ── Strategy AI Section ───────────────────────────────────────────── */}
+      <section style={{ background: "#FF3B1A", padding: "90px 0 80px" }}>
+        <div className="sec" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 2rem" }}>
+          <div style={{
+            display: "flex",
+            gap: 72,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}>
+
+            {/* ── Left column ── */}
+            <div style={{ flex: "1 1 340px", minWidth: 0 }}>
+
+              {/* Eyebrow */}
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(0,0,0,0.22)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                borderRadius: 999,
+                padding: "5px 14px",
+                marginBottom: 24,
+              }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#fff", display: "inline-block",
+                }} />
+                <span style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  color: "#fff",
+                  textTransform: "uppercase",
+                }}>Our Process</span>
+              </div>
+
+              {/* Headline */}
+              <h2 style={{
+                fontFamily: "var(--font-bebas)",
+                fontSize: "clamp(52px, 5.5vw, 84px)",
+                letterSpacing: "0.01em",
+                color: "#fff",
+                lineHeight: 0.95,
+                marginBottom: 20,
+              }}>
+                How Strategy AI<br />Works
+              </h2>
+
+              {/* Subheadline */}
+              <p style={{
+                fontSize: 17,
+                color: "rgba(255,255,255,0.82)",
+                lineHeight: 1.6,
+                marginBottom: 36,
+                maxWidth: 420,
+              }}>
+                Strategy AI turns your brand, content, and competition into a clear content plan and marketing direction.
+              </p>
+
+              {/* Feature cards */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 40 }}>
+                {[
+                  {
+                    Icon: Video,
+                    title: "Content Strategy",
+                    desc: "We analyze your brand, audience, and goals to build content that actually moves your business forward.",
+                  },
+                  {
+                    Icon: Users,
+                    title: "Competitor Insights",
+                    desc: "We review your competitors and category to find opportunities, winning angles, and content gaps.",
+                  },
+                  {
+                    Icon: TrendingUp,
+                    title: "Marketing Direction",
+                    desc: "Every video comes with strategic direction — hooks, CTA ideas, content goals, and how to market it online.",
+                  },
+                ].map(({ Icon, title, desc }) => (
+                  <div key={title} style={{
+                    background: "rgba(0,0,0,0.18)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderRadius: 14,
+                    padding: "16px 20px",
+                    display: "flex",
+                    gap: 16,
+                    alignItems: "flex-start",
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 10,
+                      background: "rgba(0,0,0,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      <Icon size={18} color="#fff" />
+                    </div>
+                    <div>
+                      <p style={{
+                        fontFamily: "'Syne', sans-serif",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        letterSpacing: "0.06em",
+                        color: "#fff",
+                        textTransform: "uppercase",
+                        marginBottom: 4,
+                      }}>{title}</p>
+                      <p style={{ fontSize: 13.5, color: "rgba(255,255,255,0.72)", lineHeight: 1.55 }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <a
+                href={BOOKING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  background: "#fff",
+                  color: "#FF3B1A",
+                  fontFamily: "'Syne', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 15,
+                  letterSpacing: "0.04em",
+                  padding: "14px 30px",
+                  borderRadius: 10,
+                  textDecoration: "none",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+                  transition: "transform 0.15s, box-shadow 0.15s",
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)"
+                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.24)"
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLAnchorElement).style.transform = ""
+                  ;(e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.18)"
+                }}
+              >
+                Book a Call →
+              </a>
+            </div>
+
+            {/* ── Right column: Funnel ── */}
+            <div style={{
+              flex: "1 1 320px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              minWidth: 0,
+            }}>
+
+              {/* Down-arrows feeding into funnel */}
+              <div style={{ display: "flex", gap: 28, marginBottom: 10 }}>
+                {[0,1,2,3,4].map(i => (
+                  <svg key={i} width="16" height="22" viewBox="0 0 16 22" fill="none">
+                    <path d="M8 0 L8 16 M2 10 L8 18 L14 10" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ))}
+              </div>
+
+              {/* Funnel layers — each is a full-width div clipped to a trapezoid */}
+              <div style={{ width: "100%", maxWidth: 380, position: "relative" }}>
+                {[
+                  { label: "BRAND",       Icon: Building2,  tl: 0,  tr: 100, bl: 8,  br: 92  },
+                  { label: "COMPETITORS", Icon: Users,       tl: 8,  tr: 92,  bl: 16, br: 84  },
+                  { label: "CONTENT",     Icon: Video,       tl: 16, tr: 84,  bl: 24, br: 76  },
+                  { label: "STRATEGY",    Icon: Brain,       tl: 24, tr: 76,  bl: 32, br: 68  },
+                  { label: "GROWTH",      Icon: TrendingUp,  tl: 32, tr: 68,  bl: 40, br: 60  },
+                ].map(({ label, Icon, tl, tr, bl, br }, i) => (
+                  <div
+                    key={label}
+                    style={{
+                      clipPath: `polygon(${tl}% 0, ${tr}% 0, ${br}% 100%, ${bl}% 100%)`,
+                      background: i % 2 === 0 ? "#ffffff" : "#f2f2f2",
+                      height: 78,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 11,
+                      marginTop: i > 0 ? -1 : 0,
+                      position: "relative",
+                    }}
+                  >
+                    <Icon size={17} color="#FF3B1A" />
+                    <span style={{
+                      fontFamily: "var(--font-bebas)",
+                      fontSize: 22,
+                      letterSpacing: "0.08em",
+                      color: "#111",
+                    }}>{label}</span>
+                  </div>
+                ))}
+
+                {/* Bottom glow / output */}
+                <div style={{
+                  margin: "0 auto",
+                  width: "20%",
+                  height: 28,
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%)",
+                  clipPath: "polygon(0% 0, 100% 0, 80% 100%, 20% 100%)",
+                }} />
+                <div style={{ display: "flex", justifyContent: "center", marginTop: -6 }}>
+                  <div style={{
+                    width: 80,
+                    height: 18,
+                    borderRadius: "50%",
+                    background: "radial-gradient(ellipse at center, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 75%)",
+                    filter: "blur(4px)",
+                  }} />
+                </div>
+              </div>
+
+              {/* Tagline below funnel */}
+              <p style={{
+                marginTop: 24,
+                fontSize: 13,
+                color: "rgba(255,255,255,0.60)",
+                textAlign: "center",
+                letterSpacing: "0.04em",
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 600,
+                textTransform: "uppercase",
+              }}>Brand → Strategy → Growth</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* ── End Strategy AI Section ─────────────────────────────────────────── */}
 
       <section id="results" className="sec-v" style={{ padding: "100px 0", overflow: "hidden" }}>
         <div className="sec" style={{ textAlign: "center", marginBottom: 56, padding: "0 3rem" }}>
