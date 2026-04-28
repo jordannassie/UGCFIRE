@@ -1147,10 +1147,10 @@ export default function Home() {
               {/* Eyebrow */}
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
-                background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.18)",
-                borderRadius: 999, padding: "5px 14px", marginBottom: 24,
+                background: "#000",
+                borderRadius: 999, padding: "6px 16px", marginBottom: 24,
               }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", display: "inline-block" }} />
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF3B1A", display: "inline-block" }} />
                 <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "#fff", textTransform: "uppercase" }}>
                   Our Process
                 </span>
@@ -1200,22 +1200,28 @@ export default function Home() {
               </div>
 
               {/* CTA */}
-              <FireButton
+              <a
                 href={BOOKING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-fire"
-                style={{ fontSize: 15, padding: "14px 32px", textDecoration: "none", display: "inline-block" }}
+                style={{
+                  display: "inline-flex", alignItems: "center",
+                  background: "#000", color: "#fff",
+                  fontFamily: "'Syne', sans-serif", fontWeight: 700,
+                  fontSize: 14, letterSpacing: "0.04em",
+                  padding: "14px 30px", borderRadius: 10,
+                  textDecoration: "none",
+                }}
               >
                 Book a Call
-              </FireButton>
+              </a>
             </div>
 
             {/* ── Right column: Funnel ── */}
             <div style={{ flex: "1 1 320px", display: "flex", flexDirection: "column", alignItems: "center", minWidth: 0 }}>
 
               {/* Input arrows */}
-              <div style={{ display: "flex", justifyContent: "space-around", width: "100%", maxWidth: 380, marginBottom: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-around", width: "100%", maxWidth: 460, marginBottom: 6 }}>
                 {[0,1,2,3,4].map(i => (
                   <svg key={i} width="18" height="34" viewBox="0 0 18 34" fill="none">
                     <line x1="9" y1="0" x2="9" y2="22" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round"/>
@@ -1225,13 +1231,13 @@ export default function Home() {
               </div>
 
               {/* Funnel layers — each wrapper carries the drop-shadow so clip-path doesn't clip it */}
-              <div style={{ width: "100%", maxWidth: 380, display: "flex", flexDirection: "column", gap: 3 }}>
+              <div style={{ width: "100%", maxWidth: 460, display: "flex", flexDirection: "column", gap: 3 }}>
                 {([
-                  { label: "BRAND",       icon: Building2,  tl:  0, tr: 100, bl:  9, br: 91, bg: "linear-gradient(180deg,#ffffff 0%,#ebebeb 100%)" },
-                  { label: "COMPETITORS", icon: Users,       tl:  9, tr:  91, bl: 18, br: 82, bg: "linear-gradient(180deg,#f5f5f5 0%,#e2e2e2 100%)" },
-                  { label: "CONTENT",     icon: Video,       tl: 18, tr:  82, bl: 27, br: 73, bg: "linear-gradient(180deg,#eeeeee 0%,#d8d8d8 100%)" },
-                  { label: "STRATEGY",    icon: Brain,       tl: 27, tr:  73, bl: 36, br: 64, bg: "linear-gradient(180deg,#e6e6e6 0%,#d0d0d0 100%)" },
-                  { label: "GROWTH",      icon: TrendingUp,  tl: 36, tr:  64, bl: 44, br: 56, bg: "linear-gradient(180deg,#dedede 0%,#c8c8c8 100%)" },
+                  { label: "BRAND",       icon: Building2,  tl:  0, tr: 100, bl:  7, br: 93, bg: "linear-gradient(180deg,#ffffff 0%,#ebebeb 100%)" },
+                  { label: "COMPETITORS", icon: Users,       tl:  7, tr:  93, bl: 14, br: 86, bg: "linear-gradient(180deg,#f5f5f5 0%,#e2e2e2 100%)" },
+                  { label: "CONTENT",     icon: Video,       tl: 14, tr:  86, bl: 21, br: 79, bg: "linear-gradient(180deg,#eeeeee 0%,#d8d8d8 100%)" },
+                  { label: "STRATEGY",    icon: Brain,       tl: 21, tr:  79, bl: 28, br: 72, bg: "linear-gradient(180deg,#e6e6e6 0%,#d0d0d0 100%)" },
+                  { label: "GROWTH",      icon: TrendingUp,  tl: 28, tr:  72, bl: 35, br: 65, bg: "linear-gradient(180deg,#dedede 0%,#c8c8c8 100%)" },
                 ] as { label: string; icon: React.ElementType; tl: number; tr: number; bl: number; br: number; bg: string }[]).map(({ label, icon: Icon, tl, tr, bl, br, bg }, i) => (
                   <div key={label} style={{ filter: `drop-shadow(0px ${8 - i}px ${12 - i}px rgba(0,0,0,${(0.22 - i * 0.02).toFixed(2)}))` }}>
                     <div style={{
@@ -1241,7 +1247,7 @@ export default function Home() {
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
                     }}>
                       <Icon size={18} color="#CC2D0F" />
-                      <span style={{ fontFamily: "var(--font-bebas)", fontSize: 22, letterSpacing: "0.08em", color: "#1a1a1a" }}>
+                      <span style={{ fontFamily: "var(--font-bebas)", fontSize: 22, letterSpacing: "0.06em", color: "#1a1a1a" }}>
                         {label}
                       </span>
                     </div>
@@ -1251,7 +1257,7 @@ export default function Home() {
 
               {/* Output glow below funnel */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 0 }}>
-                <div style={{ width: 46, height: 26, background: "linear-gradient(180deg, rgba(222,222,222,0.85) 0%, rgba(255,255,255,0) 100%)" }} />
+                <div style={{ width: 56, height: 26, background: "linear-gradient(180deg, rgba(210,210,210,0.85) 0%, rgba(255,255,255,0) 100%)" }} />
                 <div style={{
                   width: 130, height: 18, borderRadius: "50%",
                   background: "radial-gradient(ellipse at center, rgba(255,255,255,0.50) 0%, transparent 70%)",
