@@ -109,12 +109,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="relative group">
               <div
                 onClick={() => avatarInputRef.current?.click()}
-                className="w-20 h-20 rounded-full border-2 border-white/10 overflow-hidden bg-white/5 flex items-center justify-center cursor-pointer group-hover:border-[#FF3B1A]/50 transition"
+                className="w-20 h-20 rounded-full border-2 border-white/10 overflow-hidden flex items-center justify-center cursor-pointer group-hover:border-[#FF3B1A]/50 transition relative"
+                style={!avatarUrl ? { background: 'linear-gradient(135deg, #2563EB 0%, #38BDF8 100%)' } : {}}
               >
                 {avatarUrl ? (
                   <Image src={avatarUrl} alt="Brand avatar" fill className="object-cover" unoptimized />
                 ) : (
-                  <span className="text-2xl font-bold text-white/30">
+                  <span className="text-2xl font-bold text-white drop-shadow">
                     {company?.name?.[0]?.toUpperCase() ?? '?'}
                   </span>
                 )}

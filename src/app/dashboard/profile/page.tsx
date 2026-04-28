@@ -92,12 +92,13 @@ export default function ProfilePage() {
         <div className="relative">
           <div
             onClick={() => avatarRef.current?.click()}
-            className="w-20 h-20 rounded-full bg-white/5 border-2 border-white/10 overflow-hidden flex items-center justify-center cursor-pointer hover:border-[#FF3B1A]/50 transition relative"
+            className="w-20 h-20 rounded-full border-2 border-white/10 overflow-hidden flex items-center justify-center cursor-pointer hover:border-[#FF3B1A]/50 transition relative"
+            style={!avatarUrl ? { background: 'linear-gradient(135deg, #2563EB 0%, #38BDF8 100%)' } : {}}
           >
             {avatarUrl
               // eslint-disable-next-line @next/next/no-img-element
               ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              : <User size={32} className="text-white/20" />
+              : <User size={32} className="text-white drop-shadow" />
             }
           </div>
           <div
