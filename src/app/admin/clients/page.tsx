@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { statusColor } from '@/lib/data'
 import { isDemoMode, DEMO_COMPANIES } from '@/lib/demoData'
@@ -15,6 +16,26 @@ interface ClientRow {
   onboarding_status: string
   showcase_permission: boolean
   last_activity: string | null
+  avatar_url?: string | null
+}
+
+function CompanyAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
+  const initial = name?.[0]?.toUpperCase() ?? '?'
+  if (avatarUrl) {
+    return (
+      <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-white/10">
+        <Image src={avatarUrl} alt={name} width={32} height={32} className="object-cover w-full h-full" unoptimized />
+      </div>
+    )
+  }
+  return (
+    <div
+      className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center border border-white/10 text-white text-xs font-bold drop-shadow"
+      style={{ background: 'linear-gradient(135deg, #2563EB 0%, #38BDF8 100%)' }}
+    >
+      {initial}
+    </div>
+  )
 }
 
 export default function AdminClientsPage() {
@@ -38,6 +59,7 @@ export default function AdminClientsPage() {
         onboarding_status: c.onboarding_status,
         showcase_permission: c.showcase_permission,
         last_activity: c.last_activity,
+        avatar_url: null,
       })))
       setLoading(false)
       return
@@ -53,7 +75,7 @@ export default function AdminClientsPage() {
     const rows: ClientRow[] = await Promise.all(
       companies.map(async (c) => {
         const [{ data: profile }, { data: plan }, { data: lastLog }] = await Promise.all([
-          supabase.from('profiles').select('email').eq('id', c.owner_user_id).single(),
+          supabase.from('profiles').select('email, avatar_url').eq('id', c.owner_user_id).single(),
           c.plan_id ? supabase.from('plans').select('name').eq('id', c.plan_id).single() : Promise.resolve({ data: null }),
           supabase.from('activity_logs').select('created_at').eq('company_id', c.id).order('created_at', { ascending: false }).limit(1).single(),
         ])
@@ -66,6 +88,7 @@ export default function AdminClientsPage() {
           onboarding_status: c.onboarding_status,
           showcase_permission: c.showcase_permission,
           last_activity: lastLog?.created_at ?? null,
+          avatar_url: (profile as { email?: string; avatar_url?: string } | null)?.avatar_url ?? null,
         }
       })
     )
@@ -126,7 +149,12 @@ export default function AdminClientsPage() {
                 )}
                 {filtered.map(client => (
                   <tr key={client.id} className="hover:bg-white/2">
-                    <td className="py-3 border-b border-white/5 text-white font-medium px-6">{client.name}</td>
+                    <td className="py-3 border-b border-white/5 px-6">
+                      <div className="flex items-center gap-2.5">
+                        <CompanyAvatar name={client.name} avatarUrl={client.avatar_url} />
+                        <span className="text-white font-medium">{client.name}</span>
+                      </div>
+                    </td>
                     <td className="py-3 border-b border-white/5 text-white/60 px-4 text-xs">{client.owner_email}</td>
                     <td className="py-3 border-b border-white/5 text-white/70 px-4">{client.plan_name}</td>
                     <td className="py-3 border-b border-white/5 px-4">
