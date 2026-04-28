@@ -1,723 +1,636 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 import {
-  Sparkles, Brain, TrendingUp, Target, Lightbulb, Zap, ChevronRight,
-  Play, Clock, CheckCircle2, Copy, Check, ArrowRight, Calendar,
-  BarChart2, Eye, Flame, AlertCircle, BookOpen, Send,
+  Sparkles, Brain, Send, ChevronRight, Folder, Target, Users,
+  Flame, Link2, TrendingUp, Plus, X, Zap, ArrowRight, Lightbulb,
+  FileText, CheckCircle2,
 } from 'lucide-react'
-
-// Zap already imported above
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ContentIdea {
-  id: string
-  title: string
-  format: string
-  platform: string
-  hook: string
-  goal: string
-  angle: string
+type StepId = 1 | 2 | 3 | 4 | 5
+type SectionKey = 'brandMemory' | 'competitorNotes' | 'contentLibrary' | 'strategyIdeas' | 'growthSignals'
+type MemoryStatus = 'New' | 'Learning' | 'Saved' | 'Ready'
+type CenterView = 'workspace' | SectionKey
+interface ChatMsg { id: string; role: 'ai' | 'user'; text: string }
+
+// ─── Step definitions ─────────────────────────────────────────────────────────
+
+const STEPS: {
+  id: StepId; label: string; sectionKey: SectionKey
+  intro: string; questions: string[]
+}[] = [
+  {
+    id: 1, label: 'Brand', sectionKey: 'brandMemory',
+    intro: "Hi! I'm your AI content strategist. I'll guide us through the Brand step.\nLet's start by learning about your business.",
+    questions: [
+      'What is your business called?',
+      'What do you sell?',
+      'Who is your ideal customer?',
+      'What makes your brand different?',
+    ],
+  },
+  {
+    id: 2, label: 'Competitors', sectionKey: 'competitorNotes',
+    intro: "Now let's understand your market. I'll use competitor insights to find gaps, angles, and opportunities your content can own.",
+    questions: [
+      'Who are your top competitors?',
+      'What do they do well?',
+      'Where do you think their content is weak?',
+      'Do you have competitor links, ads, social pages, or examples?',
+    ],
+  },
+  {
+    id: 3, label: 'Content', sectionKey: 'contentLibrary',
+    intro: "Next, let's look at your existing content, proof, assets, and examples. This helps Strategy AI know what we can build from.",
+    questions: [
+      'What content has worked best for you so far?',
+      'Do you have testimonials, reviews, photos, or videos?',
+      'What content do you want more of?',
+      'Are there any examples or links you want us to use as inspiration?',
+    ],
+  },
+  {
+    id: 4, label: 'Strategy', sectionKey: 'strategyIdeas',
+    intro: "Now I'll turn what we know into strategy: hooks, CTAs, angles, content ideas, and briefs.",
+    questions: [
+      'What offer or message do you want to push right now?',
+      'What objections do customers usually have?',
+      'What action do you want viewers to take?',
+      'What type of content do you want Strategy AI to create first?',
+    ],
+  },
+  {
+    id: 5, label: 'Growth', sectionKey: 'growthSignals',
+    intro: "Finally, let's turn the strategy into growth. I'll help decide how to post, test, and improve your content.",
+    questions: [
+      'Where do you currently post content?',
+      'What is your main growth goal?',
+      'What results matter most: leads, sales, calls, views, or engagement?',
+      'What should we test next?',
+    ],
+  },
+]
+
+// ─── Super Brain sections ─────────────────────────────────────────────────────
+
+const BRAIN_SECTIONS: {
+  key: SectionKey; Icon: React.ElementType; title: string; desc: string; stepId: StepId
+}[] = [
+  { key: 'brandMemory',     Icon: Folder,     title: 'Brand Memory',     desc: 'Core identity, mission, positioning',  stepId: 1 },
+  { key: 'competitorNotes', Icon: Users,      title: 'Competitor Notes', desc: 'Competitor landscape + gaps',          stepId: 2 },
+  { key: 'contentLibrary',  Icon: Lightbulb,  title: 'Content Library',  desc: 'Hooks, ideas, angles, references',     stepId: 3 },
+  { key: 'strategyIdeas',   Icon: Target,     title: 'Strategy Ideas',   desc: 'Angles, offers, positioning',          stepId: 4 },
+  { key: 'growthSignals',   Icon: TrendingUp, title: 'Growth Signals',   desc: "What's working & opportunities",       stepId: 5 },
+]
+
+// ─── Memory detail content ────────────────────────────────────────────────────
+
+const DETAIL_FIELDS: Record<SectionKey, { label: string; placeholder: string }[]> = {
+  brandMemory: [
+    { label: 'Business Name',   placeholder: 'e.g. Apex Fitness Co.' },
+    { label: 'Main Offer',      placeholder: 'Describe your core product or service…' },
+    { label: 'Target Customer', placeholder: 'Who is your ideal customer?' },
+    { label: 'Differentiator',  placeholder: 'What makes your brand unique?' },
+    { label: 'Brand Voice',     placeholder: 'e.g. Bold, authentic, educational…' },
+  ],
+  competitorNotes: [
+    { label: 'Top Competitors',  placeholder: 'Names, handles, or URLs…' },
+    { label: 'Their Strengths',  placeholder: 'What angles or formats work for them?' },
+    { label: 'Their Weaknesses', placeholder: 'Gaps or objections they miss…' },
+    { label: 'Reference Links',  placeholder: 'Links to their best content…' },
+  ],
+  contentLibrary: [
+    { label: 'Best Content So Far', placeholder: 'What has performed best for you?' },
+    { label: 'Assets Available',    placeholder: 'Videos, photos, testimonials, reviews…' },
+    { label: 'Inspiration Links',   placeholder: 'Reference content you love…' },
+    { label: 'Content Gaps',        placeholder: 'What do you wish you had more of?' },
+  ],
+  strategyIdeas: [
+    { label: 'Current Offer Focus', placeholder: 'What message are you pushing now?' },
+    { label: 'Top Objections',      placeholder: "What stops customers from buying?" },
+    { label: 'Desired CTA',         placeholder: 'What action should viewers take?' },
+    { label: 'Content Priority',    placeholder: 'What type of content first?' },
+  ],
+  growthSignals: [
+    { label: 'Active Platforms', placeholder: 'TikTok, Instagram, YouTube…' },
+    { label: 'Growth Goal',      placeholder: 'Leads, sales, calls, awareness, engagement…' },
+    { label: 'Key Metrics',      placeholder: 'What numbers matter most to you?' },
+    { label: 'Next Experiment',  placeholder: 'What should we test next?' },
+  ],
 }
 
-interface UGCScript {
-  id: string
-  title: string
-  hook: string
-  body: string
-  cta: string
-  duration: string
+// ─── Mock outcomes ────────────────────────────────────────────────────────────
+
+const MOCK_OUTCOMES = {
+  hooks:        ["Most brands post content without a strategy. Here's what to do instead.", "Before you make another video, fix this first.", "This is why your content is not converting."],
+  ctaIdeas:     ['Book a call', 'DM READY', 'Comment PLAN', 'Tap the link'],
+  contentIdeas: ['Founder explains the offer', 'Customer proof video', 'Behind-the-scenes process', 'Common mistake video', 'Transformation story'],
+  ugcBriefs:    ['Testimonial-style video', 'Problem/solution short', 'Founder authority video', 'Before/after proof video'],
+  fireTasks:    ['Create 5 hooks', 'Write 3 video scripts', 'Build 2 testimonial concepts', 'Prepare content shot list'],
+  growthPlan:   ['Post 3 reels per week', 'Test 2 hook styles', 'Use direct CTA in first 10 seconds', 'Double down on highest-saves content'],
 }
 
-interface StrategyRun {
-  id: string
-  createdAt: string
-  summary: string
-  contentIdeas: ContentIdea[]
-  hooks: string[]
-  scripts: UGCScript[]
-  captions: string[]
-  competitorNotes: string[]
-  contentGaps: string[]
-  nextActions: string[]
+type OutcomeKey = keyof typeof MOCK_OUTCOMES
+
+const OUTCOME_CARDS: { Icon: React.ElementType; title: string; desc: string; key: OutcomeKey }[] = [
+  { Icon: Zap,        title: 'Hooks',              desc: 'Attention-grabbing openers that stop scrolls.',     key: 'hooks'        },
+  { Icon: Target,     title: 'CTA Ideas',          desc: 'Calls-to-action that drive clicks and sales.',      key: 'ctaIdeas'     },
+  { Icon: Folder,     title: 'Content Ideas',      desc: 'Angles and concepts for short-form content.',       key: 'contentIdeas' },
+  { Icon: FileText,   title: 'UGC Briefs',         desc: 'Creator briefs and shot lists that convert.',       key: 'ugcBriefs'    },
+  { Icon: Flame,      title: 'Fire Creator Tasks', desc: 'Tasks for creators aligned to your strategy.',      key: 'fireTasks'    },
+  { Icon: TrendingUp, title: 'Growth Plan',        desc: 'Growth levers, tests, and next steps to scale.',    key: 'growthPlan'   },
+]
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const STATUS_STYLES: Record<MemoryStatus, string> = {
+  New:      'bg-white/8 text-white/40',
+  Learning: 'bg-[#FF3B1A]/15 text-[#FF3B1A]',
+  Saved:    'bg-green-500/15 text-green-400',
+  Ready:    'bg-blue-500/15 text-blue-300',
 }
 
-interface BrandBrain {
-  businessName: string
-  category: string
-  offer: string
-  targetCustomer: string
-  brandVoice: string
-  goal: string
-}
+const STORAGE_KEY = 'ugcfire_strategy_v2'
 
-// ─── Keys ─────────────────────────────────────────────────────────────────────
-
-const BRAIN_KEY  = 'ugcfire_super_brain'      // new key: Super Brain stores answers
-const RUNS_KEY   = 'ugcfire_strategy_runs'
-const BRIEFS_KEY = 'ugcfire_content_briefs'
-
-// ─── Mock AI generator ────────────────────────────────────────────────────────
-
-function generateMockStrategy(brain: BrandBrain): StrategyRun {
-  const name   = brain.businessName || 'your brand'
-  const cat    = brain.category     || 'your industry'
-  const offer  = brain.offer        || 'your offer'
-  const target = brain.targetCustomer || 'your audience'
-
-  return {
-    id: `run-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    summary: `This week, ${name} should focus on social proof and transformation content. Your audience (${target}) responds best to authentic before/after stories and specific outcome promises. Lead with problem-awareness hooks, then pivot to your offer (${offer}). Batch 3 short-form videos and 2 static ads this week to maintain consistent reach in ${cat}.`,
-
-    contentIdeas: [
-      {
-        id: `ci-1-${Date.now()}`,
-        title: 'Before & After Transformation Story',
-        format: 'UGC Video',
-        platform: 'TikTok / Reels',
-        hook: `"I was struggling with [problem] until I found ${name}…"`,
-        goal: 'Social proof + conversion',
-        angle: 'Personal story, real results, authentic delivery',
-      },
-      {
-        id: `ci-2-${Date.now()}`,
-        title: `"3 Things I Wish I Knew Before Trying ${cat}"`,
-        format: 'Talking Head Video',
-        platform: 'TikTok / YouTube Shorts',
-        hook: '"Stop wasting money on this before you watch this video…"',
-        goal: 'Awareness + authority',
-        angle: 'Educational, counter-intuitive, builds trust',
-      },
-      {
-        id: `ci-3-${Date.now()}`,
-        title: 'Day in the Life With the Product',
-        format: 'Lifestyle UGC',
-        platform: 'Instagram Reels',
-        hook: '"Here\'s how I actually use this every single day…"',
-        goal: 'Relatability + desire',
-        angle: 'Show product naturally in daily routine',
-      },
-      {
-        id: `ci-4-${Date.now()}`,
-        title: `${target} POV: The Problem We Solve`,
-        format: 'POV Skit',
-        platform: 'TikTok',
-        hook: '"POV: You\'re tired of [pain point] and finally found something that works…"',
-        goal: 'Relatability + clicks',
-        angle: 'Funny or emotional POV that mirrors the audience situation',
-      },
-      {
-        id: `ci-5-${Date.now()}`,
-        title: 'Objection Crusher Ad',
-        format: 'Direct Response UGC',
-        platform: 'Facebook / Instagram Ads',
-        hook: '"I know what you\'re thinking — is this actually worth it?"',
-        goal: 'Conversion — lower CPL',
-        angle: 'Address top 3 objections head on. End with strong CTA.',
-      },
-    ],
-
-    hooks: [
-      `"Stop scrolling — this is for ${target} who are sick of [pain point]."`,
-      `"I tried every ${cat} solution out there. Here's the only one that actually worked."`,
-      `"Nobody talks about this, but ${name} changed everything for me."`,
-      `"You're losing money every day you don't know about this."`,
-      `"This is the ${offer} everyone in ${cat} is quietly switching to."`,
-      `"I was skeptical. Now I can't imagine going back."`,
-      `"${target} — this one's for you. Watch to the end."`,
-      `"3 seconds: that's how long this takes. Here's what happened after 30 days."`,
-      `"We asked 100 customers what they regret. Their answer was shocking."`,
-      `"If you're not doing this, you're leaving results on the table."`,
-    ],
-
-    scripts: [
-      {
-        id: `sc-1-${Date.now()}`,
-        title: 'The Transformation Hook Script',
-        hook: `"I was exactly where you are 6 months ago — frustrated with ${cat} and not seeing results."`,
-        body: `"I tried everything. Nothing worked. Then I found ${name} and their ${offer}. In the first week alone, I started seeing a difference. By week 4, everything had changed. The thing that's different? [Unique mechanism]. It works because [reason]. And it doesn't require [common objection]."`,
-        cta: `"If you're ready to stop guessing and start getting real results, check out ${name}. Link is in the bio."`,
-        duration: '30–45 seconds',
-      },
-      {
-        id: `sc-2-${Date.now()}`,
-        title: 'The Problem-Agitate-Solve Script',
-        hook: '"Are you still dealing with [pain point]? Because you don\'t have to."',
-        body: `"Most ${target} spend months trying to figure this out alone. They waste time, money, and energy on things that don't move the needle. Here's the truth: it's not your fault. The old way doesn't work anymore. ${name}'s ${offer} is built specifically for ${target} who want [desired outcome] without [objection]."`,
-        cta: '"Click below, grab your free [lead magnet or trial], and see the difference in 7 days."',
-        duration: '45–60 seconds',
-      },
-      {
-        id: `sc-3-${Date.now()}`,
-        title: 'The Social Proof Stack Script',
-        hook: '"Real people. Real results. Let me show you what\'s actually happening."',
-        body: `"In the last 30 days, our customers have [specific result]. One of them was [customer persona]. They came to ${name} with [problem]. After using ${offer}, they [specific outcome]. And they're not alone — hundreds of ${target} are getting the same results right now."`,
-        cta: '"Ready to be next? The link to get started is below."',
-        duration: '30–45 seconds',
-      },
-    ],
-
-    captions: [
-      `The ${cat} results don't lie 👀 Here's what happened when we put our ${offer} to the test with real ${target}. Drop a ❤️ if you want to see more. 👇 Link in bio.`,
-      `Stop waiting for the "right time." The ${target} who started last month are already seeing results. Your move. #${cat.replace(/\s/g, '')} #results`,
-      `We asked our community: what changed everything for you? The answer was always ${offer}. DM us "READY" and we'll show you how.`,
-      `Hot take: most ${cat} solutions are built for the wrong person. ${name} is built for ${target} who actually want [outcome]. Save this if that's you.`,
-      `This week's strategy: stop creating random content. Start with your audience's biggest problem, then show how you solve it. Every. Single. Time. 🔥`,
-    ],
-
-    competitorNotes: [
-      `Competitors in ${cat} are leaning heavily on testimonial content — your brand should differentiate with behind-the-scenes and process transparency.`,
-      `Most competitor ads in this space run 3–5x on desktop. Consider increasing mobile-first creative for better CPM efficiency.`,
-      `Competitors are not addressing the objection around [price/time/trust]. This is an open gap your content can own.`,
-    ],
-
-    contentGaps: [
-      `No "How it works" explainer content — ${target} need to understand the process before they buy.`,
-      `Missing local/community social proof — add city or niche-specific testimonials.`,
-      `No content targeting the research/consideration stage — most current content jumps straight to CTA.`,
-      `Email nurture repurposing — existing content isn't being adapted for email or DM campaigns.`,
-    ],
-
-    nextActions: [
-      `Set up 3 UGC shoots this week — script the Transformation Hook, PAS, and Social Proof scripts.`,
-      `Create a 7-day content calendar mixing hooks, educational posts, and direct-response ads.`,
-      `Audit competitor comment sections for recurring pain points to address in next week's hooks.`,
-      `Submit top 2 content briefs to Fire Creator for production.`,
-      `A/B test 2 hooks from this week's list in paid ads — minimum 48-hour window per variant.`,
-    ],
-  }
-}
-
-// ─── Small helpers ─────────────────────────────────────────────────────────────
-
-function CopyBtn({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-  function copy() {
-    navigator.clipboard.writeText(text).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1800)
-  }
-  return (
-    <button onClick={copy} className="text-white/30 hover:text-white transition p-1 rounded">
-      {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
-    </button>
-  )
-}
-
-function Tag({ label, color = 'default' }: { label: string; color?: 'red' | 'orange' | 'blue' | 'green' | 'default' }) {
-  const colors = {
-    red:     'bg-red-500/15 text-red-300',
-    orange:  'bg-[#FF3B1A]/15 text-[#FF3B1A]',
-    blue:    'bg-blue-500/15 text-blue-300',
-    green:   'bg-green-500/15 text-green-300',
-    default: 'bg-white/8 text-white/50',
-  }
-  return <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${colors[color]}`}>{label}</span>
-}
-
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function StrategyAIPage() {
-  const router = useRouter()
-  const [brain, setBrain]     = useState<BrandBrain | null>(null)
-  const [runs, setRuns]       = useState<StrategyRun[]>([])
-  const [latest, setLatest]   = useState<StrategyRun | null>(null)
-  const [running, setRunning] = useState(false)
-  const [activeTab, setActiveTab] = useState<'ideas' | 'hooks' | 'scripts' | 'captions' | 'gaps' | 'actions'>('ideas')
-  const [briefs, setBriefs]   = useState<Record<string, boolean>>({})
+  const bottomRef = useRef<HTMLDivElement>(null)
 
+  // ── Step / workspace state ──
+  const [activeStep,   setActiveStep]   = useState<StepId>(1)
+  const [centerView,   setCenterView]   = useState<CenterView>('workspace')
+  const [input,        setInput]        = useState('')
+  const [detailInputs, setDetailInputs] = useState<Partial<Record<SectionKey, Record<number, string>>>>({})
+
+  // ── Chat history per step ──
+  const [stepChats, setStepChats] = useState<Record<StepId, ChatMsg[]>>({
+    1: [{ id: 'intro-1', role: 'ai', text: STEPS[0].intro }],
+    2: [{ id: 'intro-2', role: 'ai', text: STEPS[1].intro }],
+    3: [{ id: 'intro-3', role: 'ai', text: STEPS[2].intro }],
+    4: [{ id: 'intro-4', role: 'ai', text: STEPS[3].intro }],
+    5: [{ id: 'intro-5', role: 'ai', text: STEPS[4].intro }],
+  })
+
+  // ── Super Brain status ──
+  const [brainStatus, setBrainStatus] = useState<Record<SectionKey, MemoryStatus>>({
+    brandMemory: 'New', competitorNotes: 'New', contentLibrary: 'New',
+    strategyIdeas: 'New', growthSignals: 'New',
+  })
+
+  // ── Outcomes + running ──
+  const [outcomes,      setOutcomes]      = useState<typeof MOCK_OUTCOMES | null>(null)
+  const [running,       setRunning]       = useState(false)
+  const [showAddMemory, setShowAddMemory] = useState(false)
+  const [showAddLink,   setShowAddLink]   = useState(false)
+  const [memoryInput,   setMemoryInput]   = useState('')
+  const [linkInput,     setLinkInput]     = useState('')
+
+  // ── Hydrate from localStorage ──
   useEffect(() => {
     try {
-      // Super Brain stores { answers: {...}, updatedAt: '...' }
-      const b = localStorage.getItem(BRAIN_KEY)
-      if (b) {
-        const parsed = JSON.parse(b)
-        // Map answers to legacy BrandBrain shape for strategy generation
-        if (parsed.answers) {
-          setBrain({
-            businessName:   parsed.answers[0] ?? '',
-            category:       parsed.answers[1] ?? '',
-            offer:          parsed.answers[1] ?? '',
-            targetCustomer: parsed.answers[2] ?? '',
-            brandVoice:     'Authentic and direct',
-            goal:           'leads',
-          })
-        } else if (parsed.businessName) {
-          setBrain(parsed)
-        }
-      }
-      const r = localStorage.getItem(RUNS_KEY)
-      if (r) {
-        const parsed: StrategyRun[] = JSON.parse(r)
-        setRuns(parsed)
-        if (parsed.length) setLatest(parsed[parsed.length - 1])
-      }
-      const br = localStorage.getItem(BRIEFS_KEY)
-      if (br) {
-        const parsed: { id: string }[] = JSON.parse(br)
-        const map: Record<string, boolean> = {}
-        parsed.forEach(b => { map[b.id] = true })
-        setBriefs(map)
-      }
-    } catch {}
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const saved = JSON.parse(raw)
+      if (saved.brainStatus) setBrainStatus(saved.brainStatus)
+      if (saved.stepChats)   setStepChats(saved.stepChats)
+      if (saved.outcomes)    setOutcomes(saved.outcomes)
+      if (saved.detailInputs) setDetailInputs(saved.detailInputs)
+    } catch { /* ignore */ }
   }, [])
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [stepChats, activeStep])
+
+  function persist(patch: object) {
+    try {
+      const cur = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...cur, ...patch }))
+    } catch { /* ignore */ }
+  }
+
+  // ── Actions ──
+  function handleStepClick(id: StepId) {
+    setActiveStep(id)
+    setCenterView('workspace')
+    setInput('')
+  }
+
+  function sendMessage() {
+    const text = input.trim()
+    if (!text) return
+    const step = STEPS[activeStep - 1]
+    const userMsg: ChatMsg  = { id: `u-${Date.now()}`, role: 'user', text }
+    const ackMsg:  ChatMsg  = { id: `a-${Date.now()}`, role: 'ai',   text: `Got it — I've saved that to your ${step.label} memory.` }
+    const updated = { ...stepChats, [activeStep]: [...stepChats[activeStep], userMsg, ackMsg] }
+    setStepChats(updated)
+    const prev   = brainStatus[step.sectionKey]
+    const next   = prev === 'New' ? 'Learning' : 'Saved'
+    const newStatus = { ...brainStatus, [step.sectionKey]: next as MemoryStatus }
+    setBrainStatus(newStatus)
+    setInput('')
+    persist({ stepChats: updated, brainStatus: newStatus })
+  }
+
+  function saveDetailField(key: SectionKey, idx: number, val: string) {
+    const updated = { ...detailInputs, [key]: { ...(detailInputs[key] ?? {}), [idx]: val } }
+    setDetailInputs(updated)
+    persist({ detailInputs: updated })
+  }
+
   function runStrategy() {
-    if (!brain) { router.push('/dashboard/strategy-ai/brand-brain'); return }
     setRunning(true)
     setTimeout(() => {
-      const result = generateMockStrategy(brain)
-      const updated = [...runs, result]
-      setRuns(updated)
-      setLatest(result)
-      localStorage.setItem(RUNS_KEY, JSON.stringify(updated))
+      setOutcomes(MOCK_OUTCOMES)
       setRunning(false)
-      setActiveTab('ideas')
-    }, 2200)
+      const allDone: Record<SectionKey, MemoryStatus> = {
+        brandMemory: 'Saved', competitorNotes: 'Saved', contentLibrary: 'Saved',
+        strategyIdeas: 'Ready', growthSignals: 'Ready',
+      }
+      setBrainStatus(allDone)
+      persist({ outcomes: MOCK_OUTCOMES, brainStatus: allDone })
+      document.getElementById('strategy-outcomes')?.scrollIntoView({ behavior: 'smooth' })
+    }, 1800)
   }
 
-  function createBrief(idea: ContentIdea) {
-    const brief = {
-      id: `brief-${Date.now()}`,
-      contentIdeaId: idea.id,
-      title: idea.title,
-      format: idea.format,
-      platform: idea.platform,
-      hook: idea.hook,
-      goal: idea.goal,
-      angle: idea.angle,
-      script: '',
-      shotList: '',
-      caption: '',
-      visualDirection: '',
-      status: 'Draft',
-      createdAt: new Date().toISOString(),
-    }
-    const existing = JSON.parse(localStorage.getItem(BRIEFS_KEY) ?? '[]')
-    localStorage.setItem(BRIEFS_KEY, JSON.stringify([...existing, brief]))
-    setBriefs(p => ({ ...p, [idea.id]: true }))
-    router.push(`/dashboard/strategy-ai/briefs/${brief.id}`)
-  }
+  // ── Derived ──
+  const currentStep    = STEPS[activeStep - 1]
+  const currentMsgs    = stepChats[activeStep] ?? []
+  const detailKey      = centerView !== 'workspace' ? (centerView as SectionKey) : null
+  const activeSection  = detailKey ? BRAIN_SECTIONS.find(s => s.key === detailKey) : null
 
-  const OVERVIEW_CARDS = [
-    {
-      icon: TrendingUp,
-      label: 'This Week\'s Direction',
-      value: latest ? 'Strategy Ready' : 'Not Run Yet',
-      sub: latest ? `${new Date(latest.createdAt).toLocaleDateString()}` : 'Powered by Super Brain',
-      color: 'text-[#FF3B1A]',
-      bg: 'bg-[#FF3B1A]/8 border-[#FF3B1A]/20',
-    },
-    {
-      icon: Lightbulb,
-      label: 'Content Ideas',
-      value: latest ? `${latest.contentIdeas.length} ideas` : '—',
-      sub: latest ? 'Ready to brief' : 'From Super Brain memory',
-      color: 'text-orange-400',
-      bg: 'bg-orange-500/8 border-orange-500/15',
-    },
-    {
-      icon: Target,
-      label: 'Top Hooks',
-      value: latest ? `${latest.hooks.length} hooks` : '—',
-      sub: 'Swipe-stopping openers',
-      color: 'text-blue-400',
-      bg: 'bg-blue-500/8 border-blue-500/15',
-    },
-    {
-      icon: Eye,
-      label: 'Content Gaps',
-      value: latest ? `${latest.contentGaps.length} gaps` : '—',
-      sub: 'Opportunities to capture',
-      color: 'text-purple-400',
-      bg: 'bg-purple-500/8 border-purple-500/15',
-    },
-    {
-      icon: BarChart2,
-      label: 'Competitor Insights',
-      value: latest ? `${latest.competitorNotes.length} notes` : '—',
-      sub: 'Market intelligence',
-      color: 'text-yellow-400',
-      bg: 'bg-yellow-500/8 border-yellow-500/15',
-    },
-    {
-      icon: Flame,
-      label: 'Fire Creator Tasks',
-      value: latest ? `${latest.nextActions.length} actions` : '—',
-      sub: 'Send briefs to production',
-      color: 'text-green-400',
-      bg: 'bg-green-500/8 border-green-500/15',
-    },
-  ]
-
-  const OUTPUT_TABS = [
-    { id: 'ideas'   as const, label: `Content Ideas (${latest?.contentIdeas.length ?? 0})` },
-    { id: 'hooks'   as const, label: `Hooks (${latest?.hooks.length ?? 0})` },
-    { id: 'scripts' as const, label: `UGC Scripts (${latest?.scripts.length ?? 0})` },
-    { id: 'captions'as const, label: `Captions (${latest?.captions.length ?? 0})` },
-    { id: 'gaps'    as const, label: 'Gaps & Insights' },
-    { id: 'actions' as const, label: 'Next Actions' },
-  ]
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-5 max-w-6xl">
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles size={18} className="text-[#FF3B1A]" />
-            <h1 className="text-2xl font-bold text-white">Strategy AI</h1>
-          </div>
-          <p className="text-white/40 text-sm">Your AI content strategist — know exactly what to create next.</p>
+          <h1 className="text-2xl font-bold text-white">Strategy AI</h1>
+          <p className="text-white/40 text-sm mt-0.5">AI guides our process from brand discovery to growth.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => router.push('/dashboard/strategy-ai/super-brain')}
-            className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-4 py-2.5 rounded-lg transition"
+            onClick={() => setShowAddLink(true)}
+            className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-4 py-2 rounded-lg transition"
           >
-            <Brain size={14} /> Super Brain
+            <Link2 size={13} /> Add Link
           </button>
           <button
-            onClick={() => router.push('/dashboard/strategy-ai/brand-brain')}
-            className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-4 py-2.5 rounded-lg transition"
+            onClick={() => setShowAddMemory(true)}
+            className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-4 py-2 rounded-lg transition"
           >
-            <Zap size={14} /> Brand Brain
-          </button>
-          <button
-            onClick={() => router.push('/dashboard/strategy-ai/briefs')}
-            className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-4 py-2.5 rounded-lg transition"
-          >
-            <BookOpen size={14} /> Briefs
+            <Plus size={13} /> Add Memory
           </button>
           <button
             onClick={runStrategy}
             disabled={running}
-            className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition disabled:opacity-60"
+            className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-semibold text-sm px-4 py-2 rounded-lg transition"
           >
             {running
               ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Analyzing…</>
-              : <><Play size={14} /> Run Strategy AI</>
-            }
+              : <><Sparkles size={13} /> Run Strategy AI</>}
           </button>
         </div>
       </div>
 
-      {/* Super Brain missing callout */}
-      {!brain && (
-        <div className="bg-[#111] border border-[#FF3B1A]/25 rounded-xl px-5 py-5 flex flex-wrap items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#FF3B1A]/15 flex items-center justify-center shrink-0">
-            <Brain size={18} className="text-[#FF3B1A]" />
-          </div>
-          <div className="flex-1 min-w-[200px]">
-            <p className="text-white font-semibold text-sm mb-0.5">Set up Brand Brain first</p>
-            <p className="text-white/50 text-xs leading-relaxed">Tell Strategy AI about your business so it can build your Super Brain and generate personalized content strategy.</p>
-          </div>
-          <button
-            onClick={() => router.push('/dashboard/strategy-ai/brand-brain')}
-            className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition shrink-0"
-          >
-            Set Up Brand Brain <ArrowRight size={13} />
-          </button>
+      {/* ── Funnel Stepper ── */}
+      <div>
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          {STEPS.map((step, i) => {
+            const isActive = step.id === activeStep
+            const status   = brainStatus[step.sectionKey]
+            const isDone   = status === 'Saved' || status === 'Ready'
+            return (
+              <div key={step.id} className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => handleStepClick(step.id)}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition ${
+                    isActive
+                      ? 'border-[#FF3B1A] bg-[#FF3B1A]/10 text-white'
+                      : 'border-white/10 bg-[#0d0d0d] text-white/45 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                    isActive ? 'bg-[#FF3B1A] text-white'
+                      : isDone  ? 'bg-green-500/20 text-green-400'
+                      : 'bg-white/10 text-white/35'
+                  }`}>
+                    {step.id}
+                  </span>
+                  {step.label}
+                </button>
+                {i < STEPS.length - 1 && (
+                  <ArrowRight size={13} className="text-white/20 shrink-0" />
+                )}
+              </div>
+            )
+          })}
         </div>
-      )}
-
-      {/* Brand context pill */}
-      {brain && (
-        <div className="flex items-center gap-3 bg-white/3 border border-white/8 rounded-xl px-4 py-3">
-          <Brain size={14} className="text-[#FF3B1A] shrink-0" />
-          <p className="text-white/60 text-sm">
-            Strategy for <span className="text-white font-semibold">{brain.businessName}</span>
-            <span className="text-white/30"> · </span>
-            <span className="text-white/50">{brain.category}</span>
-            <span className="text-white/30"> · </span>
-            <span className="text-white/50">{brain.goal}</span>
-          </p>
-          <button
-            onClick={() => router.push('/dashboard/strategy-ai/brand-brain')}
-            className="ml-auto text-white/30 hover:text-white text-xs transition"
-          >
-            Edit
-          </button>
-        </div>
-      )}
-
-      {/* Overview cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {OVERVIEW_CARDS.map(card => {
-          const Icon = card.icon
-          return (
-            <div key={card.label} className={`bg-[#111] border rounded-xl p-4 ${card.bg}`}>
-              <Icon size={16} className={`mb-3 ${card.color}`} />
-              <p className="text-white/40 text-[10px] font-semibold uppercase tracking-wide mb-0.5">{card.label}</p>
-              <p className="text-white font-bold text-lg leading-none">{card.value}</p>
-              <p className="text-white/30 text-[11px] mt-1">{card.sub}</p>
-            </div>
-          )
-        })}
+        <p className="text-white/30 text-xs mt-2 flex items-center gap-1.5">
+          <span className="text-white/20 text-[11px]">ⓘ</span>
+          Strategy AI powers the process: gather inputs → save memory → generate ideas → drive growth.
+        </p>
       </div>
 
-      {/* Running state */}
-      {running && (
-        <div className="bg-[#111] border border-white/8 rounded-xl p-8 text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <span className="w-5 h-5 border-2 border-[#FF3B1A]/40 border-t-[#FF3B1A] rounded-full animate-spin" />
-            <Sparkles size={16} className="text-[#FF3B1A] animate-pulse" />
-          </div>
-          <p className="text-white font-semibold">Strategy AI is analyzing your brand…</p>
-          <p className="text-white/35 text-sm">Scanning content gaps, hooks, competitor moves, and opportunities.</p>
-        </div>
-      )}
+      {/* ── 2-Column: Workspace + Super Brain ── */}
+      <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
 
-      {/* No run yet empty state */}
-      {!running && !latest && (
-        <div className="bg-[#111] border border-white/8 rounded-xl p-10 text-center space-y-5">
-          <div className="flex items-center justify-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-[#FF3B1A]/10 flex items-center justify-center">
-              <Sparkles size={26} className="text-[#FF3B1A]" />
-            </div>
-            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
-              <Brain size={26} className="text-white/40" />
-            </div>
-          </div>
-          <div>
-            <p className="text-white font-semibold text-lg">What should we create next?</p>
-            <p className="text-white/35 text-sm mt-1.5 max-w-xs mx-auto">
-              {brain
-                ? 'Super Brain is ready. Run Strategy AI to get your weekly content direction, hooks, scripts, and action plan.'
-                : 'Set up Brand Brain first so Strategy AI can generate a personalized strategy powered by your Super Brain.'}
+        {/* ── AI Workspace ── */}
+        <div
+          className="flex-1 min-w-0 bg-[#0d0d0d] border border-white/8 rounded-2xl overflow-hidden flex flex-col"
+          style={{ minHeight: 480 }}
+        >
+          {/* Workspace header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/6">
+            <p className="text-white font-semibold text-sm">
+              {centerView === 'workspace' ? 'AI Workspace' : (activeSection?.title ?? 'Memory Detail')}
+            </p>
+            <p className="text-white/30 text-xs">
+              {centerView === 'workspace' ? `Step ${activeStep} of 5` : `${currentStep.label} Memory`}
             </p>
           </div>
-          {brain ? (
-            <button
-              onClick={runStrategy}
-              className="inline-flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm px-6 py-3 rounded-lg transition"
-            >
-              <Play size={14} /> Run Strategy AI
-            </button>
-          ) : (
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => router.push('/dashboard/strategy-ai/brand-brain')}
-                className="inline-flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm px-6 py-3 rounded-lg transition"
-              >
-                <Brain size={14} /> Set Up Brand Brain
+
+          {/* WORKSPACE: chat + questions + input */}
+          {centerView === 'workspace' && (
+            <>
+              <div className="flex-1 overflow-y-auto p-5 space-y-3" style={{ maxHeight: 360 }}>
+                {/* Existing messages */}
+                {currentMsgs.map(msg => (
+                  <div key={msg.id}>
+                    {msg.role === 'ai' ? (
+                      <div className="flex items-start gap-2.5 max-w-[92%]">
+                        <div className="w-6 h-6 rounded-full bg-[#FF3B1A]/20 flex items-center justify-center shrink-0 mt-0.5">
+                          <Sparkles size={11} className="text-[#FF3B1A]" />
+                        </div>
+                        <div className="bg-white/4 border border-white/6 rounded-2xl rounded-tl-sm px-4 py-3">
+                          <p className="text-white/80 text-sm leading-relaxed whitespace-pre-line">{msg.text}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="bg-[#FF3B1A]/10 border border-[#FF3B1A]/18 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[85%]">
+                          <p className="text-white/90 text-sm leading-relaxed">{msg.text}</p>
+                        </div>
+                        <span className="flex items-center gap-1 text-green-400 text-[10px] pr-1">
+                          <CheckCircle2 size={10} /> Saved to Super Brain
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Current step questions */}
+                <div className="space-y-2 pt-1">
+                  {currentStep.questions.map((q, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-[#FF3B1A]/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <Sparkles size={11} className="text-[#FF3B1A]" />
+                      </div>
+                      <div className="bg-white/4 border border-white/6 rounded-2xl rounded-tl-sm px-4 py-2.5">
+                        <p className="text-white/60 text-sm">{q}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Input */}
+              <div className="p-4 border-t border-white/6 space-y-2">
+                <div className="flex gap-2 items-end">
+                  <textarea
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+                    placeholder="Type your answer here..."
+                    rows={2}
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-[#FF3B1A] resize-none"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={!input.trim()}
+                    className="bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-35 text-white p-3 rounded-xl transition shrink-0"
+                  >
+                    <Send size={15} />
+                  </button>
+                </div>
+                <p className="text-white/25 text-[10px] pl-1">Share as much detail as you can. Better inputs = better strategy.</p>
+              </div>
+            </>
+          )}
+
+          {/* MEMORY DETAIL VIEW */}
+          {centerView !== 'workspace' && detailKey && activeSection && (
+            <>
+              <div className="flex-1 overflow-y-auto p-5 space-y-3" style={{ maxHeight: 370 }}>
+                <p className="text-white/35 text-xs leading-relaxed">
+                  {activeSection.desc}. Fill in your details below — Strategy AI will use this across the whole funnel.
+                </p>
+                <div className="space-y-3">
+                  {DETAIL_FIELDS[detailKey].map((field, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <p className="text-white/35 text-[10px] font-semibold uppercase tracking-wide">{field.label}</p>
+                      <input
+                        value={detailInputs[detailKey]?.[idx] ?? ''}
+                        onChange={e => saveDetailField(detailKey, idx, e.target.value)}
+                        placeholder={field.placeholder}
+                        className="w-full bg-white/4 border border-white/8 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#FF3B1A]"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-white/6">
+                <button
+                  onClick={() => setCenterView('workspace')}
+                  className="flex items-center gap-1.5 text-white/35 hover:text-white text-xs transition"
+                >
+                  <ArrowRight size={11} className="rotate-180" /> Back to Funnel Step
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── Super Brain Panel ── */}
+        <div className="w-full lg:w-64 shrink-0 bg-[#0d0d0d] border border-white/8 rounded-2xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3 border-b border-white/6">
+            <div className="flex items-center gap-2 mb-0.5">
+              <Brain size={14} className="text-[#FF3B1A]" />
+              <p className="text-white font-semibold text-sm">Super Brain</p>
+            </div>
+            <p className="text-white/30 text-[11px]">Living memory used across the whole funnel.</p>
+          </div>
+
+          <div className="divide-y divide-white/5">
+            {BRAIN_SECTIONS.map(({ key, Icon, title, desc, stepId }) => {
+              const status   = brainStatus[key]
+              const isActive = centerView === key
+              return (
+                <button
+                  key={key}
+                  onClick={() => { setCenterView(isActive ? 'workspace' : key); setActiveStep(stepId) }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition ${
+                    isActive ? 'bg-[#FF3B1A]/8' : 'hover:bg-white/2'
+                  }`}
+                >
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isActive ? 'bg-[#FF3B1A]/20' : 'bg-white/5'}`}>
+                    <Icon size={13} className={isActive ? 'text-[#FF3B1A]' : 'text-white/40'} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                      <p className={`text-xs font-semibold ${isActive ? 'text-white' : 'text-white/65'}`}>{title}</p>
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${STATUS_STYLES[status]}`}>
+                        {status}
+                      </span>
+                    </div>
+                    <p className="text-white/28 text-[10px] truncate">{desc}</p>
+                  </div>
+                  <ChevronRight size={12} className={`shrink-0 ${isActive ? 'text-[#FF3B1A]' : 'text-white/18'}`} />
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Info box */}
+          <div className="m-3 bg-white/3 border border-white/6 rounded-xl p-3">
+            <p className="text-white/35 text-[11px] leading-relaxed">
+              Memory grows as we move through the funnel. All insights are connected and reused to generate stronger ideas and results.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Outcomes Section ── */}
+      <div id="strategy-outcomes" className="space-y-3">
+        <div>
+          <p className="text-white font-semibold">What Strategy AI creates</p>
+          <p className="text-white/35 text-sm mt-0.5">Your outputs from this process. Generated as we progress.</p>
+        </div>
+
+        {running && (
+          <div className="bg-[#0d0d0d] border border-white/8 rounded-xl p-6 text-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <span className="w-4 h-4 border-2 border-[#FF3B1A]/40 border-t-[#FF3B1A] rounded-full animate-spin" />
+              <Sparkles size={14} className="text-[#FF3B1A] animate-pulse" />
+            </div>
+            <p className="text-white/55 text-sm">Strategy AI is analyzing your inputs…</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {OUTCOME_CARDS.map(({ Icon, title, desc, key }) => (
+            <div key={key} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4 flex flex-col gap-2.5">
+              <Icon size={14} className="text-[#FF3B1A]" />
+              <div>
+                <p className="text-white text-xs font-semibold">{title}</p>
+                <p className="text-white/30 text-[11px] mt-0.5 leading-relaxed">{desc}</p>
+              </div>
+              {outcomes ? (
+                <div className="space-y-1.5 mt-0.5">
+                  {outcomes[key].slice(0, 3).map((item, i) => (
+                    <p key={i} className="text-white/50 text-[10px] leading-relaxed border-l-2 border-[#FF3B1A]/25 pl-2">{item}</p>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-1.5 mt-0.5">
+                  {[65, 80, 50].map((w, i) => (
+                    <div key={i} className="h-1.5 bg-white/6 rounded-full" style={{ width: `${w}%` }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Add Memory Modal ── */}
+      {showAddMemory && (
+        <div
+          className="fixed inset-0 bg-black/65 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowAddMemory(false)}
+        >
+          <div
+            className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-white font-semibold">Add Memory</p>
+              <button onClick={() => setShowAddMemory(false)} className="text-white/30 hover:text-white transition">
+                <X size={16} />
               </button>
             </div>
-          )}
+            <p className="text-white/40 text-sm">Add a note or context directly to your Super Brain.</p>
+            <textarea
+              value={memoryInput}
+              onChange={e => setMemoryInput(e.target.value)}
+              rows={4}
+              placeholder="Type memory content…"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#FF3B1A] resize-none"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setMemoryInput(''); setShowAddMemory(false) }}
+                className="flex-1 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm py-2.5 rounded-xl transition"
+              >
+                Save Memory
+              </button>
+              <button
+                onClick={() => setShowAddMemory(false)}
+                className="flex-1 border border-white/10 text-white/45 hover:text-white text-sm py-2.5 rounded-xl transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── Strategy output ── */}
-      {!running && latest && (
-        <div className="space-y-5">
-
-          {/* Summary */}
-          <div className="bg-[#111] border border-white/8 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap size={14} className="text-[#FF3B1A]" />
-              <p className="text-white font-semibold text-sm">This Week's Strategy</p>
-              <Tag label={new Date(latest.createdAt).toLocaleDateString()} />
-              <span className="ml-auto">
-                <button
-                  onClick={runStrategy}
-                  className="flex items-center gap-1 text-white/30 hover:text-white text-xs transition"
-                >
-                  <Play size={11} /> Re-run
-                </button>
-              </span>
+      {/* ── Add Link Modal ── */}
+      {showAddLink && (
+        <div
+          className="fixed inset-0 bg-black/65 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowAddLink(false)}
+        >
+          <div
+            className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-white font-semibold">Add Link</p>
+              <button onClick={() => setShowAddLink(false)} className="text-white/30 hover:text-white transition">
+                <X size={16} />
+              </button>
             </div>
-            <p className="text-white/70 text-sm leading-relaxed">{latest.summary}</p>
-          </div>
-
-          {/* Tab bar */}
-          <div className="flex gap-1 bg-[#111] border border-white/8 rounded-xl p-1 overflow-x-auto">
-            {OUTPUT_TABS.map(t => (
+            <p className="text-white/40 text-sm">Save a website, post, video, or reference for Strategy AI to use.</p>
+            <input
+              value={linkInput}
+              onChange={e => setLinkInput(e.target.value)}
+              placeholder="https://…"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#FF3B1A]"
+            />
+            <div className="flex gap-2">
               <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id)}
-                className={`shrink-0 px-3.5 py-2 rounded-lg text-xs font-medium transition whitespace-nowrap ${
-                  activeTab === t.id ? 'bg-[#FF3B1A] text-white' : 'text-white/45 hover:text-white'
-                }`}
+                onClick={() => { setLinkInput(''); setShowAddLink(false) }}
+                className="flex-1 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm py-2.5 rounded-xl transition"
               >
-                {t.label}
+                Save Link
               </button>
-            ))}
+              <button
+                onClick={() => setShowAddLink(false)}
+                className="flex-1 border border-white/10 text-white/45 hover:text-white text-sm py-2.5 rounded-xl transition"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-
-          {/* ── Content Ideas ── */}
-          {activeTab === 'ideas' && (
-            <div className="space-y-3">
-              <p className="text-white/40 text-xs uppercase tracking-wide font-semibold">Recommended Content Ideas</p>
-              {latest.contentIdeas.map((idea, i) => (
-                <div key={idea.id} className="bg-[#111] border border-white/8 rounded-xl p-5 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <span className="w-6 h-6 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold text-sm">{idea.title}</p>
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        <Tag label={idea.format} color="orange" />
-                        <Tag label={idea.platform} color="blue" />
-                        <Tag label={idea.goal} color="default" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pl-9 space-y-2">
-                    <div>
-                      <p className="text-white/35 text-[10px] uppercase tracking-wide mb-0.5">Hook</p>
-                      <p className="text-white/75 text-xs italic">{idea.hook}</p>
-                    </div>
-                    <div>
-                      <p className="text-white/35 text-[10px] uppercase tracking-wide mb-0.5">Angle</p>
-                      <p className="text-white/60 text-xs">{idea.angle}</p>
-                    </div>
-                  </div>
-                  <div className="pl-9 flex items-center gap-2">
-                    {briefs[idea.id] ? (
-                      <span className="flex items-center gap-1 text-green-400 text-xs font-semibold">
-                        <CheckCircle2 size={13} /> Brief Created
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => createBrief(idea)}
-                        className="flex items-center gap-1.5 bg-white/8 hover:bg-[#FF3B1A] text-white/70 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition"
-                      >
-                        <BookOpen size={12} /> Create Brief
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── Hooks ── */}
-          {activeTab === 'hooks' && (
-            <div className="space-y-3">
-              <p className="text-white/40 text-xs uppercase tracking-wide font-semibold">Swipe-Stopping Hooks</p>
-              <div className="bg-[#111] border border-white/8 rounded-xl divide-y divide-white/5">
-                {latest.hooks.map((hook, i) => (
-                  <div key={i} className="flex items-start gap-3 px-5 py-3.5">
-                    <span className="text-white/20 text-xs font-bold w-4 shrink-0 mt-0.5">{i + 1}</span>
-                    <p className="text-white/80 text-sm flex-1 italic">{hook}</p>
-                    <CopyBtn text={hook} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── UGC Scripts ── */}
-          {activeTab === 'scripts' && (
-            <div className="space-y-4">
-              <p className="text-white/40 text-xs uppercase tracking-wide font-semibold">UGC Video Scripts</p>
-              {latest.scripts.map((s, i) => (
-                <div key={s.id} className="bg-[#111] border border-white/8 rounded-xl p-5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                    <p className="text-white font-semibold text-sm">{s.title}</p>
-                    <Tag label={s.duration} color="default" />
-                  </div>
-                  {[{ label: 'Hook', text: s.hook }, { label: 'Body', text: s.body }, { label: 'CTA', text: s.cta }].map(part => (
-                    <div key={part.label} className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-white/35 text-[10px] uppercase tracking-wide font-semibold">{part.label}</p>
-                        <CopyBtn text={part.text} />
-                      </div>
-                      <p className="text-white/75 text-sm leading-relaxed italic border-l-2 border-[#FF3B1A]/30 pl-3">{part.text}</p>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── Captions ── */}
-          {activeTab === 'captions' && (
-            <div className="space-y-3">
-              <p className="text-white/40 text-xs uppercase tracking-wide font-semibold">Caption Ideas</p>
-              <div className="bg-[#111] border border-white/8 rounded-xl divide-y divide-white/5">
-                {latest.captions.map((cap, i) => (
-                  <div key={i} className="flex items-start gap-3 px-5 py-4">
-                    <span className="text-white/20 text-xs font-bold w-4 shrink-0 mt-0.5">{i + 1}</span>
-                    <p className="text-white/75 text-sm flex-1 leading-relaxed">{cap}</p>
-                    <CopyBtn text={cap} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Gaps & Competitor Insights ── */}
-          {activeTab === 'gaps' && (
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <p className="text-white/40 text-xs uppercase tracking-wide font-semibold">Content Gaps — Opportunities to Own</p>
-                <div className="bg-[#111] border border-white/8 rounded-xl divide-y divide-white/5">
-                  {latest.contentGaps.map((gap, i) => (
-                    <div key={i} className="flex items-start gap-3 px-5 py-3.5">
-                      <AlertCircle size={13} className="text-orange-400 mt-0.5 shrink-0" />
-                      <p className="text-white/75 text-sm">{gap}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-3">
-                <p className="text-white/40 text-xs uppercase tracking-wide font-semibold">Competitor Insights</p>
-                <div className="bg-[#111] border border-white/8 rounded-xl divide-y divide-white/5">
-                  {latest.competitorNotes.map((note, i) => (
-                    <div key={i} className="flex items-start gap-3 px-5 py-3.5">
-                      <Eye size={13} className="text-blue-400 mt-0.5 shrink-0" />
-                      <p className="text-white/75 text-sm">{note}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Next Actions ── */}
-          {activeTab === 'actions' && (
-            <div className="space-y-3">
-              <p className="text-white/40 text-xs uppercase tracking-wide font-semibold">Fire Creator Next Actions</p>
-              <div className="bg-[#111] border border-white/8 rounded-xl divide-y divide-white/5">
-                {latest.nextActions.map((action, i) => (
-                  <div key={i} className="flex items-start gap-3 px-5 py-3.5">
-                    <span className="w-5 h-5 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                    <p className="text-white/80 text-sm flex-1">{action}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => router.push('/dashboard/strategy-ai/briefs')}
-                  className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition"
-                >
-                  <Send size={13} /> Send Briefs to Fire Creator
-                </button>
-                <button
-                  onClick={() => router.push('/dashboard/strategy-ai/briefs')}
-                  className="flex items-center gap-2 border border-white/10 text-white/50 hover:text-white text-sm px-4 py-2.5 rounded-lg transition"
-                >
-                  <BookOpen size={13} /> View All Briefs
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Runs history */}
-          {runs.length > 1 && (
-            <div className="bg-white/3 border border-white/6 rounded-xl px-4 py-3 flex items-center gap-3">
-              <Clock size={13} className="text-white/30" />
-              <p className="text-white/35 text-xs">{runs.length} strategy runs total.</p>
-              <button className="ml-auto text-white/30 hover:text-white text-xs transition flex items-center gap-1">
-                View history <ChevronRight size={11} />
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>
