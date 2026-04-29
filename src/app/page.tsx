@@ -97,10 +97,22 @@ const TESTIMONIALS: TestimonialProps[] = [
 ];
 
 const REEL_CARDS = [
-  { views: "28.3K", revenue: "$27K", delta: "+95%", label: "Hook-driven product demo" },
-  { views: "15.1K", revenue: "$18K", delta: "+14%", label: "Founder-style talking ad" },
-  { views: "11.8K", revenue: "$19K", delta: "+17%", label: "Problem / solution short" },
-  { views: "8K",   revenue: "$12K", delta: "+38%", label: "Offer-focused conversion video" },
+  {
+    label: "Computer Brand",
+    videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-casual-ugc-style-ve_2891981897.mp4",
+  },
+  {
+    label: "Workout Gear Brand",
+    videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-energetic-ugc-fitne_2891987468.mp4",
+  },
+  {
+    label: "Soda Brand",
+    videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-casual-ugcstyle-tes_2892041483.mp4",
+  },
+  {
+    label: "Lotion Brand",
+    videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_make-ugc-video-with-this-_2892034073.mp4",
+  },
 ];
 
 const TESTIMONIALS_NEW = [
