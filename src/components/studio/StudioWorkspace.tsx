@@ -661,8 +661,23 @@ function DetailDrawer({
         <button onClick={onClose} className="text-white/40 hover:text-white transition p-1 shrink-0 mt-0.5"><X size={17} /></button>
       </div>
 
+      {/* ── Media preview (always visible, above tabs) ── */}
+      <div className="bg-[#080808] aspect-video flex items-center justify-center shrink-0">
+        {hasFile ? (
+          isVideo
+            ? <video src={item.file_url!} className="w-full h-full object-contain" controls />
+            // eslint-disable-next-line @next/next/no-img-element
+            : <img src={item.file_url!} alt={item.title} className="w-full h-full object-contain" />
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-white/20">
+            <MediaTypeIcon type={item.media_type} size={36} />
+            <span className="text-xs">In production</span>
+          </div>
+        )}
+      </div>
+
       {/* Tab bar */}
-      <div className="flex border-b border-white/8 shrink-0">
+      <div className="flex border-b border-white/8 border-t border-t-white/8 shrink-0">
         {tabs.map(t => (
           <button
             key={t.id}
@@ -684,21 +699,6 @@ function DetailDrawer({
         {/* ── Details tab ── */}
         {tab === 'details' && (
           <>
-            {/* Preview */}
-            <div className="bg-[#080808] aspect-video flex items-center justify-center">
-              {hasFile ? (
-                isVideo
-                  ? <video src={item.file_url!} className="w-full h-full object-contain" controls />
-                  // eslint-disable-next-line @next/next/no-img-element
-                  : <img src={item.file_url!} alt={item.title} className="w-full h-full object-contain" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-white/20">
-                  <MediaTypeIcon type={item.media_type} size={36} />
-                  <span className="text-xs">In production</span>
-                </div>
-              )}
-            </div>
-
             {/* Metadata grid */}
             <div className="px-5 py-3 border-b border-white/8 grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
               {([
