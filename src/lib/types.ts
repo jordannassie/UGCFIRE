@@ -37,8 +37,11 @@ export interface Plan {
   name: string
   slug: string
   price_monthly: number
+  yearly_price: number | null
   videos_per_month: number
   description: string | null
+  sales_only: boolean
+  sort_order: number
   is_active: boolean
   created_at: string
 }
@@ -147,11 +150,13 @@ export interface BillingRecord {
   plan_id: string | null
   billing_status: BillingStatus
   subscription_status: SubscriptionStatus
+  billing_interval: 'monthly' | 'yearly' | null
   mock_mode: boolean
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   current_period_start: string | null
   current_period_end: string | null
+  cancel_at_period_end: boolean
   created_at: string
   updated_at: string
 }

@@ -126,10 +126,14 @@ const TESTIMONIALS_NEW = [
 
 const PLANS = [
   {
+    key: "growth",
     name: "Growth",
-    price: "$2,500/month",
+    monthlyPrice: 2500,
+    yearlyTotal: 24000,
+    yearlyEquiv: "$2,000/mo billed annually",
     tagline: "8 UGC-style videos per month",
     badge: null,
+    salesOnly: false,
     desc: "Best for brands that want consistent weekly content without hiring creators, editors, or a full content team.",
     includes: [
       "8 UGC-style videos/month",
@@ -143,10 +147,14 @@ const PLANS = [
     cta: "Book Growth Call",
   },
   {
+    key: "scale",
     name: "Scale",
-    price: "$5,000/month",
+    monthlyPrice: 5000,
+    yearlyTotal: 48000,
+    yearlyEquiv: "$4,000/mo billed annually",
     tagline: "20 UGC-style videos per month",
     badge: "Most Popular",
+    salesOnly: false,
     desc: "Best for brands that want daily content volume and more creative testing.",
     includes: [
       "20 UGC-style videos/month",
@@ -160,6 +168,28 @@ const PLANS = [
       "Cancel anytime",
     ],
     cta: "Book Scale Call",
+  },
+  {
+    key: "enterprise",
+    name: "Enterprise",
+    monthlyPrice: null,
+    yearlyTotal: null,
+    yearlyEquiv: null,
+    tagline: "Custom content volume for brands that need more",
+    badge: null,
+    salesOnly: true,
+    desc: "For high-volume brands and agencies that need a dedicated creative partner, custom workflows, and priority support.",
+    includes: [
+      "Custom monthly content volume",
+      "Dedicated creative strategist",
+      "Custom content planning",
+      "Priority support",
+      "Priority delivery",
+      "Custom workflows",
+      "Team collaboration",
+      "Ongoing strategy support",
+    ],
+    cta: "Talk to Sales",
   },
 ];
 
@@ -462,6 +492,7 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [heroVideo, setHeroVideo] = useState(0);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   // Calendar booking state
   interface CalSlot { iso: string; label: string }
@@ -1269,6 +1300,7 @@ export default function Home() {
       </section>
       {/* ── End Process Section ── */}
 
+      {/* UGCFire Pricing Section — 3 plans + monthly/yearly toggle */}
       <section id="plans" className="sec sec-v" style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
         <div style={sectionHead}>
           <div style={{
@@ -1295,69 +1327,194 @@ export default function Home() {
             Choose the content volume that fits your brand. We handle the creative direction, hooks, scripts, and AI-assisted production.
           </p>
         </div>
+
+        {/* Billing cycle toggle */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 48, marginTop: 8 }}>
+          <div style={{
+            display: "inline-flex",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            borderRadius: 40,
+            padding: 4,
+            gap: 4,
+          }}>
+            <button
+              onClick={() => setBillingCycle("monthly")}
+              style={{
+                background: billingCycle === "monthly" ? "#FF3B1A" : "transparent",
+                color: billingCycle === "monthly" ? "#fff" : "rgba(255,255,255,0.45)",
+                border: "none",
+                borderRadius: 32,
+                padding: "8px 22px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                letterSpacing: "0.03em",
+              }}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingCycle("yearly")}
+              style={{
+                background: billingCycle === "yearly" ? "#FF3B1A" : "transparent",
+                color: billingCycle === "yearly" ? "#fff" : "rgba(255,255,255,0.45)",
+                border: "none",
+                borderRadius: 32,
+                padding: "8px 22px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                letterSpacing: "0.03em",
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+              }}
+            >
+              Yearly
+              <span style={{
+                background: billingCycle === "yearly" ? "rgba(255,255,255,0.25)" : "rgba(255,59,26,0.25)",
+                color: billingCycle === "yearly" ? "#fff" : "#FF3B1A",
+                fontSize: 10,
+                fontWeight: 800,
+                padding: "2px 7px",
+                borderRadius: 20,
+                letterSpacing: "0.05em",
+              }}>
+                -20%
+              </span>
+            </button>
+          </div>
+        </div>
+
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
           gap: 24,
           alignItems: "start",
         }}>
-          {PLANS.map((plan, i) => (
-            <div
-              key={i}
-              style={{
-                background: plan.badge ? "rgba(255,59,26,0.07)" : "rgba(255,255,255,0.03)",
-                border: plan.badge ? "1px solid rgba(255,59,26,0.35)" : "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 18,
-                padding: "36px 32px",
-                position: "relative",
-              }}
-            >
-              {plan.badge && (
-                <div style={{
-                  position: "absolute",
-                  top: -14,
-                  left: 32,
-                  background: "#FF3B1A",
-                  color: "#fff",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  padding: "4px 14px",
-                  borderRadius: 20,
-                }}>
-                  {plan.badge}
-                </div>
-              )}
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", fontWeight: 600, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                {plan.name}
-              </div>
-              <div style={{ fontFamily: "var(--font-bebas)", fontSize: 48, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, marginBottom: 4 }}>
-                {plan.price}
-              </div>
-              <div style={{ fontSize: 15, color: "#FF3B1A", fontWeight: 600, marginBottom: 12 }}>
-                {plan.tagline}
-              </div>
-              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 24 }}>
-                {plan.desc}
-              </p>
-              <div style={{ marginBottom: 28 }}>
-                {plan.includes.map((item, j) => (
-                  <div key={j} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                    <span style={{ color: "#FF3B1A", fontSize: 14, flexShrink: 0 }}>✓</span>
-                    <span style={{ fontSize: 14, color: "rgba(255,255,255,0.65)" }}>{item}</span>
-                  </div>
-                ))}
-              </div>
-              <FireButton
-                href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
-                className="btn-fire"
-                style={{ display: "block", textAlign: "center", textDecoration: "none", fontSize: 15, padding: "14px 24px" }}
+          {PLANS.map((plan, i) => {
+            const isScale = plan.key === "scale";
+            const isEnterprise = plan.key === "enterprise";
+
+            return (
+              <div
+                key={i}
+                style={{
+                  background: isScale ? "rgba(255,59,26,0.07)" : "rgba(255,255,255,0.03)",
+                  border: isScale ? "1px solid rgba(255,59,26,0.35)" : "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 18,
+                  padding: "36px 32px",
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
               >
-                {plan.cta}
-              </FireButton>
-            </div>
-          ))}
+                {/* Badge */}
+                {plan.badge && (
+                  <div style={{
+                    position: "absolute",
+                    top: -14,
+                    left: 32,
+                    background: "#FF3B1A",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    padding: "4px 14px",
+                    borderRadius: 20,
+                  }}>
+                    {plan.badge}
+                  </div>
+                )}
+
+                {/* Plan name */}
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", fontWeight: 600, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {plan.name}
+                </div>
+
+                {/* Price */}
+                {plan.salesOnly ? (
+                  <div style={{ fontFamily: "var(--font-bebas)", fontSize: 40, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, marginBottom: 4 }}>
+                    Talk to Sales
+                  </div>
+                ) : billingCycle === "monthly" ? (
+                  <div>
+                    <div style={{ fontFamily: "var(--font-bebas)", fontSize: 48, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, marginBottom: 2 }}>
+                      ${plan.monthlyPrice!.toLocaleString()}<span style={{ fontSize: 22, fontFamily: "inherit" }}>/mo</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontFamily: "var(--font-bebas)", fontSize: 48, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, marginBottom: 2 }}>
+                      ${plan.yearlyTotal!.toLocaleString()}<span style={{ fontSize: 22, fontFamily: "inherit" }}>/yr</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginBottom: 2 }}>
+                      {plan.yearlyEquiv}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: 15, color: "#FF3B1A", fontWeight: 600, marginBottom: 12, marginTop: 4 }}>
+                  {plan.tagline}
+                </div>
+                <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 24 }}>
+                  {plan.desc}
+                </p>
+
+                {/* Features */}
+                <div style={{ marginBottom: 28, flex: 1 }}>
+                  {plan.includes.map((item, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <span style={{ color: "#FF3B1A", fontSize: 14, flexShrink: 0 }}>✓</span>
+                      <span style={{ fontSize: 14, color: "rgba(255,255,255,0.65)" }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                {plan.salesOnly ? (
+                  <a
+                    href="mailto:hello@ugcfire.com"
+                    style={{
+                      display: "block",
+                      textAlign: "center",
+                      textDecoration: "none",
+                      fontSize: 15,
+                      padding: "14px 24px",
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      borderRadius: 10,
+                      color: "#fff",
+                      fontWeight: 700,
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.12)";
+                      (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,59,26,0.4)";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.08)";
+                      (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.15)";
+                    }}
+                  >
+                    {plan.cta}
+                  </a>
+                ) : (
+                  <FireButton
+                    href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
+                    className="btn-fire"
+                    style={{ display: "block", textAlign: "center", textDecoration: "none", fontSize: 15, padding: "14px 24px" }}
+                  >
+                    {plan.cta}
+                  </FireButton>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
