@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useState, useEffect, type CSSProperties } from "react";
-import { Phone, Inbox, MessageSquare, CreditCard, Star, Building2, Users, Video, Brain, TrendingUp } from "lucide-react";
+import { Phone, Inbox, MessageSquare, CreditCard, Star, Building2, Users, Video, Brain, TrendingUp, Palmtree, Sun, Waves } from "lucide-react";
 import FireButton from "@/components/FireButton";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -116,6 +116,10 @@ const REEL_CARDS = [
   {
     label: "Vacuum Cleaner Brand",
     videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-cinematic-ugc-testi_2892073891.mp4",
+  },
+  {
+    label: "Chips Brand",
+    videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-ugcstyle-vertical-s_2892334025.mp4",
   },
 ];
 
@@ -2080,7 +2084,7 @@ export default function Home() {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div className="footer-grid" style={{
             display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr",
+            gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr",
             gap: 48,
             marginBottom: 56,
           }}>
@@ -2180,6 +2184,35 @@ export default function Home() {
                 ))}
               </div>
             ))}
+            {/* Office Locations */}
+            <div>
+              <div style={{
+                fontSize: 11,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.3)",
+                fontWeight: 600,
+                marginBottom: 18,
+              }}>
+                Office Locations
+              </div>
+              {[
+                { icon: <Building2 size={18} />, label: "Dallas, TX" },
+                { icon: <Palmtree size={18} />, label: "Newport Beach, CA" },
+                { icon: <Sun size={18} />, label: "Miami, FL" },
+              ].map(({ icon, label }) => (
+                <div key={label} style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 16,
+                  color: "rgba(255,255,255,0.45)",
+                }}>
+                  <span style={{ color: "rgba(255,255,255,0.25)", flexShrink: 0 }}>{icon}</span>
+                  <span style={{ fontSize: 13 }}>{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
           <div style={{
             borderTop: "1px solid rgba(255,255,255,0.06)",
