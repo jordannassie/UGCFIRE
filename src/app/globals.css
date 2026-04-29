@@ -136,3 +136,15 @@ body {
    In light mode these look too harsh — soften to light gray.                       */
 [data-theme="light"] .bg-black          { background-color: #e5e7eb !important; }
 [data-theme="light"] .border-black      { border-color:     #e5e7eb !important; }
+
+/* Studio preview panel — status control bar (light mode) */
+[data-theme="light"] .studio-status-bar {
+  background-color: #fff7ed !important; /* orange-50 */
+  border-color:     #fdba74 !important; /* orange-300 */
+}
+[data-theme="light"] .studio-status-bar .studio-status-divider {
+  background-color: #fdba74 !important;
+}
+[data-theme="light"] .studio-status-bar .studio-media-type {
+  color: #9a3412 !important; /* orange-800, readable on light bg */
+}

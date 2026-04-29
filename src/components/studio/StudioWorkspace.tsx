@@ -194,6 +194,16 @@ const STATUS_OPTIONS: Status[] = [
   'in_production', 'ready_for_review', 'revision_requested', 'approved', 'delivered',
 ]
 
+// Text colour shown inside the status select (per-status accent)
+const STATUS_SELECT_COLOR: Record<string, string> = {
+  in_production:      '#fbbf24', // amber-400
+  ready_for_review:   '#60a5fa', // blue-400
+  revision_requested: '#fb923c', // orange-400
+  approved:           '#4ade80', // green-400
+  delivered:          '#34d399', // emerald-400
+  archived:           '#9ca3af', // gray-400
+}
+
 const MEDIA_ICONS: Record<string, React.ElementType> = {
   photo: ImageIcon, video: Video, graphic: PenTool, carousel: LayoutTemplate, other: File,
 }
@@ -653,14 +663,18 @@ function DetailDrawer({
       <div className="pb-28">
 
       {/* Header */}
-      <div className="px-5 pt-4 pb-3 border-b border-white/8">
-        <div className="flex items-start justify-between mb-2.5">
+      <div className="px-5 pt-4 pb-4 border-b border-white/8 space-y-3">
+        {/* Title row */}
+        <div className="flex items-start justify-between">
           <p className="text-white font-semibold text-sm leading-snug flex-1 min-w-0 mr-3">{item.title}</p>
           <button onClick={onClose} className="text-white/40 hover:text-white transition p-1 shrink-0"><X size={17} /></button>
         </div>
-        {/* Status dropdown + meta */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-white/35 text-[10px] font-semibold uppercase tracking-wide shrink-0">Status</label>
+
+        {/* Status control bar */}
+        <div className="studio-status-bar bg-[#FF3B1A]/10 border border-[#FF3B1A]/22 rounded-xl px-3.5 py-2.5 flex items-center gap-3 flex-wrap">
+          <span className="text-[#FF3B1A]/75 text-[9px] font-bold uppercase tracking-[0.12em] shrink-0">
+            Status
+          </span>
           <select
             value={status}
             onChange={e => {
@@ -669,18 +683,19 @@ function DetailDrawer({
               onStatusChange(item.id, next)
               onToast(`Status updated: ${STATUS_META[next].label}`)
             }}
-            className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border focus:outline-none focus:ring-1 focus:ring-[#FF3B1A] cursor-pointer ${STATUS_META[status]?.color ?? 'bg-white/8 text-white/60 border-white/10'} border-current/20`}
-            style={{ background: 'transparent' }}
+            className="flex-1 min-w-0 bg-transparent text-xs font-bold focus:outline-none cursor-pointer border-0 appearance-none"
+            style={{ color: STATUS_SELECT_COLOR[status] ?? '#ffffff' }}
           >
             {STATUS_OPTIONS.map(s => (
-              <option key={s} value={s} className="bg-[#111] text-white">
+              <option key={s} value={s} style={{ background: '#111', color: '#fff' }}>
                 {STATUS_META[s].label}
               </option>
             ))}
           </select>
-          <span className="text-white/25 text-[10px] capitalize">{item.media_type}</span>
+          <div className="studio-status-divider h-3.5 w-px bg-[#FF3B1A]/20 shrink-0" />
+          <span className="studio-media-type text-white/35 text-[10px] capitalize shrink-0">{item.media_type}</span>
           {item.company_name && role === 'admin' && (
-            <span className="text-white/25 text-[10px]">· {item.company_name}</span>
+            <span className="text-white/25 text-[10px] shrink-0">· {item.company_name}</span>
           )}
         </div>
       </div>
