@@ -644,7 +644,7 @@ function DetailDrawer({
   const internalComments = localComments.filter(c => c.is_internal)
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[420px] bg-[#0d0d0d] border-l border-white/8 flex flex-col z-40 shadow-2xl">
+    <div className="fixed inset-y-0 right-0 w-[420px] bg-[#0d0d0d] border-l border-white/8 z-40 shadow-2xl overflow-y-auto overflow-x-hidden">
 
       {/* Header */}
       <div className="flex items-start justify-between px-5 pt-4 pb-3 border-b border-white/8">
@@ -662,10 +662,7 @@ function DetailDrawer({
       </div>
 
       {/* ── Media preview (always visible, above tabs) ── */}
-      <div
-        className="bg-[#080808] flex items-center justify-center shrink-0 w-full"
-        style={{ height: 'min(42vh, 240px)' }}
-      >
+      <div className="bg-[#080808] aspect-video flex items-center justify-center w-full">
         {hasFile ? (
           isVideo
             ? <video src={item.file_url!} className="w-full h-full object-contain" controls />
@@ -697,7 +694,7 @@ function DetailDrawer({
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto">
+      <div>
 
         {/* ── Details tab ── */}
         {tab === 'details' && (
@@ -795,8 +792,8 @@ function DetailDrawer({
 
         {/* ── Comments tab ── */}
         {tab === 'comments' && (
-          <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          <div>
+            <div className="p-5 space-y-3 pb-20">
               {publicComments.length === 0 && (
                 <p className="text-white/20 text-xs pt-4 text-center">No comments yet.</p>
               )}
@@ -838,7 +835,7 @@ function DetailDrawer({
               })}
               <div ref={bottomRef} />
             </div>
-            <div className="p-4 border-t border-white/8 flex gap-2 shrink-0">
+            <div className="sticky bottom-0 bg-[#0d0d0d] p-4 border-t border-white/8 flex gap-2">
               <input
                 value={msg}
                 onChange={e => setMsg(e.target.value)}
@@ -853,8 +850,8 @@ function DetailDrawer({
 
         {/* ── Notes tab (admin only) ── */}
         {tab === 'notes' && role === 'admin' && (
-          <div className="flex flex-col h-full">
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          <div>
+            <div className="p-5 space-y-3 pb-4">
               <p className="text-yellow-500/50 text-[10px] font-medium">Internal notes are never visible to the client.</p>
               {internalComments.length === 0 && notes.length === 0 && (
                 <p className="text-white/20 text-xs pt-2 text-center">No internal notes yet.</p>
@@ -872,7 +869,7 @@ function DetailDrawer({
                 </div>
               ))}
             </div>
-            <div className="p-4 border-t border-white/8 space-y-2 shrink-0">
+            <div className="sticky bottom-0 bg-[#0d0d0d] p-4 border-t border-white/8 space-y-2">
               <textarea
                 value={noteText}
                 onChange={e => setNoteText(e.target.value)}
