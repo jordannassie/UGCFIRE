@@ -651,18 +651,36 @@ function DetailDrawer({
       <div className="pb-28">
 
       {/* Header */}
-      <div className="flex items-start justify-between px-5 pt-4 pb-3 border-b border-white/8">
-        <div className="flex-1 min-w-0 mr-3">
-          <p className="text-white font-semibold text-sm leading-snug">{item.title}</p>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <StatusBadge status={status} />
-            <span className="text-white/30 text-[10px] capitalize">{item.media_type}</span>
-            {item.company_name && role === 'admin' && (
-              <span className="text-white/30 text-[10px]">· {item.company_name}</span>
-            )}
-          </div>
+      <div className="px-5 pt-4 pb-3 border-b border-white/8">
+        <div className="flex items-start justify-between mb-2.5">
+          <p className="text-white font-semibold text-sm leading-snug flex-1 min-w-0 mr-3">{item.title}</p>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition p-1 shrink-0"><X size={17} /></button>
         </div>
-        <button onClick={onClose} className="text-white/40 hover:text-white transition p-1 shrink-0 mt-0.5"><X size={17} /></button>
+        {/* Status dropdown + meta */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <label className="text-white/35 text-[10px] font-semibold uppercase tracking-wide shrink-0">Status</label>
+          <select
+            value={status}
+            onChange={e => {
+              const next = e.target.value as Status
+              setStatus(next)
+              onStatusChange(item.id, next)
+              onToast(`Status updated: ${STATUS_META[next].label}`)
+            }}
+            className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border focus:outline-none focus:ring-1 focus:ring-[#FF3B1A] cursor-pointer ${STATUS_META[status]?.color ?? 'bg-white/8 text-white/60 border-white/10'} border-current/20`}
+            style={{ background: 'transparent' }}
+          >
+            {STATUS_OPTIONS.map(s => (
+              <option key={s} value={s} className="bg-[#111] text-white">
+                {STATUS_META[s].label}
+              </option>
+            ))}
+          </select>
+          <span className="text-white/25 text-[10px] capitalize">{item.media_type}</span>
+          {item.company_name && role === 'admin' && (
+            <span className="text-white/25 text-[10px]">· {item.company_name}</span>
+          )}
+        </div>
       </div>
 
       {/* ── Media preview (always visible, above tabs) ── */}

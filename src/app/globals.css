@@ -130,3 +130,9 @@ body {
 /* ── DRAG / DROP BORDERS ── */
 [data-theme="light"] .border-dashed.border-white\/10 { border-color: #d1d5db !important; }
 [data-theme="light"] .border-dashed.border-white\/20 { border-color: #9ca3af !important; }
+
+/* ── STUDIO FOLDER CARD THUMBNAIL DIVIDERS ──
+   The vertical/horizontal dividers between preview images use bg-black / border-black.
+   In light mode these look too harsh — soften to light gray.                       */
+[data-theme="light"] .bg-black          { background-color: #e5e7eb !important; }
+[data-theme="light"] .border-black      { border-color:     #e5e7eb !important; }
