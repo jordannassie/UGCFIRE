@@ -15,7 +15,7 @@ import {
   MessageSquare, RotateCcw, Star, Send, ChevronRight,
   Paperclip, Eye, SlidersHorizontal, MessageCircle, Plus,
   Folder as FolderIcon, FolderOpen, FolderPlus, ArrowLeft,
-  StickyNote, Pin, PinOff, Pencil, BookOpen,
+  StickyNote, Pin, PinOff, Pencil, BookOpen, Trash2,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 }
 
 const STATUS_OPTIONS: Status[] = [
-  'in_production', 'ready_for_review', 'revision_requested', 'approved', 'delivered', 'archived',
+  'in_production', 'ready_for_review', 'revision_requested', 'approved', 'delivered',
 ]
 
 const MEDIA_ICONS: Record<string, React.ElementType> = {
@@ -566,7 +566,7 @@ function ChatPanel({
 type DrawerTab = 'details' | 'comments' | 'notes' | 'versions'
 
 function DetailDrawer({
-  item, role, fcProfile, comments, onClose, onStatusChange, onToast,
+  item, role, fcProfile, comments, onClose, onStatusChange, onRemove, onToast,
 }: {
   item: ContentItem
   role: Role
@@ -574,6 +574,7 @@ function DetailDrawer({
   comments: ContentComment[]
   onClose: () => void
   onStatusChange: (id: string, status: Status) => void
+  onRemove: (id: string) => void
   onToast: (msg: string) => void
 }) {
   const [tab, setTab]                     = useState<DrawerTab>('details')
@@ -585,6 +586,7 @@ function DetailDrawer({
   const [status, setStatus]               = useState<Status>(item.status)
   const [noteText, setNoteText]           = useState('')
   const [notes, setNotes]                 = useState<{ id: string; text: string; created_at: string }[]>([])
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
   const bottomRef                         = useRef<HTMLDivElement>(null)
 
   useEffect(() => { setLocalComments(comments) }, [comments])
@@ -809,7 +811,47 @@ function DetailDrawer({
                 )}
               </div>
             )}
+
+            {/* ── Remove from Studio ── */}
+            <div className="px-5 py-3 border-t border-white/8">
+              <button
+                onClick={() => setShowRemoveConfirm(true)}
+                className="w-full flex items-center justify-center gap-2 border border-red-500/20 text-red-400/70 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/5 text-xs font-medium py-2 rounded-lg transition"
+              >
+                <Trash2 size={12} /> Remove from Studio
+              </button>
+            </div>
           </>
+        )}
+
+        {/* ── Remove confirmation modal ── */}
+        {showRemoveConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setShowRemoveConfirm(false)}>
+            <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="space-y-1">
+                <p className="text-white font-semibold text-sm">Remove this asset from Studio?</p>
+                <p className="text-white/45 text-xs leading-relaxed">This will remove the file from this client workspace. This action cannot be undone.</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    onRemove(item.id)
+                    onToast('Asset removed from Studio.')
+                    onClose()
+                  }}
+                  className="flex-1 bg-red-500/15 hover:bg-red-500/25 text-red-400 font-semibold text-sm py-2.5 rounded-xl transition"
+                >
+                  Remove Asset
+                </button>
+                <button
+                  onClick={() => setShowRemoveConfirm(false)}
+                  className="flex-1 border border-white/10 text-white/50 hover:text-white text-sm py-2.5 rounded-xl transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── Comments tab ── */}
@@ -1277,6 +1319,16 @@ export default function StudioWorkspace({
     }
   }
 
+  function removeItem(id: string) {
+    setItems(p => p.filter(i => i.id !== id))
+    setSelected(p => { const n = new Set(p); n.delete(id); return n })
+    if (!demo) {
+      const supabase = createClient()
+      // Soft-delete: set deleted_at (matches the existing .is('deleted_at', null) query filter)
+      supabase.from('content_items').update({ deleted_at: new Date().toISOString() }).eq('id', id).then(() => {})
+    }
+  }
+
   function sendComment(msg: string, isInternal: boolean, contentItemId: string | null = null) {
     const senderName = role === 'admin' ? fcProfile.displayName : undefined
     const newC: ContentComment = {
@@ -1346,6 +1398,7 @@ export default function StudioWorkspace({
           comments={itemComments(activeItem.id)}
           onClose={() => setActiveItem(null)}
           onStatusChange={updateStatus}
+          onRemove={removeItem}
           onToast={showToast}
         />
       )}
