@@ -644,7 +644,11 @@ function DetailDrawer({
   const internalComments = localComments.filter(c => c.is_internal)
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[420px] bg-[#0d0d0d] border-l border-white/8 z-40 shadow-2xl overflow-y-auto overflow-x-hidden">
+    <div
+      className="fixed right-0 top-0 w-[420px] bg-[#0d0d0d] border-l border-white/8 z-40 shadow-2xl overscroll-contain"
+      style={{ height: '100vh', maxHeight: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+    >
+      <div className="pb-28">
 
       {/* Header */}
       <div className="flex items-start justify-between px-5 pt-4 pb-3 border-b border-white/8">
@@ -913,6 +917,7 @@ function DetailDrawer({
         )}
 
       </div>
+      </div>{/* end pb-28 inner wrapper */}
     </div>
   )
 }
