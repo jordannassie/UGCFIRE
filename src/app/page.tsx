@@ -360,18 +360,42 @@ function ReelCard({
   );
 }
 
-const PHOTO_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/1a75fdad-d79b-4df6-a855-d10aa65335c7.png";
-
 const PHOTO_CARDS = [
-  { label: "Product lifestyle photo" },
-  { label: "UGC brand shot" },
-  { label: "Founder content photo" },
-  { label: "Ad creative still" },
-  { label: "Social media photo" },
-  { label: "Brand campaign shot" },
+  {
+    label: "Soap Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/02952be0-8ac1-4d5d-98b6-daa52cb4fd08.png",
+  },
+  {
+    label: "Face Beauty Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/010aa1e6-c801-4299-85c5-62b7c7462e31.png",
+  },
+  {
+    label: "Trail Mix Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/6038b54b-e507-44e5-a160-691b1788f55a.png",
+  },
+  {
+    label: "Soda Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/9491597e-5c30-40cc-92cb-e606b4d0a037.png",
+  },
+  {
+    label: "Toothpaste Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/df522445-4f8c-4c49-9dba-76b8131f0ada.png",
+  },
+  {
+    label: "Hot Sauce Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/6dacd0a5-e10c-4eaa-b6c2-ab1fae07726e.png",
+  },
+  {
+    label: "Detergent Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/164bdc38-cd6d-4917-b5e7-26a973a03ab1.png",
+  },
+  {
+    label: "Chip Brand",
+    src: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC%20images/4b29686e-366c-4163-9549-6e371e81ca1a.png",
+  },
 ];
 
-function PhotoCard({ label }: { label: string }) {
+function PhotoCard({ label, src }: { label: string; src: string }) {
   return (
     <div style={{
       background: "#141414",
@@ -383,7 +407,7 @@ function PhotoCard({ label }: { label: string }) {
     }}>
       <div style={{ position: "relative", height: 280 }}>
         <Image
-          src={PHOTO_URL}
+          src={src}
           alt={label}
           fill
           style={{ objectFit: "cover" }}
