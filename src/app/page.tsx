@@ -2130,20 +2130,16 @@ export default function Home() {
                 heading: "Product",
                 links: [
                   { label: "How It Works", href: "#how-it-works" },
-                  { label: "Pricing", href: "#plans" },
-                  { label: "Creator Network", href: "#" },
-                  { label: "Integrations", href: "#" },
-                  { label: "API", href: "#" },
+                  { label: "Plans", href: "#plans" },
+                  { label: "Results", href: "#results" },
+                  { label: "FAQ", href: "#faq" },
                 ],
               },
               {
-                heading: "Resources",
+                heading: "Account",
                 links: [
-                  { label: "Blog", href: "#" },
-                  { label: "Case Studies", href: "#results" },
-                  { label: "Creator Hub", href: "#" },
-                  { label: "Help Center", href: "#" },
-                  { label: "Affiliate Program", href: "#" },
+                  { label: "Sign In", href: "/signup" },
+                  { label: "Book a Call", href: BOOKING_URL },
                 ],
               },
               {
@@ -2151,9 +2147,6 @@ export default function Home() {
                 links: [
                   { label: "Terms of Service", href: "/terms" },
                   { label: "Privacy Policy", href: "/privacy" },
-                  { label: "Cookie Policy", href: "/privacy" },
-                  { label: "AI Terms", href: "/terms" },
-                  { label: "Creator Agreement", href: "/terms" },
                 ],
               },
             ] as { heading: string; links: { label: string; href: string }[] }[]).map(({ heading, links }) => (
