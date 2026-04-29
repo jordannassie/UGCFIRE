@@ -662,7 +662,10 @@ function DetailDrawer({
       </div>
 
       {/* ── Media preview (always visible, above tabs) ── */}
-      <div className="bg-[#080808] aspect-video flex items-center justify-center shrink-0">
+      <div
+        className="bg-[#080808] flex items-center justify-center shrink-0 w-full"
+        style={{ height: 'min(42vh, 240px)' }}
+      >
         {hasFile ? (
           isVideo
             ? <video src={item.file_url!} className="w-full h-full object-contain" controls />
