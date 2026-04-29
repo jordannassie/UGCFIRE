@@ -15,8 +15,8 @@ alter table public.billing_records
 -- Update existing plans with correct prices, yearly monthly-equivalent, and sort order
 -- monthly_price stores the monthly billing price
 -- yearly_price stores the yearly-billed monthly equivalent (20% off)
-update public.plans set price_monthly = 1497, yearly_price = 1197, sort_order = 1 where slug = 'growth';
-update public.plans set price_monthly = 2497, yearly_price = 1997, sort_order = 2 where slug = 'scale';
+update public.plans set price_monthly = 2500, yearly_price = 2000, sort_order = 1 where slug = 'growth';
+update public.plans set price_monthly = 5000, yearly_price = 4000, sort_order = 2 where slug = 'scale';
 
 -- Seed Enterprise plan (sales-only, no self-serve checkout)
 insert into public.plans (name, slug, price_monthly, yearly_price, videos_per_month, description, sales_only, sort_order, is_active)

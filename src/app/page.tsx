@@ -128,8 +128,8 @@ const PLANS = [
   {
     key: "growth",
     name: "Growth",
-    monthlyPrice: 1497,
-    yearlyMonthlyPrice: 1197,  // 20% off monthly
+    monthlyPrice: 2500,
+    yearlyMonthlyPrice: 2000,  // 20% off monthly
     tagline: "8 UGC-style videos per month",
     badge: null,
     salesOnly: false,
@@ -148,8 +148,8 @@ const PLANS = [
   {
     key: "scale",
     name: "Scale",
-    monthlyPrice: 2497,
-    yearlyMonthlyPrice: 1997,  // 20% off monthly
+    monthlyPrice: 5000,
+    yearlyMonthlyPrice: 4000,  // 20% off monthly
     tagline: "20 UGC-style videos per month",
     badge: "Most Popular",
     salesOnly: false,

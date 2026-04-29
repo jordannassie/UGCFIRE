@@ -26,8 +26,8 @@ export const PLAN_CONFIG: PlanConfig[] = [
   {
     key: 'growth',
     name: 'Growth',
-    monthlyPrice: 1497,
-    yearlyMonthlyPrice: 1197,        // Math.round(1497 * 0.8)
+    monthlyPrice: 2500,
+    yearlyMonthlyPrice: 2000,        // 20% off monthly
     deliverables: 8,
     tagline: '8 UGC-style videos per month',
     badge: null,
@@ -56,8 +56,8 @@ export const PLAN_CONFIG: PlanConfig[] = [
   {
     key: 'scale',
     name: 'Scale',
-    monthlyPrice: 2497,
-    yearlyMonthlyPrice: 1997,        // Math.round(2497 * 0.8) = 1997.6 → 1997
+    monthlyPrice: 5000,
+    yearlyMonthlyPrice: 4000,        // 20% off monthly
     deliverables: 20,
     tagline: '20 UGC-style videos per month',
     badge: 'Most Popular',
