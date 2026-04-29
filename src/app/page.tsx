@@ -1801,7 +1801,7 @@ export default function Home() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundImage: "url('https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/End.png')",
+          backgroundImage: "url('https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/Fire%20background.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
