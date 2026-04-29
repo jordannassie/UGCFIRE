@@ -121,6 +121,10 @@ const REEL_CARDS = [
     label: "Chips Brand",
     videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-ugcstyle-vertical-s_2892334025.mp4",
   },
+  {
+    label: "Hot Sauce Brand",
+    videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-casual-ugc-selfiest_2892474678.mp4",
+  },
 ];
 
 const TESTIMONIALS_NEW = [
