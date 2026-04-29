@@ -113,6 +113,10 @@ const REEL_CARDS = [
     label: "Lotion Brand",
     videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_make-ugc-video-with-this-_2892034073.mp4",
   },
+  {
+    label: "Vacuum Cleaner Brand",
+    videoSrc: "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/Brands/Home%20UGC/magnific_style-cinematic-ugc-testi_2892073891.mp4",
+  },
 ];
 
 const TESTIMONIALS_NEW = [
