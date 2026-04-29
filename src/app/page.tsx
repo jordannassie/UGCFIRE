@@ -1024,6 +1024,55 @@ export default function Home() {
         </div>
       </section>
 
+      {/* UGCFire — Brand Video Showcase Section */}
+      <section
+        className="ugcfire-video-section"
+        style={{
+          position: "relative",
+          width: "100%",
+          minHeight: "700px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundImage: "url('https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/Fire%20background.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          overflow: "hidden",
+        }}
+      >
+        {/* Subtle dark overlay so video pops */}
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.30)", zIndex: 1 }} />
+
+        {/* Centered video */}
+        <div style={{ position: "relative", zIndex: 2, width: "90%", maxWidth: 900 }}>
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            style={{
+              width: "100%",
+              borderRadius: 20,
+              boxShadow: "0 32px 80px rgba(0,0,0,0.55)",
+              display: "block",
+            }}
+          >
+            <source
+              src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/hf_20260429_020651_1d9ae862-a0c1-498e-9296-651fb43dc88c.mp4"
+              type="video/mp4"
+            />
+          </video>
+        </div>
+
+        {/* Mobile: lower min-height */}
+        <style>{`
+          @media (max-width: 640px) {
+            .ugcfire-video-section { min-height: 520px !important; }
+          }
+        `}</style>
+      </section>
+
       {/* ── HOW IT WORKS (merged) ── */}
       <section id="how-it-works" className="sec sec-v" style={{
         padding: "100px 3rem",
@@ -1790,55 +1839,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {/* UGCFire — Brand Video Showcase Section */}
-      <section
-        className="ugcfire-video-section"
-        style={{
-          position: "relative",
-          width: "100%",
-          minHeight: "700px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundImage: "url('https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/Fire%20background.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          overflow: "hidden",
-        }}
-      >
-        {/* Subtle dark overlay so video pops */}
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.30)", zIndex: 1 }} />
-
-        {/* Centered video */}
-        <div style={{ position: "relative", zIndex: 2, width: "90%", maxWidth: 900 }}>
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            style={{
-              width: "100%",
-              borderRadius: 20,
-              boxShadow: "0 32px 80px rgba(0,0,0,0.55)",
-              display: "block",
-            }}
-          >
-            <source
-              src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/hf_20260429_020651_1d9ae862-a0c1-498e-9296-651fb43dc88c.mp4"
-              type="video/mp4"
-            />
-          </video>
-        </div>
-
-        {/* Mobile: lower min-height */}
-        <style>{`
-          @media (max-width: 640px) {
-            .ugcfire-video-section { min-height: 520px !important; }
-          }
-        `}</style>
-      </section>
 
       <footer className="footer-wrap" style={{
         background: "#060606",
