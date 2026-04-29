@@ -128,9 +128,8 @@ const PLANS = [
   {
     key: "growth",
     name: "Growth",
-    monthlyPrice: 2500,
-    yearlyTotal: 24000,
-    yearlyEquiv: "$2,000/mo billed annually",
+    monthlyPrice: 1497,
+    yearlyMonthlyPrice: 1197,  // 20% off monthly
     tagline: "8 UGC-style videos per month",
     badge: null,
     salesOnly: false,
@@ -149,9 +148,8 @@ const PLANS = [
   {
     key: "scale",
     name: "Scale",
-    monthlyPrice: 5000,
-    yearlyTotal: 48000,
-    yearlyEquiv: "$4,000/mo billed annually",
+    monthlyPrice: 2497,
+    yearlyMonthlyPrice: 1997,  // 20% off monthly
     tagline: "20 UGC-style videos per month",
     badge: "Most Popular",
     salesOnly: false,
@@ -173,21 +171,19 @@ const PLANS = [
     key: "enterprise",
     name: "Enterprise",
     monthlyPrice: null,
-    yearlyTotal: null,
-    yearlyEquiv: null,
-    tagline: "Custom content volume for brands that need more",
+    yearlyMonthlyPrice: null,
+    tagline: "For brands that need higher volume, custom workflows, and priority support.",
     badge: null,
     salesOnly: true,
     desc: "For high-volume brands and agencies that need a dedicated creative partner, custom workflows, and priority support.",
     includes: [
-      "Custom monthly content volume",
+      "Custom monthly deliverables",
       "Dedicated creative strategist",
-      "Custom content planning",
       "Priority support",
-      "Priority delivery",
       "Custom workflows",
       "Team collaboration",
-      "Ongoing strategy support",
+      "Strategy support",
+      "Priority delivery",
     ],
     cta: "Talk to Sales",
   },
@@ -1301,7 +1297,7 @@ export default function Home() {
       {/* ── End Process Section ── */}
 
       {/* UGCFire Pricing Section — 3 plans + monthly/yearly toggle */}
-      <section id="plans" className="sec sec-v" style={{ padding: "100px 3rem", maxWidth: 1200, margin: "0 auto" }}>
+      <section id="plans" className="sec sec-v" style={{ padding: "100px 2rem", maxWidth: 1400, margin: "0 auto" }}>
         <div style={sectionHead}>
           <div style={{
             fontSize: 12,
@@ -1389,15 +1385,18 @@ export default function Home() {
           </div>
         </div>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
-          gap: 24,
-          alignItems: "start",
-        }}>
+        {/* plans grid — 3 fixed columns on desktop, 1 on mobile */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start" style={{ maxWidth: 1280, margin: "0 auto" }}>
           {PLANS.map((plan, i) => {
             const isScale = plan.key === "scale";
-            const isEnterprise = plan.key === "enterprise";
+
+            const priceMain = plan.salesOnly
+              ? "Custom"
+              : billingCycle === "yearly"
+              ? `$${plan.yearlyMonthlyPrice!.toLocaleString()}`
+              : `$${plan.monthlyPrice!.toLocaleString()}`;
+            const priceUnit = plan.salesOnly ? "" : "/mo";
+            const priceNote = (!plan.salesOnly && billingCycle === "yearly") ? "billed annually" : null;
 
             return (
               <div
@@ -1406,7 +1405,7 @@ export default function Home() {
                   background: isScale ? "rgba(255,59,26,0.07)" : "rgba(255,255,255,0.03)",
                   border: isScale ? "1px solid rgba(255,59,26,0.35)" : "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 18,
-                  padding: "36px 32px",
+                  padding: "36px 28px",
                   position: "relative",
                   display: "flex",
                   flexDirection: "column",
@@ -1417,7 +1416,7 @@ export default function Home() {
                   <div style={{
                     position: "absolute",
                     top: -14,
-                    left: 32,
+                    left: 28,
                     background: "#FF3B1A",
                     color: "#fff",
                     fontSize: 11,
@@ -1437,40 +1436,35 @@ export default function Home() {
                 </div>
 
                 {/* Price */}
-                {plan.salesOnly ? (
-                  <div style={{ fontFamily: "var(--font-bebas)", fontSize: 40, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, marginBottom: 4 }}>
-                    Talk to Sales
-                  </div>
-                ) : billingCycle === "monthly" ? (
-                  <div>
-                    <div style={{ fontFamily: "var(--font-bebas)", fontSize: 48, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, marginBottom: 2 }}>
-                      ${plan.monthlyPrice!.toLocaleString()}<span style={{ fontSize: 22, fontFamily: "inherit" }}>/mo</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div style={{ fontFamily: "var(--font-bebas)", fontSize: 48, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, marginBottom: 2 }}>
-                      ${plan.yearlyTotal!.toLocaleString()}<span style={{ fontSize: 22, fontFamily: "inherit" }}>/yr</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: "#4ade80", fontWeight: 600, marginBottom: 2 }}>
-                      {plan.yearlyEquiv}
-                    </div>
+                <div style={{ marginBottom: 4 }}>
+                  <span style={{ fontFamily: "var(--font-bebas)", fontSize: plan.salesOnly ? 36 : 44, color: "#fff", letterSpacing: "0.02em", lineHeight: 1 }}>
+                    {priceMain}
+                  </span>
+                  {priceUnit && (
+                    <span style={{ fontFamily: "var(--font-bebas)", fontSize: 20, color: "rgba(255,255,255,0.5)", marginLeft: 2 }}>
+                      {priceUnit}
+                    </span>
+                  )}
+                </div>
+                {priceNote && (
+                  <div style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, marginBottom: 4 }}>
+                    {priceNote}
                   </div>
                 )}
 
-                <div style={{ fontSize: 15, color: "#FF3B1A", fontWeight: 600, marginBottom: 12, marginTop: 4 }}>
+                <div style={{ fontSize: 14, color: "#FF3B1A", fontWeight: 600, marginBottom: 10, marginTop: 2 }}>
                   {plan.tagline}
                 </div>
-                <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 24 }}>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: 20 }}>
                   {plan.desc}
                 </p>
 
                 {/* Features */}
-                <div style={{ marginBottom: 28, flex: 1 }}>
+                <div style={{ marginBottom: 24, flex: 1 }}>
                   {plan.includes.map((item, j) => (
-                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                      <span style={{ color: "#FF3B1A", fontSize: 14, flexShrink: 0 }}>✓</span>
-                      <span style={{ fontSize: 14, color: "rgba(255,255,255,0.65)" }}>{item}</span>
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }}>
+                      <span style={{ color: "#FF3B1A", fontSize: 13, flexShrink: 0 }}>✓</span>
+                      <span style={{ fontSize: 13, color: "rgba(255,255,255,0.62)" }}>{item}</span>
                     </div>
                   ))}
                 </div>
@@ -1478,13 +1472,13 @@ export default function Home() {
                 {/* CTA */}
                 {plan.salesOnly ? (
                   <a
-                    href="mailto:hello@ugcfire.com"
+                    href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
                     style={{
                       display: "block",
                       textAlign: "center",
                       textDecoration: "none",
-                      fontSize: 15,
-                      padding: "14px 24px",
+                      fontSize: 14,
+                      padding: "13px 20px",
                       background: "rgba(255,255,255,0.08)",
                       border: "1px solid rgba(255,255,255,0.15)",
                       borderRadius: 10,
@@ -1507,7 +1501,7 @@ export default function Home() {
                   <FireButton
                     href={BOOKING_URL} target="_blank" rel="noopener noreferrer"
                     className="btn-fire"
-                    style={{ display: "block", textAlign: "center", textDecoration: "none", fontSize: 15, padding: "14px 24px" }}
+                    style={{ display: "block", textAlign: "center", textDecoration: "none", fontSize: 14, padding: "13px 20px" }}
                   >
                     {plan.cta}
                   </FireButton>
