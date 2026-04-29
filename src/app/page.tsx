@@ -1390,13 +1390,7 @@ export default function Home() {
           {PLANS.map((plan, i) => {
             const isScale = plan.key === "scale";
 
-            const priceMain = plan.salesOnly
-              ? "Custom"
-              : billingCycle === "yearly"
-              ? `$${plan.yearlyMonthlyPrice!.toLocaleString()}`
-              : `$${plan.monthlyPrice!.toLocaleString()}`;
-            const priceUnit = plan.salesOnly ? "" : "/mo";
-            const priceNote = (!plan.salesOnly && billingCycle === "yearly") ? "billed annually" : null;
+            const isYearly = billingCycle === "yearly" && !plan.salesOnly;
 
             return (
               <div
@@ -1437,20 +1431,34 @@ export default function Home() {
 
                 {/* Price */}
                 <div style={{ marginBottom: 4 }}>
-                  <span style={{ fontFamily: "var(--font-bebas)", fontSize: plan.salesOnly ? 36 : 44, color: "#fff", letterSpacing: "0.02em", lineHeight: 1 }}>
-                    {priceMain}
-                  </span>
-                  {priceUnit && (
-                    <span style={{ fontFamily: "var(--font-bebas)", fontSize: 20, color: "rgba(255,255,255,0.5)", marginLeft: 2 }}>
-                      {priceUnit}
+                  {plan.salesOnly ? (
+                    <span style={{ fontFamily: "var(--font-bebas)", fontSize: 36, color: "#fff", letterSpacing: "0.02em", lineHeight: 1 }}>
+                      Custom
                     </span>
+                  ) : (
+                    <>
+                      {/* Slashed original price — only on yearly */}
+                      {isYearly && (
+                        <div style={{ fontSize: 15, color: "rgba(255,255,255,0.35)", fontWeight: 600, textDecoration: "line-through", marginBottom: 2 }}>
+                          ${plan.monthlyPrice!.toLocaleString()}/mo
+                        </div>
+                      )}
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
+                        <span style={{ fontFamily: "var(--font-bebas)", fontSize: 44, color: "#fff", letterSpacing: "0.02em", lineHeight: 1 }}>
+                          ${(isYearly ? plan.yearlyMonthlyPrice! : plan.monthlyPrice!).toLocaleString()}
+                        </span>
+                        <span style={{ fontFamily: "var(--font-bebas)", fontSize: 20, color: "rgba(255,255,255,0.5)" }}>
+                          /mo
+                        </span>
+                      </div>
+                      {isYearly && (
+                        <div style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, marginTop: 3 }}>
+                          billed annually
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-                {priceNote && (
-                  <div style={{ fontSize: 12, color: "#4ade80", fontWeight: 600, marginBottom: 4 }}>
-                    {priceNote}
-                  </div>
-                )}
 
                 <div style={{ fontSize: 14, color: "#FF3B1A", fontWeight: 600, marginBottom: 10, marginTop: 2 }}>
                   {plan.tagline}

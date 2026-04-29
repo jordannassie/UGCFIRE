@@ -272,11 +272,25 @@ export default function PlansPage() {
 
               {/* Price */}
               <div className="mb-0.5">
-                <span className="text-3xl font-bold text-white">{main}</span>
-                {unit && <span className="text-white/40 text-sm ml-1">{unit}</span>}
+                {cfg.salesOnly ? (
+                  <span className="text-3xl font-bold text-white">{main}</span>
+                ) : (
+                  <>
+                    {/* Slashed original price — only shown on yearly */}
+                    {billingCycle === 'yearly' && cfg.monthlyPrice != null && (
+                      <div className="text-sm text-white/30 font-semibold line-through mb-0.5">
+                        ${cfg.monthlyPrice.toLocaleString()}/mo
+                      </div>
+                    )}
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-bold text-white">{main}</span>
+                      {unit && <span className="text-white/40 text-sm">{unit}</span>}
+                    </div>
+                    {note && <p className="text-green-400 text-xs font-semibold mt-1">{note}</p>}
+                  </>
+                )}
               </div>
-              {note && <p className="text-green-400 text-xs font-semibold mb-1">{note}</p>}
-              <p className="text-white/35 text-xs mb-4">{cfg.deliverables ? `${cfg.deliverables} deliverables/month` : 'Custom volume'}</p>
+              <p className="text-white/35 text-xs mb-4 mt-1">{cfg.deliverables ? `${cfg.deliverables} deliverables/month` : 'Custom volume'}</p>
 
               {/* Features */}
               <ul className="space-y-2 flex-1 mb-5">
