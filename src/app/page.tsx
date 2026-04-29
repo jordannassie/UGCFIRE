@@ -109,7 +109,7 @@ const TESTIMONIALS_NEW = [
     name: "Brand Founder",
     handle: "Ecommerce Brand",
     label: "Monthly subscriber",
-    avatar: "https://i.pravatar.cc/96?img=47",
+    avatar: "https://i.pravatar.cc/96?img=68",
   },
   {
     quote: "The biggest win is consistency. We can keep testing hooks, angles, and short-form content without starting from scratch every week.",
