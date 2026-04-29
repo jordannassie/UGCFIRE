@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const ICON_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/icon/UGCfire.png";
+const ICON_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/icon/ICONS.png";
 
 export const metadata: Metadata = {
   title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
