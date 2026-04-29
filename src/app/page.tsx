@@ -109,18 +109,21 @@ const TESTIMONIALS_NEW = [
     name: "Brand Founder",
     handle: "Ecommerce Brand",
     label: "Monthly subscriber",
+    avatar: "https://i.pravatar.cc/96?img=47",
   },
   {
     quote: "The biggest win is consistency. We can keep testing hooks, angles, and short-form content without starting from scratch every week.",
     name: "Marketing Lead",
     handle: "Growth Team",
     label: "Monthly subscriber",
+    avatar: "https://i.pravatar.cc/96?img=32",
   },
   {
     quote: "It feels like having a creative department on subscription. We get content ideas, scripts, and assets without the normal production headache.",
     name: "Agency Owner",
     handle: "Client Content Partner",
     label: "Monthly subscriber",
+    avatar: "https://i.pravatar.cc/96?img=12",
   },
 ];
 
@@ -1554,36 +1557,66 @@ export default function Home() {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: 20,
+            alignItems: "start",
           }} className="proof-grid">
             {TESTIMONIALS_NEW.map((t, i) => (
-              <div
-                key={i}
-                style={{
+              <div key={i} style={{ position: "relative", paddingTop: 52 }}>
+                {/* Avatar circle — elevated above the card */}
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 2,
+                }}>
+                  <div style={{
+                    width: 84,
+                    height: 84,
+                    borderRadius: "50%",
+                    border: "3px solid #FF3B1A",
+                    boxShadow: "0 0 0 4px rgba(255,59,26,0.15), 0 0 28px rgba(255,59,26,0.35)",
+                    overflow: "hidden",
+                    background: "#1a1a1a",
+                    flexShrink: 0,
+                  }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={t.avatar}
+                      alt={t.name}
+                      width={84}
+                      height={84}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Testimonial card */}
+                <div style={{
                   background: "rgba(255,255,255,0.03)",
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: 16,
-                  padding: "28px 24px",
-                }}
-              >
-                <div style={{ fontSize: 32, color: "#FF3B1A", marginBottom: 12, lineHeight: 1 }}>&ldquo;</div>
-                <p style={{ fontSize: 15, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, marginBottom: 20 }}>
-                  {t.quote}
-                </p>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{t.name}</div>
+                  padding: "52px 24px 28px",
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 28, color: "#FF3B1A", marginBottom: 10, lineHeight: 1 }}>&ldquo;</div>
+                  <p style={{ fontSize: 15, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, marginBottom: 20 }}>
+                    {t.quote}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{t.name}</div>
                     <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{t.handle}</div>
-                  </div>
-                  <div style={{
-                    background: "rgba(255,59,26,0.15)",
-                    border: "1px solid rgba(255,59,26,0.3)",
-                    borderRadius: 20,
-                    padding: "4px 12px",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "#ff8060",
-                  }}>
-                    {t.label}
+                    <div style={{
+                      background: "rgba(255,59,26,0.15)",
+                      border: "1px solid rgba(255,59,26,0.3)",
+                      borderRadius: 20,
+                      padding: "3px 12px",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "#ff8060",
+                      marginTop: 2,
+                    }}>
+                      {t.label}
+                    </div>
                   </div>
                 </div>
               </div>
