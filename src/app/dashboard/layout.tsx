@@ -8,8 +8,10 @@ import { getMyCompany } from '@/lib/data'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY, DEMO_COMPANY } from '@/lib/demoData'
 import type { Company } from '@/lib/types'
 import {
-  Clapperboard, Target, User, Wallet, FileCheck, Menu, LogOut, Camera, Sparkles,
+  Clapperboard, Target, User, Wallet, FileCheck, Menu, LogOut, Camera, Sparkles, Sun, Moon,
 } from 'lucide-react'
+
+const THEME_KEY = 'ugcfire_dashboard_theme'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +33,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  function toggleTheme(t: 'dark' | 'light') {
+    setTheme(t)
+    localStorage.setItem(THEME_KEY, t)
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem(THEME_KEY)
+    if (saved === 'light' || saved === 'dark') setTheme(saved)
+  }, [])
 
   useEffect(() => {
     // Demo mode: skip Supabase entirely
@@ -79,11 +92,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.location.href = '/login'
   }
 
+  const isLight = theme === 'light'
+
   return (
-    <div className="min-h-screen bg-[#080808] flex">
+    <div
+      data-theme={theme}
+      className="min-h-screen flex"
+      style={{ backgroundColor: isLight ? '#f1f5f9' : '#080808' }}
+    >
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0d0d0d] border-r border-white/5 flex flex-col transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        <div className="p-5 border-b border-white/5">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex flex-col transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        style={{
+          backgroundColor: isLight ? '#ffffff' : '#0d0d0d',
+          borderRight: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.05)',
+        }}
+      >
+        <div className="p-5" style={{ borderBottom: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.05)' }}>
           {/* Logo row + logout */}
           <div className="flex items-center justify-between mb-5">
             <Link href="/">
@@ -98,7 +123,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               onClick={signOut}
               title="Sign out"
-              className="text-white/30 hover:text-[#FF3B1A] transition p-1 rounded-lg hover:bg-white/5"
+              className="hover:text-[#FF3B1A] transition p-1 rounded-lg"
+              style={{ color: isLight ? 'rgba(15,23,42,0.35)' : 'rgba(255,255,255,0.30)' }}
             >
               <LogOut size={18} />
             </button>
@@ -140,7 +166,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {company && (
               <div className="text-center">
-                <p className="text-white text-base font-bold leading-tight truncate max-w-[180px]">{company.name}</p>
+                <p className="text-base font-bold leading-tight truncate max-w-[180px]"
+                   style={{ color: isLight ? '#0f172a' : '#ffffff' }}>{company.name}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
                   company.billing_status === 'active_mock'
                     ? 'bg-green-500/20 text-green-400'
@@ -164,9 +191,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 onClick={() => setSidebarOpen(false)}
                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
                   active
-                    ? 'bg-[#FF3B1A]/15 text-white font-medium border border-[#FF3B1A]/20'
-                    : 'text-white/40 hover:text-white hover:bg-white/5'
+                    ? 'bg-[#FF3B1A]/15 font-medium border border-[#FF3B1A]/20'
+                    : 'hover:bg-white/5'
                 }`}
+                style={{
+                  color: active
+                    ? (isLight ? '#0f172a' : '#ffffff')
+                    : (isLight ? 'rgba(15,23,42,0.50)' : 'rgba(255,255,255,0.40)'),
+                }}
               >
                 <Icon
                   size={16}
@@ -180,8 +212,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/5">
-          <p className="text-white/30 text-xs truncate">{userEmail}</p>
+        {/* Theme toggle + email */}
+        <div
+          className="p-4 space-y-3"
+          style={{ borderTop: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.05)' }}
+        >
+          {/* Light / Dark toggle */}
+          <div
+            className="flex items-center rounded-lg p-0.5 gap-0.5"
+            style={{
+              backgroundColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+              border: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <button
+              onClick={() => toggleTheme('light')}
+              className="flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-md text-xs font-medium transition-all"
+              style={{
+                backgroundColor: theme === 'light' ? (isLight ? '#ffffff' : 'rgba(255,255,255,0.12)') : 'transparent',
+                color: theme === 'light'
+                  ? (isLight ? '#0f172a' : '#ffffff')
+                  : (isLight ? 'rgba(15,23,42,0.40)' : 'rgba(255,255,255,0.35)'),
+                boxShadow: theme === 'light' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+              }}
+            >
+              <Sun size={11} /> Light
+            </button>
+            <button
+              onClick={() => toggleTheme('dark')}
+              className="flex items-center gap-1.5 flex-1 justify-center py-1.5 rounded-md text-xs font-medium transition-all"
+              style={{
+                backgroundColor: theme === 'dark' ? (isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)') : 'transparent',
+                color: theme === 'dark'
+                  ? (isLight ? '#0f172a' : '#ffffff')
+                  : (isLight ? 'rgba(15,23,42,0.40)' : 'rgba(255,255,255,0.35)'),
+                boxShadow: theme === 'dark' ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+              }}
+            >
+              <Moon size={11} /> Dark
+            </button>
+          </div>
+
+          <p className="text-xs truncate" style={{ color: isLight ? 'rgba(15,23,42,0.35)' : 'rgba(255,255,255,0.30)' }}>
+            {userEmail}
+          </p>
         </div>
       </aside>
 
@@ -192,11 +266,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <div className="flex-1 lg:ml-64">
-        <header className="bg-[#0d0d0d] border-b border-white/5 px-6 py-4 flex items-center gap-4 lg:hidden">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/60 hover:text-white">
+        <header
+          className="px-6 py-4 flex items-center gap-4 lg:hidden"
+          style={{
+            backgroundColor: isLight ? '#ffffff' : '#0d0d0d',
+            borderBottom: isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255,255,255,0.05)',
+          }}
+        >
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{ color: isLight ? 'rgba(15,23,42,0.55)' : 'rgba(255,255,255,0.60)' }}
+          >
             <Menu size={20} />
           </button>
-          <span className="text-white font-semibold text-sm">UGCFire Dashboard</span>
+          <span className="font-semibold text-sm" style={{ color: isLight ? '#0f172a' : '#ffffff' }}>
+            UGCFire Dashboard
+          </span>
         </header>
         <main className="p-6 lg:p-8">{children}</main>
       </div>
