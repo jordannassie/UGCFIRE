@@ -664,15 +664,74 @@ export default function StrategyAIPage() {
           )}
         </div>
 
-        {/* Running */}
+        {/* Running — premium Brain animation */}
         {running && (
-          <div className="bg-[#0d0d0d] border border-white/8 rounded-xl p-8 text-center space-y-3">
-            <div className="flex items-center justify-center gap-3">
-              <span className="w-5 h-5 border-2 border-[#FF3B1A]/40 border-t-[#FF3B1A] rounded-full animate-spin" />
-              <Sparkles size={16} className="text-[#FF3B1A] animate-pulse" />
+          <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-10 text-center space-y-8">
+
+            {/* Brain + spinning ring */}
+            <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto' }}>
+              {/* Outer slow spin */}
+              <div className="animate-spin" style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                border: '2px solid transparent',
+                borderTopColor: '#FF3B1A',
+                borderRightColor: 'rgba(255,59,26,0.35)',
+                animationDuration: '1.6s',
+              }} />
+              {/* Inner counter-spin (segmented feel) */}
+              <div className="animate-spin" style={{
+                position: 'absolute', inset: 8, borderRadius: '50%',
+                border: '1.5px solid transparent',
+                borderBottomColor: '#FF3B1A',
+                borderLeftColor: 'rgba(255,59,26,0.25)',
+                animationDuration: '2.4s',
+                animationDirection: 'reverse',
+              }} />
+              {/* Brain icon with glow */}
+              <div style={{
+                position: 'absolute', inset: 16, borderRadius: '50%',
+                background: 'rgba(255,59,26,0.08)',
+                boxShadow: '0 0 28px rgba(255,59,26,0.25), 0 0 8px rgba(255,59,26,0.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Brain size={26} style={{ color: '#FF3B1A' }} />
+              </div>
             </div>
-            <p className="text-white font-semibold text-sm">Strategy AI is building your strategy from Super Brain…</p>
-            <p className="text-white/30 text-xs">Generating hooks, captions, briefs, and your growth plan.</p>
+
+            {/* Copy */}
+            <div className="space-y-2">
+              <p className="text-white font-semibold text-base">Building your strategy…</p>
+              <p className="text-white/45 text-sm">Generating hooks, captions, CTAs, briefs, and growth plan</p>
+              <p className="text-white/25 text-xs">This may take a few moments</p>
+            </div>
+
+            {/* Prompt cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
+              {[
+                { title: 'Hooks Prompt',    desc: 'Write 10 scroll-stopping hooks for this brand and offer.' },
+                { title: 'CTAs Prompt',     desc: 'Write 10 clear CTAs that drive clicks, calls, signups, or purchases.' },
+                { title: 'Captions Prompt', desc: 'Write 10 engaging captions that build trust and drive action.' },
+                { title: 'UGC Brief Prompt',desc: 'Create a UGC brief with angle, audience, deliverables, and tone.' },
+              ].map(({ title, desc }) => (
+                <div key={title} className="bg-white/3 border border-white/8 rounded-xl p-4 text-left space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-white/70 text-xs font-semibold">{title}</p>
+                    <span className="flex items-center gap-1 text-[9px] font-bold bg-[#FF3B1A]/15 text-[#FF3B1A] px-2 py-0.5 rounded-full">
+                      <span className="w-1 h-1 rounded-full bg-[#FF3B1A] animate-pulse" />
+                      Generating
+                    </span>
+                  </div>
+                  <p className="text-white/30 text-[11px] leading-relaxed">{desc}</p>
+                  <div className="space-y-1.5">
+                    {[75, 55, 85].map((w, i) => (
+                      <div key={i} className="h-1 bg-white/6 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#FF3B1A]/25 rounded-full animate-pulse" style={{ width: `${w}%`, animationDelay: `${i * 200}ms` }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
