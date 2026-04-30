@@ -17,7 +17,10 @@ export async function PATCH(
     const body = await req.json().catch(() => ({}))
     const supabase = getSupabase()
 
-    const allowed = ['status', 'next_follow_up_at', 'last_contacted_at', 'lead_score']
+    const allowed = [
+      'status', 'next_follow_up_at', 'last_contacted_at', 'lead_score',
+      'main_contact', 'contact_title', 'contact_email', 'contact_phone', 'business_notes',
+    ]
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
     for (const key of allowed) {
       if (key in body) patch[key] = body[key]
