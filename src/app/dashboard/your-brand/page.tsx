@@ -333,40 +333,122 @@ export default function YourBrandPage() {
         <p className="text-white/30 text-xs mt-1">Start with Basic in 5 minutes. Add Pro details anytime for better commercial ideas.</p>
       </div>
 
-      {/* Brand Context card */}
-      <div className="bg-[#111] border border-white/10 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            <span className="text-white/40">Setup Level:</span>
-            <span className="font-semibold text-white">{context.setupLevel}</span>
-            <span className="text-white/20">·</span>
-            <span className="text-white/40">Brand Completion:</span>
-            <span className="font-semibold text-white">{context.completionPercentage}%</span>
-            <span className="text-white/20">·</span>
-            <span className="text-white/40">Strategy Confidence:</span>
-            <span className={`font-semibold ${confColor}`}>{context.confidenceLabel}</span>
+      {/* Top card: Brand Profile (left) + Brand Context (right) */}
+      <div className="bg-[#111] border border-white/10 rounded-xl overflow-hidden">
+        <div className="grid lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/8">
+
+          {/* LEFT — Brand Profile */}
+          <div className="px-5 py-6 space-y-4">
+            <p className="text-white font-semibold text-sm">Brand Profile</p>
+
+            {/* Avatar */}
+            <div className="flex items-center gap-4">
+              <div
+                onClick={() => logoInputRef.current?.click()}
+                className="relative w-16 h-16 rounded-full border-2 border-white/10 overflow-hidden flex items-center justify-center cursor-pointer hover:border-[#FF3B1A]/50 transition shrink-0"
+                style={!basic.logo_url ? { background: 'linear-gradient(135deg, #2563EB 0%, #38BDF8 100%)' } : {}}
+              >
+                {basic.logo_url ? (
+                  <img src={basic.logo_url} alt="Brand" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl font-bold text-white">
+                    {basic.company_name?.[0]?.toUpperCase() ?? company?.name?.[0]?.toUpperCase() ?? '?'}
+                  </span>
+                )}
+                {logoUploading && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-white font-semibold text-sm truncate">
+                  {basic.company_name || company?.name || 'Your Brand'}
+                </p>
+                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 mt-0.5">
+                  Active
+                </span>
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="block text-[11px] text-white/35 hover:text-white/60 mt-1.5 transition"
+                >
+                  Change Brand Image
+                </button>
+                <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+              </div>
+            </div>
+
+            {/* Brand Name input */}
+            <div>
+              <label className="block text-white/40 text-xs mb-1.5">Brand Name</label>
+              <input
+                value={basic.company_name}
+                onChange={e => setBasic(b => ({ ...b, company_name: e.target.value }))}
+                placeholder="Your brand or business name"
+                className={ic}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition ${saved ? 'bg-green-500/15 text-green-400 border border-green-500/25' : 'border border-white/12 text-white/55 hover:text-white hover:border-white/25'}`}
+            >
+              {saved ? <><CheckCircle size={13} /> Saved</> : saving ? 'Saving…' : 'Save Brand Profile'}
+            </button>
           </div>
-          <div className="h-1.5 bg-white/6 rounded-full overflow-hidden max-w-xs">
-            <div className="h-full rounded-full bg-[#FF3B1A] transition-all" style={{ width: `${context.completionPercentage}%` }} />
+
+          {/* RIGHT — Brand Context */}
+          <div className="px-5 py-6 space-y-4">
+            <p className="text-white font-semibold text-sm">Brand Context</p>
+
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  ['Setup Level', context.setupLevel, 'text-white'],
+                  ['Completion', `${context.completionPercentage}%`, 'text-white'],
+                  ['Confidence', context.confidenceLabel, confColor],
+                ].map(([label, value, color]) => (
+                  <div key={label} className="bg-white/4 border border-white/6 rounded-lg px-3 py-2.5 text-center">
+                    <p className="text-white/30 text-[10px] mb-0.5">{label}</p>
+                    <p className={`font-bold text-sm ${color}`}>{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress bar */}
+              <div className="space-y-1">
+                <div className="h-1.5 bg-white/6 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-[#FF3B1A] transition-all duration-500" style={{ width: `${context.completionPercentage}%` }} />
+                </div>
+                <p className="text-white/25 text-[11px]">
+                  Strategy AI can generate ideas anytime. Add more brand details to improve the ideas.
+                </p>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className={`flex items-center justify-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg transition ${saved ? 'bg-green-500/15 text-green-400 border border-green-500/25' : 'border border-white/12 text-white/55 hover:text-white hover:border-white/25'}`}
+              >
+                {saved ? <><CheckCircle size={13} /> Saved</> : saving ? 'Saving…' : 'Save Brand'}
+              </button>
+              <button
+                type="button"
+                onClick={saveAndGenerate}
+                className="flex items-center justify-center gap-2 text-sm font-semibold px-4 py-2.5 bg-[#FF3B1A] hover:bg-[#e02e10] text-white rounded-lg transition"
+              >
+                <Sparkles size={13} /> Generate Commercial Ideas
+              </button>
+            </div>
           </div>
-          <p className="text-white/30 text-xs">Strategy AI can run anytime. The more details you add, the better the ideas get.</p>
-        </div>
-        <div className="flex gap-2 shrink-0 flex-wrap">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition ${saved ? 'bg-green-500/20 text-green-400 border border-green-500/25' : 'border border-white/12 text-white/60 hover:text-white hover:border-white/25'}`}
-          >
-            {saved ? <><Check size={13} /> Saved</> : saving ? 'Saving…' : 'Save Brand'}
-          </button>
-          <button
-            type="button"
-            onClick={saveAndGenerate}
-            className="flex items-center gap-2 text-sm font-semibold px-4 py-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white rounded-lg transition"
-          >
-            <Sparkles size={13} /> Generate Commercial Ideas
-          </button>
+
         </div>
       </div>
 

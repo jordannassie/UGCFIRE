@@ -16,9 +16,9 @@ const THEME_KEY = 'ugcfire_dashboard_theme'
 export const dynamic = 'force-dynamic'
 
 const NAV = [
-  { label: 'Studio',      href: '/dashboard/studio',        icon: Clapperboard },
-  { label: 'Strategy AI', href: '/dashboard/strategy-ai',   icon: Sparkles },
   { label: 'Your Brand',  href: '/dashboard/your-brand',    icon: Target },
+  { label: 'Strategy AI', href: '/dashboard/strategy-ai',   icon: Sparkles },
+  { label: 'Studio',      href: '/dashboard/studio',        icon: Clapperboard },
   { label: 'Profile',     href: '/dashboard/profile',       icon: User },
   { label: 'Plans',       href: '/dashboard/plans',         icon: LayoutGrid },
   { label: 'Billing',     href: '/dashboard/billing',       icon: Wallet },

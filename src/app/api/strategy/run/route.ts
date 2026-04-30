@@ -26,6 +26,18 @@ Use language like:
 Do NOT use: "Record", "Film", "Shoot", "Capture footage", "Have the creator record"
 unless productionType is specifically "Real Creator".
 
+CRITICAL DURATION RULE:
+Do NOT include explicit duration wording in the ugcPrompt text.
+Do NOT write "5-second", "15-second", "30-second", or "60-second" inside the ugcPrompt.
+The UI already shows the selected video length to the user.
+Use the selected video length only to decide how complex the idea should be (shots, story, voiceover depth).
+
+Use length-based language alternatives:
+- Instead of "5-second": use "quick" or "single-moment"
+- Instead of "15-second": use "short" 
+- Instead of "30-second": use (no duration qualifier needed)
+- Instead of "60-second": use "detailed" or "story-driven"
+
 CRITICAL QUALITY RULES:
 Do not output vague categories. Output specific commercial scenes.
 Avoid generic titles like "Product Demo", "Testimonial", "Before and After", "Social Proof", "Daily Routine" unless made specific and visual.
@@ -33,10 +45,10 @@ Avoid generic titles like "Product Demo", "Testimonial", "Before and After", "So
 EXAMPLES OF BAD vs GOOD:
 
 Bad prompt: "Record a 30-day skincare journey."
-Good prompt (5 sec): "Create a realistic 5-second iPhone-style UGC clip showing a skincare product on a bathroom counter, a creator applying one pump, and smiling softly in the mirror."
-Good prompt (15 sec): "Create a realistic 15-second iPhone-style UGC commercial showing a creator starting their morning routine, applying the product in natural bathroom light, checking their skin, and ending with the product clearly visible."
-Good prompt (30 sec): "Create a realistic 30-second UGC commercial showing a creator talking through a simple morning routine, applying the product, showing texture close-ups, reacting naturally, and ending with a clear product recommendation."
-Good prompt (60 sec): "Create a realistic 60-second UGC-style routine video where a creator explains how they simplified their skincare routine, shows the product in use, demonstrates texture and application, shares a natural reaction, and ends with a clear product moment."
+Good prompt (for 5 sec): "Create a quick iPhone-style UGC clip showing a skincare product on a bathroom counter, a creator applying one pump, and smiling softly in the mirror."
+Good prompt (for 15 sec): "Create a short iPhone-style UGC commercial showing a creator starting their morning routine, applying the product in natural bathroom light, checking their skin, and ending with the product clearly visible."
+Good prompt (for 30 sec): "Create a realistic UGC-style commercial showing a creator talking through a simple morning routine, applying the product, showing texture close-ups, reacting naturally, and ending with a clear product recommendation."
+Good prompt (for 60 sec): "Create a detailed UGC-style routine video where a creator explains how they simplified their skincare routine, shows the product in use, demonstrates texture and application, shares a natural reaction, and ends with a clear product moment."
 
 Bad title: "Product Demo"
 Good title: "One Pump Morning Glow"
@@ -47,29 +59,26 @@ Good title: "The Product I Keep Reaching For"
 Bad title: "Food Review"
 Good title: "First Bite Crunch Reaction"
 
-VIDEO LENGTH RULES — build every idea for the selected video length:
+VIDEO LENGTH RULES — use length to decide complexity, NOT to write duration into the prompt:
 
 For 5-second ideas:
-- One simple visual moment
-- One product action or reaction
-- Very short ugcPrompt (1–2 sentences)
-- No complex story
-- Minimal or no voiceover
-- 1–2 shots max
+- One simple visual moment — quick, single action
+- Very short ugcPrompt (1–2 sentences), use "quick" or "single-moment" language
+- 1–2 shots max, minimal or no voiceover
 
 For 15-second ideas:
-- Hook → product moment → reaction or benefit → CTA
-- Short clear ugcPrompt
+- Hook → product moment → reaction → CTA
+- Short clear ugcPrompt, use "short" language but no explicit "15-second"
 - 3–5 shots max
 
 For 30-second ideas:
-- Hook → problem or routine setup → product use → benefit/reaction → CTA
-- Full but concise ugcPrompt
+- Hook → routine/problem → product use → benefit/reaction → CTA
+- Full but concise ugcPrompt, no duration qualifier needed
 - 5–7 shots max
 
 For 60-second ideas:
-- Mini story: hook → routine/demo → multiple product moments → voiceover → CTA
-- Detailed ugcPrompt
+- Hook → routine/demo → multiple product moments → voiceover → CTA
+- Detailed ugcPrompt, use "detailed" or "story-driven" language
 - 7–10 shots max
 
 QUALITY CHECKLIST — verify each idea:
@@ -79,7 +88,8 @@ QUALITY CHECKLIST — verify each idea:
 [ ] Hook is a specific opening line or visual?
 [ ] CTA is a natural recommendation or action?
 [ ] ugcPrompt uses AI-generation language (Create/Generate/Show/Depict)?
-[ ] ugcPrompt matches the selected video length?
+[ ] ugcPrompt does NOT contain "5-second", "15-second", "30-second", or "60-second"?
+[ ] ugcPrompt complexity matches the selected video length?
 [ ] ugcPrompt includes: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."?
 [ ] Shot list length matches the video length?
 
@@ -145,7 +155,7 @@ function makeFallback() {
         videoLength: '15 sec',
         productionType: 'AI Video',
         difficulty: 'Easy',
-        ugcPrompt: 'Create a realistic 15-second iPhone-style UGC clip. Show a bathroom or kitchen counter with several items scattered on it. A hand sweeps the items aside in one smooth motion and places the product in the center. The creator picks it up, examines it with natural curiosity, applies or uses it, and ends with a satisfied smile holding the product clearly toward the camera. Natural warm lighting, handheld style, relaxed and authentic. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
+        ugcPrompt: 'Create a short iPhone-style UGC clip. Show a bathroom or kitchen counter with several items scattered on it. Depict a hand sweeping the items aside in one smooth motion and placing the product in the center. Show the creator picking it up, examining it with natural curiosity, applying or using it, and ending with a satisfied smile holding the product clearly toward the camera. Natural warm lighting, handheld style, relaxed and authentic. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
         shotList: [
           'Wide shot of cluttered counter — creator hand enters frame',
           'Slow sweep clearing items aside',
@@ -166,7 +176,7 @@ function makeFallback() {
         videoLength: '15 sec',
         productionType: 'Real Creator',
         difficulty: 'Easy',
-        ugcPrompt: 'Create a realistic 15-second iPhone-style UGC first-reaction video. Show a creator opening product packaging on camera for the first time. Depict a genuine surprised and curious expression as they see and examine the product. Show the first touch or first use moment with a natural sensory reaction. Handheld camera, natural lighting, authentic UGC feel. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
+        ugcPrompt: 'Create a short iPhone-style UGC first-reaction video. Show a creator opening product packaging on camera for the first time. Depict a genuine surprised and curious expression as they see and examine the product. Show the first touch or first use moment with a natural sensory reaction. Handheld camera, natural lighting, authentic UGC feel. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
         shotList: [
           'Close-up of hands opening packaging',
           'Creator face — genuine curiosity or surprise reaction',
@@ -186,7 +196,7 @@ function makeFallback() {
         videoLength: '15 sec',
         productionType: 'AI Video',
         difficulty: 'Easy',
-        ugcPrompt: 'Create a realistic 15-second iPhone-style lifestyle UGC video. Show a fridge or pantry door opening from the outside with a clearly branded product front and center on the shelf. Depict a hand reaching for the product without hesitation, pulling it out naturally, using it in the kitchen, ending with a satisfied expression. Warm natural kitchen lighting, relaxed everyday feel, handheld style. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
+        ugcPrompt: 'Create a short iPhone-style lifestyle UGC video. Show a fridge or pantry door opening from the outside with a clearly branded product front and center on the shelf. Depict a hand reaching for the product without hesitation, pulling it out naturally, using it in the kitchen, ending with a satisfied expression. Warm natural kitchen lighting, relaxed everyday feel, handheld style. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
         shotList: [
           'Fridge or cabinet door opens — product visible and prominent on shelf',
           'Creator hand reaches directly for product without hesitation',
@@ -226,11 +236,11 @@ function inferCategory(brief: Record<string, unknown> | undefined): string {
 
 function lengthInstruction(videoLength: string): string {
   switch (videoLength) {
-    case '5 sec': return 'Make every idea a single quick visual moment — one action, one product, one emotion. Very short ugcPrompt (1–2 sentences). 1–2 shots max. Minimal or no voiceover.'
-    case '15 sec': return 'Make every idea a short hook-product-CTA commercial. ugcPrompt should be concise and direct. 3–5 shots max. Simple voiceover or none.'
-    case '30 sec': return 'Make every idea a complete short UGC ad: hook → setup → product use → reaction → CTA. ugcPrompt should be full but focused. 5–7 shots.'
-    case '60 sec': return 'Make every idea a deeper routine or story concept: hook → routine/demo → multiple product moments → voiceover → CTA. ugcPrompt should be detailed. 7–10 shots.'
-    default: return 'Make every idea a complete short UGC commercial appropriate for the selected length.'
+    case '5 sec': return 'Make every idea a single quick visual moment — one action, one product, one emotion. Very short ugcPrompt (1–2 sentences). Use "quick" or "single-moment" in the prompt, NOT "5-second". 1–2 shots max. Minimal or no voiceover.'
+    case '15 sec': return 'Make every idea a short hook-product-CTA commercial. ugcPrompt should be concise and direct. Use "short" in the prompt, NOT "15-second". 3–5 shots max. Simple voiceover or none.'
+    case '30 sec': return 'Make every idea a complete UGC commercial with hook, setup, product use, reaction, and CTA. ugcPrompt should be full but focused. Do not use any explicit duration wording. 5–7 shots.'
+    case '60 sec': return 'Make every idea a deeper story or routine concept with multiple product moments and voiceover. ugcPrompt should be detailed. Use "detailed" or "story-driven" in the prompt, NOT "60-second". 7–10 shots.'
+    default: return 'Make every idea a complete short UGC commercial. Do not write any explicit duration like "5-second", "15-second", "30-second", or "60-second" inside the ugcPrompt.'
   }
 }
 
@@ -270,6 +280,7 @@ function buildUserPrompt({ brandContext, ideaCountNum, selectedVideoLength, sele
     `Do not create 30-day journey concepts for 5 sec or 15 sec videos.`,
     ``,
     `All ugcPrompts must use AI-generation language (Create/Generate/Show/Depict), not recording language (Record/Film/Shoot/Capture).`,
+    `IMPORTANT: Do NOT include explicit duration wording ("5-second", "15-second", "30-second", "60-second") inside any ugcPrompt. Use complexity and shot count to reflect the length instead.`,
     `Every ugcPrompt must include: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."`,
     `Each idea must include: title, description, hook, cta, videoLength (set to "${selectedVideoLength}"), productionType, difficulty, ugcPrompt, shotList, voiceoverDirection, editingStyle.`,
     `Avoid generic titles like "Product Demo", "Testimonial", "Daily Routine", "Social Proof".`,

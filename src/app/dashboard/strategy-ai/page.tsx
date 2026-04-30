@@ -85,7 +85,7 @@ class OutputErrorBoundary extends Component<{ children: ReactNode }, { crashed: 
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'ugcfire_ideas_v4'
-const IDEA_COUNTS = [8, 20, 40] as const
+const IDEA_COUNTS = [3, 8, 20, 40] as const
 const VIDEO_LENGTHS = ['5 sec', '15 sec', '30 sec', '60 sec'] as const
 type VideoLength = typeof VIDEO_LENGTHS[number]
 
@@ -116,6 +116,7 @@ function DiffBadge({ d }: { d: string }) {
 function buildCopyText(idea: Idea): string {
   return [
     `Title:\n${idea.title}`,
+    idea.videoLength ? `\nVideo Length:\n${idea.videoLength}` : '',
     idea.hook ? `\nHook:\n${idea.hook}` : '',
     idea.ugcPrompt ? `\nUGC Video Prompt:\n${idea.ugcPrompt}` : '',
     idea.shotList?.length ? `\nShot List:\n${idea.shotList.map(s => `- ${s}`).join('\n')}` : '',
@@ -261,7 +262,7 @@ export default function StrategyAIPage() {
   const [brandBrief, setBrandBrief] = useState<Record<string, unknown> | null>(null)
   const [context, setContext] = useState(calcBrandContext(null))
 
-  const [ideaCount, setIdeaCount] = useState<8 | 20 | 40>(8)
+  const [ideaCount, setIdeaCount] = useState<3 | 8 | 20 | 40>(3)
   const [videoLength, setVideoLength] = useState<VideoLength>('15 sec')
   const [output, setOutput] = useState<IdeasOutput | null>(null)
   const [running, setRunning] = useState(false)
