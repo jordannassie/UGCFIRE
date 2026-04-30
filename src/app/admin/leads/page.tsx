@@ -180,8 +180,8 @@ function ImportTab({ onImported }: { onImported: () => void }) {
 
 // ── Tab 2: Pipeline ────────────────────────────────────────────────────────
 
-function PipelineTab({ leads, loading, onRefresh, onSelect }: {
-  leads: Lead[]; loading: boolean; onRefresh: () => void; onSelect: (l: Lead) => void
+function PipelineTab({ leads, loading, onRefresh, onOpenInQueue }: {
+  leads: Lead[]; loading: boolean; onRefresh: () => void; onOpenInQueue: (l: Lead) => void
 }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -194,6 +194,10 @@ function PipelineTab({ leads, loading, onRefresh, onSelect }: {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-2 bg-white/3 border border-white/8 rounded-lg px-4 py-2.5">
+        <PhoneCall size={13} className="text-[#FF3B1A] shrink-0" />
+        <p className="text-white/45 text-xs">Click any business to open it in Call Queue — call, add notes, update status, and set follow-up.</p>
+      </div>
       <div className="flex gap-2 flex-col sm:flex-row">
         <div className="relative flex-1">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
@@ -223,7 +227,7 @@ function PipelineTab({ leads, loading, onRefresh, onSelect }: {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {filtered.map(lead => (
-                    <tr key={lead.id} className="hover:bg-white/3 transition group cursor-pointer" onClick={() => onSelect(lead)}>
+                    <tr key={lead.id} className="hover:bg-white/3 transition group cursor-pointer" onClick={() => onOpenInQueue(lead)}>
                       <td className="px-4 py-3"><p className="text-white font-medium truncate max-w-[180px]">{lead.business_name}</p></td>
                       <td className="px-4 py-3 text-white/40 text-xs truncate max-w-[120px]">{lead.category ?? '—'}</td>
                       <td className="px-4 py-3 text-white/40 text-xs whitespace-nowrap">{lead.city ?? '—'}</td>
@@ -246,7 +250,7 @@ function PipelineTab({ leads, loading, onRefresh, onSelect }: {
                           </>}
                           {lead.website && <a href={lead.website} target="_blank" rel="noopener noreferrer" title="Website" className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition"><Globe size={12}/></a>}
                           {lead.google_maps_url && <a href={lead.google_maps_url} target="_blank" rel="noopener noreferrer" title="Maps" className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition"><MapPin size={12}/></a>}
-                          <button onClick={() => onSelect(lead)} title="Open" className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition"><Plus size={12}/></button>
+                          <button onClick={() => onOpenInQueue(lead)} title="Open in Call Queue" className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg bg-[#FF3B1A]/15 hover:bg-[#FF3B1A]/25 text-[#FF3B1A] transition font-semibold whitespace-nowrap"><PhoneCall size={11}/> Call Queue</button>
                         </div>
                       </td>
                     </tr>
@@ -367,14 +371,24 @@ function CallQueueRightPanel({ selectedLead, scripts, selectedScript, onScriptCh
 
 // ── Tab 3: Call Queue ──────────────────────────────────────────────────────
 
-function CallQueueTab({ leads, scripts, onLeadUpdated }: {
+function CallQueueTab({ leads, scripts, onLeadUpdated, preSelectedLead }: {
   leads: Lead[]
   scripts: CallScript[]
   onLeadUpdated: (l: Lead) => void
+  preSelectedLead?: Lead | null
 }) {
-  const [queueFilter, setQueueFilter] = useState('New')
+  const [queueFilter, setQueueFilter] = useState('All Leads')
+  const [queueSearch, setQueueSearch] = useState('')
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [selectedScript, setSelectedScript] = useState<CallScript | null>(null)
+
+  // When navigating here from Pipeline, load the pre-selected lead
+  useEffect(() => {
+    if (preSelectedLead) {
+      setSelectedLead(preSelectedLead)
+      setQueueFilter('All Leads')
+    }
+  }, [preSelectedLead?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Call notes state
   const [noteText, setNoteText] = useState('')
@@ -402,9 +416,24 @@ function CallQueueTab({ leads, scripts, onLeadUpdated }: {
     { label: 'All Leads', filter: () => true },
   ]
 
-  const filteredQueue = leads.filter(
-    QUEUE_FILTERS.find(f => f.label === queueFilter)?.filter ?? (() => true)
-  )
+  const filteredQueue = leads.filter(l => {
+    const matchFilter = (QUEUE_FILTERS.find(f => f.label === queueFilter)?.filter ?? (() => true))(l)
+    if (!matchFilter) return false
+    if (!queueSearch.trim()) return true
+    const q = queueSearch.toLowerCase()
+    return (
+      l.business_name.toLowerCase().includes(q) ||
+      (l.city ?? '').toLowerCase().includes(q) ||
+      (l.category ?? '').toLowerCase().includes(q) ||
+      (l.phone ?? '').replace(/\D/g,'').includes(q.replace(/\D/g,'')) ||
+      (l.phone ?? '').toLowerCase().includes(q) ||
+      (l.website ?? '').toLowerCase().includes(q) ||
+      (l.main_contact ?? '').toLowerCase().includes(q) ||
+      (l.contact_email ?? '').toLowerCase().includes(q) ||
+      (l.contact_phone ?? '').replace(/\D/g,'').includes(q.replace(/\D/g,'')) ||
+      (l.business_notes ?? '').toLowerCase().includes(q)
+    )
+  })
 
   const defaultScript = scripts.find(s => s.is_default) ?? scripts[0] ?? null
 
@@ -512,8 +541,19 @@ function CallQueueTab({ leads, scripts, onLeadUpdated }: {
 
       {/* LEFT — queue list */}
       <div className="bg-[#111] border border-white/8 rounded-xl flex flex-col overflow-hidden">
-        <div className="px-4 py-3 border-b border-white/8">
-          <p className="text-white/60 text-[10px] uppercase tracking-widest font-semibold mb-2">Queue Filter</p>
+        <div className="px-4 py-3 border-b border-white/8 space-y-3">
+          {/* Search */}
+          <div className="relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+            <input
+              value={queueSearch}
+              onChange={e => setQueueSearch(e.target.value)}
+              placeholder="Search name, city, phone…"
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-white text-xs focus:border-[#FF3B1A] focus:outline-none placeholder:text-white/25"
+            />
+          </div>
+          {/* Filters */}
+          <p className="text-white/60 text-[10px] uppercase tracking-widest font-semibold">Filter</p>
           <div className="space-y-0.5">
             {QUEUE_FILTERS.map(f => (
               <button key={f.label} onClick={() => setQueueFilter(f.label)}
@@ -1026,6 +1066,11 @@ export default function AdminLeadsPage() {
   const [loadingLeads, setLoadingLeads] = useState(true)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
 
+  function openLeadInQueue(lead: Lead) {
+    setSelectedLead(lead)
+    setTab('queue')
+  }
+
   const loadLeads = useCallback(async () => {
     setLoadingLeads(true)
     const res = await fetch('/api/admin/leads?limit=500').catch(() => null)
@@ -1092,22 +1137,23 @@ export default function AdminLeadsPage() {
       </div>
 
       {tab === 'import' && <ImportTab onImported={loadLeads}/>}
-      {tab === 'pipeline' && <PipelineTab leads={leads} loading={loadingLeads} onRefresh={loadLeads} onSelect={setSelectedLead}/>}
-      {tab === 'queue' && <CallQueueTab leads={leads} scripts={scripts} onLeadUpdated={handleLeadUpdated}/>}
+      {tab === 'pipeline' && (
+        <PipelineTab
+          leads={leads}
+          loading={loadingLeads}
+          onRefresh={loadLeads}
+          onOpenInQueue={openLeadInQueue}
+        />
+      )}
+      {tab === 'queue' && (
+        <CallQueueTab
+          leads={leads}
+          scripts={scripts}
+          onLeadUpdated={handleLeadUpdated}
+          preSelectedLead={selectedLead}
+        />
+      )}
       {tab === 'scripts' && <ScriptsTab scripts={scripts} onUpdate={loadScripts}/>}
-
-      {selectedLead && tab === 'pipeline' && (
-        <LeadDrawer lead={selectedLead} onClose={() => setSelectedLead(null)} onUpdate={handleLeadUpdated}/>
-      )}
-
-      {tab === 'pipeline' && !selectedLead && leads.length > 0 && (
-        <div className="fixed bottom-6 right-6 lg:hidden">
-          <button onClick={() => setTab('queue')}
-            className="flex items-center gap-2 bg-[#FF3B1A] text-white text-xs font-bold px-4 py-3 rounded-full shadow-lg shadow-[#FF3B1A]/30 transition">
-            <PhoneCall size={15}/> Call Queue
-          </button>
-        </div>
-      )}
     </div>
   )
 }
