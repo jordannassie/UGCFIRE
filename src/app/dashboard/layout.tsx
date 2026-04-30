@@ -8,7 +8,7 @@ import { getMyCompany } from '@/lib/data'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY, DEMO_COMPANY } from '@/lib/demoData'
 import type { Company } from '@/lib/types'
 import {
-  Clapperboard, Target, User, Wallet, FileCheck, Menu, LogOut, Camera, Sparkles, Sun, Moon, LayoutGrid,
+  Clapperboard, Target, User, Wallet, FileCheck, Menu, LogOut, Camera, Sparkles, Sun, Moon, LayoutGrid, Mail,
 } from 'lucide-react'
 
 const THEME_KEY = 'ugcfire_dashboard_theme'
@@ -284,6 +284,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             UGCFire Dashboard
           </span>
         </header>
+        {/* Global support bar */}
+        <div
+          className="px-4 lg:px-8 py-2 flex items-center justify-end"
+          style={{
+            borderBottom: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.05)',
+          }}
+        >
+          <a
+            href="mailto:hello@ugcfire.com"
+            className="flex items-center gap-1.5 text-xs transition hover:opacity-80 min-w-0"
+            style={{ color: isLight ? 'rgba(15,23,42,0.35)' : 'rgba(255,255,255,0.28)' }}
+          >
+            <Mail size={11} className="shrink-0" />
+            <span className="truncate">Support: hello@ugcfire.com</span>
+          </a>
+        </div>
         <main className="p-6 lg:p-8">{children}</main>
       </div>
     </div>
