@@ -1,85 +1,86 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { getMyCompany } from '@/lib/data'
+import { isDemoMode, DEMO_BRAND_BRIEF, DEMO_COMPANY } from '@/lib/demoData'
+import { calcBrandContext } from '@/lib/brandCompletion'
 import {
-  Sparkles, Brain, Send, ChevronRight, ChevronDown, Folder, Target, Users,
-  Flame, Link2, TrendingUp, Plus, X, Zap, ArrowRight, Lightbulb,
-  FileText, CheckCircle2, Copy, Check, BookOpen, Play, BarChart2,
-  Star, AlignLeft, Mic2, Pencil, Trash2, RefreshCw, User,
+  Sparkles, Brain, Send, Copy, Check, X, ChevronDown, ChevronUp,
+  Target, Users, Video, Layers, Film, Star, Shield, RefreshCw, User,
+  CheckCircle2, Zap,
 } from 'lucide-react'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────
 
-type SectionKey   = 'brandMemory' | 'competitorNotes' | 'contentLibrary' | 'strategyIdeas' | 'growthSignals'
-type MemoryStatus = 'new' | 'learning' | 'saved' | 'ready'
-type AccordionId  = 'summary' | 'hooks' | 'captions' | 'cta' | 'ideas' | 'briefs' | 'tasks' | 'growth'
-
-interface ChatMsg {
-  id: string
-  role: 'user' | 'assistant'
-  text: string
-  memories?: number
+interface UgcAngle { title: string; whyItWorks: string; bestUseCase: string; exampleCommercialIdea: string }
+interface Scene {
+  category: string; sceneTitle: string; purpose: string; whatToShow: string
+  location: string; propsNeeded: string[]; talentDirection: string
+  suggestedSpokenMoment: string; whyItWorks: string
+}
+interface ReusableScene { sceneTitle: string; whyReusable: string; usedInCommercialIdeas: string[] }
+interface CommercialIdea {
+  title: string; goal: string; productionType: string; difficulty: string
+  bestFor: string; priority: string; openingMoment: string; sceneDescription: string
+  shotList: string[]; aiVideoPrompt: string; voiceoverSpokenDirection: string
+  ctaDirection: string; editingStyle: string; propsLocationTalent: string[]
+  variationIdeas: string[]; ugcFireProductionNotes: string; doNotInclude: string[]
+}
+interface VideoRecipe {
+  recipeName: string; length: string; bestFor: string; sceneSequence: string[]
+  openingMoment: string; shotOrder: string[]; voiceoverSpokenDirection: string
+  ctaDirection: string; editingNotes: string; aiVideoPrompt: string; doNotInclude: string[]
+}
+interface FirstBatchItem {
+  title: string; whyMakeThisFirst: string; difficulty: string; productionType: string
+  priority: string; assetsNeeded: string[]; sceneBankScenesUsed: string[]
+}
+interface CreativeRules {
+  brandRules: string[]; productionRules: string[]; claimsToAvoid: string[]
+  doNotIncludeRules: string[]; qualityNotes: string[]
+  whatMakesThisWork: string[]; creativeAvoidList: string[]
+}
+interface FactoryOutput {
+  brandProductRead: string
+  contentIngredients: string[]
+  bestOpportunities: string[]
+  ugcMarketingAngles: UgcAngle[]
+  sceneBank: Scene[]
+  reusableScenesToCaptureFirst: ReusableScene[]
+  commercialIdeas: CommercialIdea[]
+  videoRecipes: VideoRecipe[]
+  firstBatchRecommendation: FirstBatchItem[]
+  creativeRules: CreativeRules
 }
 
-interface Hook         { text: string; type: string; useCase?: string }
-interface Caption      { text: string; platform: string; cta: string }
-interface CtaItem      { cta: string; bestUseCase: string; whyItWorks: string }
-interface ContentIdea  { title: string; angle: string; platform: string; goal?: string; whyItWorks?: string }
-interface Brief        { title: string; hook: string; angle: string; script: string; shotList: string[]; cta: string; platforms: string[]; goal?: string; whyItWorks: string; fireCreatorNotes?: string; status?: string }
-interface FireTask     { task: string; priority: string; status: string; relatedBrief?: string }
-interface GrowthPlan   { whereToPost: string[]; weeklyPostingPlan: string[]; whatToTest: string[]; whatToMeasure: string[]; whatToDoubleDownOn: string[]; nextSevenDays: string[] }
+interface ChatMsg { id: string; role: 'user' | 'assistant'; text: string }
 
-interface Strategy {
-  strategySummary: { mainDirection: string; thisWeeksFocus: string; bestOpportunity: string; whyThisMatters: string }
-  hooks: Hook[]
-  captions: Caption[]
-  ctaStrategy: CtaItem[]
-  contentIdeas: ContentIdea[]
-  ugcVideoBriefs: Brief[]
-  fireCreatorTasks: FireTask[]
-  growthPlan: GrowthPlan
-}
+const STORAGE_KEY = 'ugcfire_factory_v1'
 
-// ─── Super Brain sections ─────────────────────────────────────────────────────
+const IDEA_COUNTS = ['8 ideas', '20 ideas', '40 ideas']
+const COMMERCIAL_STYLES = ['Mixed', 'Authentic UGC', 'Product Demo', 'Lifestyle', 'Founder-Led', 'Reaction-Style', 'Testimonial-Style', 'Sensory / ASMR', 'Direct Response']
+const PRODUCTION_TYPES = ['Mixed Production', 'AI Video', 'Real Creator', 'Product B-Roll', 'Founder-Led', 'Photo-to-Video', 'Voiceover Only']
+const OUTPUT_TABS = ['Overview', 'Angles', 'Scene Bank', 'Commercial Ideas', 'Video Recipes', 'First Batch', 'Creative Rules'] as const
+type OutputTab = typeof OUTPUT_TABS[number]
 
-const BRAIN_SECTIONS: { key: SectionKey; stage: string; Icon: React.ElementType; title: string; desc: string }[] = [
-  { key: 'brandMemory',     stage: 'brand',       Icon: Folder,     title: 'Brand Memory',     desc: 'Core identity, mission, positioning' },
-  { key: 'competitorNotes', stage: 'competitors', Icon: Users,      title: 'Competitor Notes', desc: 'Competitor landscape and content gaps' },
-  { key: 'contentLibrary',  stage: 'content',     Icon: Lightbulb,  title: 'Content Library',  desc: 'Hooks, ideas, angles, and references' },
-  { key: 'strategyIdeas',   stage: 'strategy',    Icon: Target,     title: 'Strategy Ideas',   desc: 'Angles, offers, and positioning' },
-  { key: 'growthSignals',   stage: 'growth',      Icon: TrendingUp, title: 'Growth Signals',   desc: "What's working and opportunities" },
+const CHAT_CHIPS = [
+  'Give me more commercial ideas', 'Generate more scenes', 'Make this more premium',
+  'Make this more fun', 'Make this more direct response', 'Create more AI video prompts',
+  'Create more lifestyle concepts', 'Create more product demo concepts',
 ]
 
-const STATUS_STYLES: Record<MemoryStatus, string> = {
-  new:      'bg-white/8 text-white/35',
-  learning: 'bg-[#FF3B1A]/15 text-[#FF3B1A]',
-  saved:    'bg-green-500/15 text-green-400',
-  ready:    'bg-blue-500/15 text-blue-300',
-}
+// ── Small helpers ──────────────────────────────────────────────────────────
 
-const STARTER_CHIPS = [
-  'Build my brand strategy',
-  'Analyze my competitors',
-  'Create hooks and captions',
-  'Make UGC video briefs',
-  'Create my growth plan',
-]
-
-const ALL_ACCORDION_IDS: AccordionId[] = ['summary', 'hooks', 'captions', 'cta', 'ideas', 'briefs', 'tasks', 'growth']
-const STORAGE_KEY = 'ugcfire_strategy_v3'
-
-// ─── Small helpers ────────────────────────────────────────────────────────────
-
-function CopyBtn({ text }: { text: string }) {
+function CopyBtn({ text, label = 'Copy' }: { text: string; label?: string }) {
   const [done, setDone] = useState(false)
   return (
     <button
-      onClick={() => { navigator.clipboard.writeText(text).catch(() => {}); setDone(true); setTimeout(() => setDone(false), 1600) }}
-      title="Copy"
-      className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1.5 rounded-lg border transition ${done ? 'border-green-500/30 text-green-400' : 'border-white/10 text-white/35 hover:text-white hover:border-white/20'}`}
+      onClick={() => { navigator.clipboard.writeText(text).catch(() => {}); setDone(true); setTimeout(() => setDone(false), 1800) }}
+      className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition ${done ? 'border-green-500/30 text-green-400' : 'border-white/10 text-white/35 hover:text-white hover:border-white/20'}`}
     >
-      {done ? <><Check size={9} /> Copied</> : <><Copy size={9} /> Copy</>}
+      {done ? <><Check size={9} /> Copied</> : <><Copy size={9} /> {label}</>}
     </button>
   )
 }
@@ -89,108 +90,217 @@ function PriorityBadge({ p }: { p: string }) {
   return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${s}`}>{p}</span>
 }
 
-function ActionBtn({ icon: Icon, label, onClick, danger }: { icon: React.ElementType; label: string; onClick: () => void; danger?: boolean }) {
+function DiffBadge({ d }: { d: string }) {
+  const s = d === 'Easy' ? 'bg-green-500/15 text-green-400' : d === 'Medium' ? 'bg-yellow-500/15 text-yellow-400' : 'bg-red-500/15 text-red-400'
+  return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${s}`}>{d}</span>
+}
+
+function ListItems({ items, className = '' }: { items: string[]; className?: string }) {
+  if (!items?.length) return <p className="text-white/25 text-xs italic">None specified</p>
   return (
-    <button
-      onClick={onClick}
-      title={label}
-      className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-1.5 rounded-lg border transition ${danger ? 'border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-400/30' : 'border-white/10 text-white/35 hover:text-white hover:border-white/20'}`}
-    >
-      <Icon size={9} /> {label}
-    </button>
+    <ul className={`space-y-1 ${className}`}>
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-2 text-xs text-white/60">
+          <span className="mt-1 w-1 h-1 rounded-full bg-[#FF3B1A]/60 shrink-0" />
+          {item}
+        </li>
+      ))}
+    </ul>
   )
 }
 
-interface AccordionProps {
-  id: AccordionId; title: string; Icon: React.ElementType
-  isOpen: boolean; onToggle: () => void; children: React.ReactNode
-}
-function AccordionSection({ title, Icon, isOpen, onToggle, children }: AccordionProps) {
+// ── Commercial Idea Card ───────────────────────────────────────────────────
+
+function CommercialIdeaCard({ idea, index }: { idea: CommercialIdea; index: number }) {
+  const [open, setOpen] = useState(false)
   return (
     <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl overflow-hidden">
-      <button onClick={onToggle} className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/2 transition">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-[#FF3B1A]/15 flex items-center justify-center shrink-0">
-            <Icon size={13} className="text-[#FF3B1A]" />
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-start justify-between gap-3 px-4 py-4 text-left hover:bg-white/2 transition"
+      >
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <span className="w-5 h-5 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{index + 1}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-semibold text-sm truncate">{idea.title}</p>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+              <span className="text-[9px] bg-white/6 text-white/40 px-2 py-0.5 rounded-full">{idea.productionType}</span>
+              <DiffBadge d={idea.difficulty} />
+              <PriorityBadge p={idea.priority} />
+            </div>
           </div>
-          <p className="text-white font-semibold text-sm">{title}</p>
         </div>
-        <ChevronDown size={15} className={`text-white/30 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {open ? <ChevronUp size={14} className="text-white/30 shrink-0 mt-1" /> : <ChevronDown size={14} className="text-white/30 shrink-0 mt-1" />}
       </button>
-      {isOpen && <div className="border-t border-white/6 px-5 py-5">{children}</div>}
+
+      {open && (
+        <div className="border-t border-white/6 px-4 py-5 space-y-5">
+          {/* Goal / Best For */}
+          <div className="grid sm:grid-cols-2 gap-3">
+            {[['Goal', idea.goal], ['Best For', idea.bestFor]].map(([label, val]) => (
+              <div key={label} className="bg-white/3 border border-white/6 rounded-xl p-3">
+                <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">{label}</p>
+                <p className="text-white/70 text-xs leading-relaxed">{val}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Opening Moment + Scene Description */}
+          {[['Opening Moment', idea.openingMoment], ['Scene Description', idea.sceneDescription]].map(([label, val]) => val ? (
+            <div key={label} className="bg-white/3 border border-white/6 rounded-xl p-3">
+              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">{label}</p>
+              <p className="text-white/70 text-xs leading-relaxed">{val}</p>
+            </div>
+          ) : null)}
+
+          {/* Shot List */}
+          {idea.shotList?.length > 0 && (
+            <div className="bg-white/3 border border-white/6 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide">Shot List</p>
+                <CopyBtn text={idea.shotList.join('\n')} label="Copy Shot List" />
+              </div>
+              <ListItems items={idea.shotList} />
+            </div>
+          )}
+
+          {/* AI Video Prompt */}
+          {idea.aiVideoPrompt && (
+            <div className="bg-[#FF3B1A]/5 border border-[#FF3B1A]/20 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[#FF3B1A] text-[10px] font-semibold uppercase tracking-wide">Copy/Paste AI Video Prompt</p>
+                <CopyBtn text={idea.aiVideoPrompt} label="Copy AI Prompt" />
+              </div>
+              <p className="text-white/65 text-xs leading-relaxed whitespace-pre-wrap">{idea.aiVideoPrompt}</p>
+            </div>
+          )}
+
+          {/* Voiceover / CTA / Editing */}
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              ['Voiceover / Spoken Direction', idea.voiceoverSpokenDirection],
+              ['CTA Direction', idea.ctaDirection],
+              ['Editing Style', idea.editingStyle],
+            ].filter(([, v]) => v).map(([label, val]) => (
+              <div key={label} className="bg-white/3 border border-white/6 rounded-xl p-3">
+                <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">{label}</p>
+                <p className="text-white/65 text-xs leading-relaxed">{val}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Props / Location / Talent */}
+          {idea.propsLocationTalent?.length > 0 && (
+            <div className="bg-white/3 border border-white/6 rounded-xl p-3">
+              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-2">Props / Location / Talent</p>
+              <ListItems items={idea.propsLocationTalent} />
+            </div>
+          )}
+
+          {/* Variation Ideas */}
+          {idea.variationIdeas?.length > 0 && (
+            <div className="bg-white/3 border border-white/6 rounded-xl p-3">
+              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-2">Variation Ideas</p>
+              <ListItems items={idea.variationIdeas} />
+            </div>
+          )}
+
+          {/* Production Notes */}
+          {idea.ugcFireProductionNotes && (
+            <div className="bg-white/3 border border-white/6 rounded-xl p-3">
+              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Production Notes</p>
+              <p className="text-white/55 text-xs leading-relaxed">{idea.ugcFireProductionNotes}</p>
+            </div>
+          )}
+
+          {/* Do Not Include */}
+          {idea.doNotInclude?.length > 0 && (
+            <div className="bg-red-500/5 border border-red-500/15 rounded-xl p-3">
+              <p className="text-red-400/70 text-[10px] font-semibold uppercase tracking-wide mb-2">Do Not Include</p>
+              <ListItems items={idea.doNotInclude} />
+            </div>
+          )}
+
+          {/* Copy full brief */}
+          <div className="flex gap-2">
+            <CopyBtn label="Copy Production Brief" text={[
+              `COMMERCIAL IDEA: ${idea.title}`,
+              `Goal: ${idea.goal}`, `Production Type: ${idea.productionType}`,
+              `Opening Moment: ${idea.openingMoment}`,
+              `Scene Description: ${idea.sceneDescription}`,
+              `Shot List:\n${idea.shotList?.map(s => `- ${s}`).join('\n')}`,
+              `AI Video Prompt:\n${idea.aiVideoPrompt}`,
+              `Voiceover: ${idea.voiceoverSpokenDirection}`,
+              `CTA: ${idea.ctaDirection}`,
+              `Do Not Include:\n${idea.doNotInclude?.map(s => `- ${s}`).join('\n')}`,
+            ].filter(Boolean).join('\n\n')} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ── Main Page ──────────────────────────────────────────────────────────────
 
 export default function StrategyAIPage() {
   const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const [userId, setUserId] = useState<string | null>(null)
+  const [brandBrief, setBrandBrief] = useState<Record<string, unknown> | null>(null)
+  const [context, setContext] = useState(calcBrandContext(null))
+
+  // Generation controls
+  const [ideaCount, setIdeaCount] = useState('8 ideas')
+  const [commercialStyle, setCommercialStyle] = useState('Mixed')
+  const [productionType, setProductionType] = useState('Mixed Production')
+
+  // Factory output
+  const [factory, setFactory] = useState<FactoryOutput | null>(null)
+  const [running, setRunning] = useState(false)
+  const [runError, setRunError] = useState('')
+  const [approved, setApproved] = useState(false)
+  const [activeTab, setActiveTab] = useState<OutputTab>('Overview')
+
+  // Chat
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    { id: 'init', role: 'assistant', text: "Ask me for more commercial ideas, new scenes, different styles, or creative direction changes. I'll use your brand context to help." }
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const [chatError, setChatError] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // ── Auth ──
-  const [userId, setUserId] = useState<string | null>(null)
-
-  // ── Chat ──
-  const [messages,    setMessages]    = useState<ChatMsg[]>([
-    { id: 'init', role: 'assistant', text: "Hi! I'm Strategy AI. Tell me about your business, offer, audience, or competitors. I'll organize it all into your Super Brain and build your content strategy." }
-  ])
-  const [input,       setInput]       = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
-  const [chatError,   setChatError]   = useState('')
-
-  // ── Super Brain ──
-  const [brainStatus,  setBrainStatus]  = useState<Record<string, MemoryStatus>>({
-    brand: 'new', competitors: 'new', content: 'new', strategy: 'new', growth: 'new',
-  })
-  const [memoryCounts, setMemoryCounts] = useState<Record<string, number>>({})
-
-  // ── Strategy output ──
-  const [strategy,     setStrategy]     = useState<Strategy | null>(null)
-  const [running,      setRunning]      = useState(false)
-  const [openSections, setOpenSections] = useState<Set<AccordionId>>(new Set())
-  const [successMsg,   setSuccessMsg]   = useState(false)
-  const [runError,     setRunError]     = useState('')
-
-  // ── Editing ──
-  const [editingCell,  setEditingCell]  = useState<{ section: string; index: number } | null>(null)
-  const [editDraft,    setEditDraft]    = useState<Record<string, string>>({})
-  const [savedCell,    setSavedCell]    = useState<string | null>(null)
-  const [briefModal,   setBriefModal]   = useState<Brief | null>(null)
-  const [editBrief,    setEditBrief]    = useState<Brief | null>(null)
-
-  // ── Modals ──
-  const [showAddMemory, setShowAddMemory] = useState(false)
-  const [showAddLink,   setShowAddLink]   = useState(false)
-  const [memStage,      setMemStage]      = useState('brand')
-  const [memTitle,      setMemTitle]      = useState('')
-  const [memContent,    setMemContent]    = useState('')
-  const [linkUrl,       setLinkUrl]       = useState('')
-  const [linkNotes,     setLinkNotes]     = useState('')
-  const [linkStage,     setLinkStage]     = useState('brand')
-  const [modalSaving,   setModalSaving]   = useState(false)
-
-  // ── Hydrate ──
+  // ── Load brand brief + restore cached factory ──────────────────────────
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id)
-    })
-
+    // Restore factory from localStorage
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      if (!raw) return
-      const s = JSON.parse(raw)
-      if (s.messages?.length)  setMessages(s.messages)
-      if (s.brainStatus)       setBrainStatus(s.brainStatus)
-      if (s.strategy)          { setStrategy(s.strategy); setOpenSections(new Set(ALL_ACCORDION_IDS)) }
-      if (s.memoryCounts)      setMemoryCounts(s.memoryCounts)
+      if (raw) {
+        const saved = JSON.parse(raw)
+        if (saved?.factory) { setFactory(saved.factory); setApproved(saved.approved ?? false) }
+      }
     } catch { /* ignore */ }
+
+    async function load() {
+      if (isDemoMode()) {
+        setBrandBrief(DEMO_BRAND_BRIEF as unknown as Record<string, unknown>)
+        setContext(calcBrandContext(DEMO_BRAND_BRIEF as unknown as Record<string, unknown>))
+        return
+      }
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setUserId(user.id)
+      const co = await getMyCompany()
+      if (co) {
+        const { data: brief } = await supabase.from('brand_briefs').select('*').eq('company_id', co.id).single()
+        if (brief) { setBrandBrief(brief as Record<string, unknown>); setContext(calcBrandContext(brief as Record<string, unknown>)) }
+      }
+    }
+    load()
   }, [])
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, chatLoading])
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, chatLoading])
 
   const persist = useCallback((patch: object) => {
     try {
@@ -199,97 +309,32 @@ export default function StrategyAIPage() {
     } catch { /* ignore */ }
   }, [])
 
-  // ── Send chat message ──
-  async function sendMessage(text?: string) {
-    const msg = (text ?? input).trim()
-    if (!msg || chatLoading) return
-
-    const userMsg: ChatMsg = { id: `u${Date.now()}`, role: 'user', text: msg }
-    const newMsgs = [...messages, userMsg]
-    setMessages(newMsgs)
-    setInput('')
-    setChatLoading(true)
-    setChatError('')
-
-    try {
-      const res = await fetch('/api/strategy/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, userId, currentStatus: brainStatus }),
-      })
-      const data = await res.json()
-
-      if (!res.ok || data.error) {
-        setChatError(data.error ?? 'Strategy AI could not respond right now. Please try again.')
-        setChatLoading(false)
-        return
-      }
-
-      const aiMsg: ChatMsg = {
-        id: `a${Date.now()}`,
-        role: 'assistant',
-        text: data.assistantMessage,
-        memories: data.extractedMemories?.length ?? 0,
-      }
-      const updatedMsgs = [...newMsgs, aiMsg]
-      setMessages(updatedMsgs)
-
-      // Update brain status
-      if (data.superBrainStatus) {
-        const newStatus = { ...brainStatus, ...data.superBrainStatus }
-        setBrainStatus(newStatus)
-        persist({ brainStatus: newStatus })
-      }
-
-      // Update memory counts
-      if (data.extractedMemories?.length) {
-        const newCounts = { ...memoryCounts }
-        for (const m of data.extractedMemories) {
-          newCounts[m.stage] = (newCounts[m.stage] ?? 0) + 1
-        }
-        setMemoryCounts(newCounts)
-        persist({ memoryCounts: newCounts })
-      }
-
-      persist({ messages: updatedMsgs })
-    } catch {
-      setChatError('Strategy AI could not respond right now. Please try again.')
-    } finally {
-      setChatLoading(false)
-    }
-  }
-
-  // ── Run Strategy AI ──
-  async function runStrategy() {
+  // ── Run factory ──────────────────────────────────────────────────────────
+  async function runFactory() {
     setRunning(true)
     setRunError('')
-
+    setApproved(false)
     try {
       const res = await fetch('/api/strategy/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({
+          userId,
+          setupLevel: context.setupLevel,
+          completionPercentage: context.completionPercentage,
+          confidenceLabel: context.confidenceLabel,
+          brandBrief,
+          selectedIdeaCount: ideaCount,
+          selectedCommercialStyle: commercialStyle,
+          selectedProductionType: productionType,
+        }),
       })
       const data = await res.json()
-
-      if (!res.ok || data.error) {
-        setRunError(data.error ?? 'Strategy AI could not generate right now. Please try again.')
-        setRunning(false)
-        return
-      }
-
-      setStrategy(data as Strategy)
-      setOpenSections(new Set(ALL_ACCORDION_IDS))
-      setSuccessMsg(true)
-      setTimeout(() => setSuccessMsg(false), 4500)
-      persist({ strategy: data })
-
-      // Mark all as ready
-      const allReady: Record<string, MemoryStatus> = { brand: 'ready', competitors: 'ready', content: 'ready', strategy: 'ready', growth: 'ready' }
-      setBrainStatus(allReady)
-      persist({ brainStatus: allReady })
-
-      document.getElementById('strategy-output')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (!res.ok || data.error) { setRunError(data.error ?? 'Strategy AI could not generate right now. Please try again.'); return }
+      setFactory(data as FactoryOutput)
+      setActiveTab('Overview')
+      persist({ factory: data, approved: false })
+      document.getElementById('factory-output')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     } catch {
       setRunError('Strategy AI could not generate right now. Please try again.')
     } finally {
@@ -297,185 +342,51 @@ export default function StrategyAIPage() {
     }
   }
 
-  function toggleSection(id: AccordionId) {
-    setOpenSections(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+  function handleApprove() {
+    setApproved(true)
+    persist({ approved: true })
   }
 
-  // ── Editing helpers ──
-  function startEdit(section: string, index: number, item: Record<string, string>) {
-    setEditingCell({ section, index })
-    setEditDraft(item)
-  }
-
-  function saveEdit() {
-    if (!editingCell || !strategy) return
-    const { section, index } = editingCell
-    const updated = structuredClone(strategy) as Strategy
-
-    if (section === 'hooks')         (updated.hooks[index] as Record<string, string>) = { ...updated.hooks[index], ...editDraft }
-    if (section === 'captions')      (updated.captions[index] as Record<string, string>) = { ...updated.captions[index], ...editDraft }
-    if (section === 'ctaStrategy')   (updated.ctaStrategy[index] as Record<string, string>) = { ...updated.ctaStrategy[index], ...editDraft }
-    if (section === 'contentIdeas')  (updated.contentIdeas[index] as Record<string, string>) = { ...updated.contentIdeas[index], ...editDraft }
-    if (section === 'fireCreatorTasks') (updated.fireCreatorTasks[index] as Record<string, string>) = { ...updated.fireCreatorTasks[index], ...editDraft }
-    if (section === 'summary') updated.strategySummary = { ...updated.strategySummary, ...editDraft as Partial<typeof updated.strategySummary> }
-
-    setStrategy(updated)
-    persist({ strategy: updated })
-    setEditingCell(null)
-    setEditDraft({})
-    setSavedCell(`${section}-${index}`)
-    setTimeout(() => setSavedCell(null), 2000)
-  }
-
-  function cancelEdit() { setEditingCell(null); setEditDraft({}) }
-
-  function deleteItem(section: keyof Strategy, index: number) {
-    if (!strategy) return
-    const updated = structuredClone(strategy) as Strategy
-    const arr = updated[section]
-    if (Array.isArray(arr)) { arr.splice(index, 1) }
-    setStrategy(updated)
-    persist({ strategy: updated })
-  }
-
-  function saveBriefEdit() {
-    if (!editBrief || !strategy) return
-    const updated = structuredClone(strategy) as Strategy
-    const idx = updated.ugcVideoBriefs.findIndex(b => b.title === briefModal?.title)
-    if (idx >= 0) updated.ugcVideoBriefs[idx] = editBrief
-    setStrategy(updated)
-    persist({ strategy: updated })
-    setBriefModal(editBrief)
-    setEditBrief(null)
-  }
-
-  function updateBriefStatus(title: string, status: string) {
-    if (!strategy) return
-    const updated = structuredClone(strategy) as Strategy
-    const idx = updated.ugcVideoBriefs.findIndex(b => b.title === title)
-    if (idx >= 0) updated.ugcVideoBriefs[idx] = { ...updated.ugcVideoBriefs[idx], status }
-    setStrategy(updated)
-    persist({ strategy: updated })
-  }
-
-  function updateTaskStatus(index: number, status: string) {
-    if (!strategy) return
-    const updated = structuredClone(strategy) as Strategy
-    updated.fireCreatorTasks[index].status = status
-    setStrategy(updated)
-    persist({ strategy: updated })
-  }
-
-  // ── Save memory modal ──
-  async function saveMemory() {
-    if (!memTitle.trim() || !memContent.trim()) return
-    setModalSaving(true)
+  // ── Chat ─────────────────────────────────────────────────────────────────
+  async function sendChat(text?: string) {
+    const msg = (text ?? chatInput).trim()
+    if (!msg || chatLoading) return
+    const userMsg: ChatMsg = { id: `u${Date.now()}`, role: 'user', text: msg }
+    const newMsgs = [...messages, userMsg]
+    setMessages(newMsgs)
+    setChatInput('')
+    setChatLoading(true)
+    setChatError('')
     try {
-      const supabase = createClient()
-      if (userId) {
-        await supabase.from('strategy_memories').insert({
-          user_id: userId,
-          stage: memStage,
-          memory_type: 'manual',
-          title: memTitle,
-          summary: memContent,
-          data: {},
-        })
-      }
-      const newCounts = { ...memoryCounts, [memStage]: (memoryCounts[memStage] ?? 0) + 1 }
-      setMemoryCounts(newCounts)
-      setBrainStatus(prev => ({ ...prev, [memStage]: 'saved' }))
-      persist({ memoryCounts: newCounts })
-    } finally {
-      setMemTitle(''); setMemContent(''); setShowAddMemory(false); setModalSaving(false)
-    }
+      const res = await fetch('/api/strategy/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, userId, currentStatus: context }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { setChatError(data.error ?? 'Could not respond. Try again.'); return }
+      const aiMsg: ChatMsg = { id: `a${Date.now()}`, role: 'assistant', text: data.assistantMessage ?? data.message ?? 'Got it.' }
+      setMessages([...newMsgs, aiMsg])
+    } catch { setChatError('Could not respond. Try again.') }
+    finally { setChatLoading(false) }
   }
 
-  async function saveLink() {
-    if (!linkUrl.trim()) return
-    setModalSaving(true)
-    try {
-      const supabase = createClient()
-      if (userId) {
-        await supabase.from('strategy_memories').insert({
-          user_id: userId,
-          stage: linkStage,
-          memory_type: 'link',
-          title: linkUrl,
-          summary: linkNotes || linkUrl,
-          data: { url: linkUrl, notes: linkNotes },
-        })
-      }
-    } finally {
-      setLinkUrl(''); setLinkNotes(''); setShowAddLink(false); setModalSaving(false)
-    }
-  }
+  // ── Confidence color ─────────────────────────────────────────────────────
+  const confColor = context.confidenceLabel === 'High' ? 'text-green-400' : context.confidenceLabel === 'Medium' ? 'text-yellow-400' : 'text-white/40'
 
-  // ── Inline edit row (text + textarea) ──
-  function isEditing(section: string, index: number) {
-    return editingCell?.section === section && editingCell?.index === index
-  }
-
-  function EditControls({ section, index, item }: { section: string; index: number; item: Record<string, string> }) {
-    const key = `${section}-${index}`
-    if (savedCell === key) return <span className="flex items-center gap-1 text-green-400 text-[10px]"><Check size={10} /> Saved</span>
-    if (isEditing(section, index)) return null
-    return (
-      <ActionBtn icon={Pencil} label="Edit" onClick={() => startEdit(section, index, item)} />
-    )
-  }
-
-  function InlineEditArea({ field }: { field: string }) {
-    return (
-      <textarea
-        value={editDraft[field] ?? ''}
-        onChange={e => setEditDraft(prev => ({ ...prev, [field]: e.target.value }))}
-        rows={3}
-        className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none resize-none"
-        autoFocus
-      />
-    )
-  }
-
-  function SaveCancelRow() {
-    return (
-      <div className="flex gap-2 mt-2">
-        <button onClick={saveEdit}   className="text-[10px] font-semibold bg-[#FF3B1A] text-white px-3 py-1.5 rounded-lg">Save</button>
-        <button onClick={cancelEdit} className="text-[10px] font-semibold border border-white/10 text-white/40 hover:text-white px-3 py-1.5 rounded-lg transition">Cancel</button>
-      </div>
-    )
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 max-w-6xl">
+    <div className="space-y-6 max-w-5xl">
 
       {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Strategy AI</h1>
-          <p className="text-white/40 text-sm mt-0.5">Talk to Strategy AI. It builds your Super Brain, content strategy, hooks, captions, briefs, and growth plan.</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setShowAddLink(true)}   className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-3.5 py-2 rounded-lg transition"><Link2 size={12} /> Add Link</button>
-          <button onClick={() => setShowAddMemory(true)} className="flex items-center gap-1.5 border border-white/10 text-white/50 hover:text-white hover:border-white/25 text-sm px-3.5 py-2 rounded-lg transition"><Plus size={12} /> Add Memory</button>
-          <button onClick={runStrategy} disabled={running} className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-semibold text-sm px-4 py-2 rounded-lg transition">
-            {running ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Analyzing…</> : <><Sparkles size={13} /> Run Strategy AI</>}
-          </button>
+          <p className="text-white/40 text-sm mt-0.5">Generate commercial ideas, scenes, hooks, video recipes, and production prompts from your brand setup.</p>
         </div>
       </div>
 
-      {/* ── Toasts ── */}
-      {successMsg && (
-        <div className="flex items-center gap-2 bg-green-500/15 border border-green-500/25 text-green-400 text-sm px-4 py-3 rounded-xl">
-          <CheckCircle2 size={15} /> Strategy generated from Super Brain.
-        </div>
-      )}
+      {/* ── Error ── */}
       {runError && (
         <div className="flex items-center justify-between bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-xl">
           <span>{runError}</span>
@@ -483,731 +394,514 @@ export default function StrategyAIPage() {
         </div>
       )}
 
-      {/* ── Funnel Stepper (visual) ── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-        {['Brand', 'Competitors', 'Content', 'Strategy', 'Growth'].map((step, i, arr) => {
-          const stage = step.toLowerCase()
-          const status = brainStatus[stage] ?? 'new'
-          const isDone = status === 'saved' || status === 'ready'
-          return (
-            <div key={step} className="flex items-center gap-1.5 shrink-0">
-              <div className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm ${isDone ? 'border-green-500/25 bg-green-500/6 text-green-400' : 'border-white/8 bg-[#0d0d0d] text-white/40'}`}>
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isDone ? 'bg-green-500/20 text-green-400' : 'bg-white/8 text-white/30'}`}>{i + 1}</span>
-                {step}
-                {status !== 'new' && <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
-              </div>
-              {i < arr.length - 1 && <ArrowRight size={12} className="text-white/15 shrink-0" />}
+      {/* ── Brand Context Card ── */}
+      <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-5 space-y-4">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-white font-semibold text-sm">Brand Context</p>
+            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs">
+              <span className="text-white/40">Setup Level: <span className="text-white font-semibold">{context.setupLevel}</span></span>
+              <span className="text-white/20">·</span>
+              <span className="text-white/40">Brand Completion: <span className="text-white font-semibold">{context.completionPercentage}%</span></span>
+              <span className="text-white/20">·</span>
+              <span className="text-white/40">Strategy Confidence: <span className={`font-semibold ${confColor}`}>{context.confidenceLabel}</span></span>
             </div>
-          )
-        })}
-      </div>
-
-      {/* ── 2-Column: Chat + Super Brain ── */}
-      <div className="flex gap-4 items-start flex-wrap lg:flex-nowrap">
-
-        {/* ── Chat ── */}
-        <div className="flex-1 min-w-0 bg-[#0d0d0d] border border-white/8 rounded-2xl overflow-hidden flex flex-col">
-          <div className="px-5 py-4 border-b border-white/6">
-            <div className="flex items-center gap-2">
-              <Sparkles size={14} className="text-[#FF3B1A]" />
-              <p className="text-white font-semibold text-sm">Talk to Strategy AI</p>
-            </div>
-            <p className="text-white/28 text-xs mt-0.5 pl-5">Tell me about your business, offer, audience, competitors, content goals, or paste links. I'll organize it into your Super Brain and build your strategy.</p>
-          </div>
-
-          {/* Messages */}
-          <div className="overflow-y-auto p-5 space-y-3" style={{ minHeight: 260, maxHeight: 380 }}>
-            {messages.map(msg => (
-              <div key={msg.id}>
-                {msg.role === 'assistant' ? (
-                  <div className="flex items-start gap-2.5 max-w-[95%]">
-                    <div className="w-6 h-6 rounded-full bg-[#FF3B1A]/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <Sparkles size={11} className="text-[#FF3B1A]" />
-                    </div>
-                    <div className="bg-white/4 border border-white/6 rounded-2xl rounded-tl-sm px-4 py-3 space-y-1">
-                      <p className="text-white/80 text-sm leading-relaxed">{msg.text}</p>
-                      {msg.memories && msg.memories > 0 ? (
-                        <p className="text-[10px] text-green-400 flex items-center gap-1">
-                          <CheckCircle2 size={9} /> {msg.memories} {msg.memories === 1 ? 'memory' : 'memories'} saved to Super Brain
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-end">
-                    <div className="flex items-start gap-2 max-w-[90%]">
-                      <div className="bg-[#FF3B1A]/10 border border-[#FF3B1A]/18 rounded-2xl rounded-tr-sm px-4 py-3">
-                        <p className="text-white/90 text-sm leading-relaxed">{msg.text}</p>
-                      </div>
-                      <div className="w-6 h-6 rounded-full bg-white/8 flex items-center justify-center shrink-0 mt-0.5">
-                        <User size={11} className="text-white/50" />
-                      </div>
-                    </div>
-                  </div>
+            {brandBrief && (
+              <div className="flex flex-wrap gap-3 mt-2 text-xs text-white/35">
+                {brandBrief.offer && <span><span className="text-white/20">Offer:</span> {String(brandBrief.offer).slice(0, 60)}{String(brandBrief.offer).length > 60 ? '…' : ''}</span>}
+                {(brandBrief as Record<string, unknown> & { notes?: string }).notes?.includes('"main_goal"') && (
+                  <span><span className="text-white/20">Goal:</span> {(JSON.parse((brandBrief as Record<string, unknown> & { notes?: string }).notes ?? '{}') as Record<string, string>).main_goal}</span>
                 )}
               </div>
-            ))}
-            {chatLoading && (
-              <div className="flex items-start gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-[#FF3B1A]/20 flex items-center justify-center shrink-0">
-                  <Sparkles size={11} className="text-[#FF3B1A]" />
-                </div>
-                <div className="bg-white/4 border border-white/6 rounded-2xl rounded-tl-sm px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              </div>
             )}
-            {chatError && (
-              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-3 py-2 rounded-lg">
-                {chatError}
-              </div>
-            )}
-            <div ref={chatEndRef} />
           </div>
+          <div className="flex gap-2 flex-wrap shrink-0">
+            <Link href="/dashboard/your-brand" className="flex items-center gap-1.5 text-xs font-semibold border border-white/12 text-white/50 hover:text-white hover:border-white/25 px-3.5 py-2 rounded-lg transition">
+              <Target size={11} /> Improve Your Brand
+            </Link>
+            <button
+              onClick={runFactory}
+              disabled={running}
+              className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-semibold text-sm px-4 py-2 rounded-lg transition"
+            >
+              {running ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Sparkles size={13} />}
+              {running ? 'Building…' : 'Generate UGC Commercial Factory'}
+            </button>
+          </div>
+        </div>
+        <p className="text-white/25 text-xs">Strategy AI can run anytime. The more details you add, the better the ideas get.</p>
+      </div>
 
-          {/* Starter chips */}
-          {messages.length <= 1 && (
-            <div className="px-5 pb-2 flex flex-wrap gap-2">
-              {STARTER_CHIPS.map(chip => (
-                <button
-                  key={chip}
-                  onClick={() => sendMessage(chip)}
-                  disabled={chatLoading}
-                  className="text-[11px] font-medium border border-white/10 text-white/45 hover:text-white hover:border-[#FF3B1A]/40 px-3 py-1.5 rounded-full transition"
-                >
-                  {chip}
+      {/* ── What Strategy AI Will Use ── */}
+      <div>
+        <p className="text-white font-semibold text-sm mb-3">What Strategy AI Will Use</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            {
+              Icon: Target, label: 'Business',
+              items: [
+                brandBrief?.company_name ? `Business: ${brandBrief.company_name}` : 'Business name missing',
+                brandBrief?.website ? `Website: ${String(brandBrief.website).replace('https://', '')}` : 'Website missing',
+                brandBrief?.offer ? String(brandBrief.offer).slice(0, 50) + '…' : 'What you sell: missing',
+              ],
+            },
+            {
+              Icon: Layers, label: 'Product & Offer',
+              items: [
+                brandBrief?.offer ? `Offer: ${String(brandBrief.offer).slice(0, 40)}…` : 'Main offer: missing',
+                brandBrief?.target_customer ? `Customer: ${String(brandBrief.target_customer).slice(0, 40)}…` : 'Target customer: missing',
+              ],
+            },
+            {
+              Icon: Users, label: 'Audience',
+              items: [
+                brandBrief?.target_customer ? String(brandBrief.target_customer).slice(0, 60) + '…' : 'Ideal customer: missing',
+              ],
+            },
+            {
+              Icon: Film, label: 'Creative Direction',
+              items: [
+                brandBrief?.video_styles ? `Style: ${String(brandBrief.video_styles).slice(0, 40)}…` : 'Video styles: missing',
+                brandBrief?.examples ? `Examples: added` : 'Example links: missing',
+              ],
+            },
+          ].map(({ Icon, label, items }) => (
+            <div key={label} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-[#FF3B1A]/12 flex items-center justify-center shrink-0">
+                  <Icon size={12} className="text-[#FF3B1A]" />
+                </div>
+                <p className="text-white/70 text-xs font-semibold">{label}</p>
+              </div>
+              {items.map((item, i) => (
+                <p key={i} className="text-white/35 text-[11px] leading-relaxed">{item}</p>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Generation Controls ── */}
+      <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-5 space-y-5">
+        <div>
+          <p className="text-white font-semibold text-sm">Generate UGC Commercial Factory</p>
+          <p className="text-white/35 text-xs mt-0.5">Create commercial ideas your team can produce using AI video tools, creators, product B-roll, or editing tools.</p>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-white/40 text-xs mb-1.5">Number of Commercial Ideas</label>
+            <div className="flex gap-1.5 flex-wrap">
+              {IDEA_COUNTS.map(c => (
+                <button key={c} type="button" onClick={() => setIdeaCount(c)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition ${ideaCount === c ? 'bg-[#FF3B1A]/18 border-[#FF3B1A]/50 text-white' : 'border-white/10 text-white/40 hover:border-white/25'}`}>
+                  {c}
                 </button>
               ))}
             </div>
-          )}
+          </div>
+          <div>
+            <label className="block text-white/40 text-xs mb-1.5">Commercial Style</label>
+            <select className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FF3B1A]" value={commercialStyle} onChange={e => setCommercialStyle(e.target.value)}>
+              {COMMERCIAL_STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-white/40 text-xs mb-1.5">Production Type</label>
+            <select className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FF3B1A]" value={productionType} onChange={e => setProductionType(e.target.value)}>
+              {PRODUCTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
 
-          {/* Input */}
-          <div className="p-4 border-t border-white/6">
-            <div className="flex gap-2 items-end">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-                placeholder="Tell Strategy AI about your business, paste a website, add competitor links, or describe what you need..."
-                rows={2}
-                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/22 focus:outline-none focus:border-[#FF3B1A] resize-none"
-              />
-              <button
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || chatLoading}
-                className="bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-35 text-white p-3 rounded-xl transition shrink-0"
-              >
-                <Send size={15} />
+        {context.setupLevel === 'Empty' && (
+          <p className="text-white/30 text-xs">Strategy will be generated with the context available. Add more brand details later to improve future versions.</p>
+        )}
+
+        <button
+          onClick={runFactory}
+          disabled={running}
+          className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
+        >
+          {running ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Sparkles size={14} />}
+          {running ? 'Building your UGC Commercial Factory…' : 'Generate UGC Commercial Factory'}
+        </button>
+      </div>
+
+      {/* ── Loading State ── */}
+      {running && (
+        <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-10 text-center space-y-6">
+          <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto' }}>
+            <div className="animate-spin" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid transparent', borderTopColor: '#FF3B1A', borderRightColor: 'rgba(255,59,26,0.35)', animationDuration: '1.6s' }} />
+            <div className="animate-spin" style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '1.5px solid transparent', borderBottomColor: '#FF3B1A', borderLeftColor: 'rgba(255,59,26,0.25)', animationDuration: '2.4s', animationDirection: 'reverse' }} />
+            <div style={{ position: 'absolute', inset: 16, borderRadius: '50%', background: 'rgba(255,59,26,0.08)', boxShadow: '0 0 28px rgba(255,59,26,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Brain size={26} style={{ color: '#FF3B1A' }} />
+            </div>
+          </div>
+          <div>
+            <p className="text-white font-semibold">Strategy AI is building your UGC Commercial Factory…</p>
+            <p className="text-white/35 text-sm mt-1">Generating commercial ideas, scenes, video recipes, and AI prompts</p>
+            <p className="text-white/20 text-xs mt-1">This may take a few moments</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+            {['Commercial Ideas', 'Scene Bank', 'Video Recipes', 'AI Prompts'].map(label => (
+              <div key={label} className="bg-white/3 border border-white/8 rounded-xl p-3 text-center space-y-2">
+                <p className="text-white/55 text-xs font-semibold">{label}</p>
+                <span className="flex items-center justify-center gap-1 text-[9px] font-bold bg-[#FF3B1A]/15 text-[#FF3B1A] px-2 py-0.5 rounded-full mx-auto w-fit">
+                  <span className="w-1 h-1 rounded-full bg-[#FF3B1A] animate-pulse" /> Generating
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Factory Output ── */}
+      {!running && factory && (
+        <div id="factory-output" className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-white font-semibold">Your UGC Commercial Factory</p>
+              <p className="text-white/35 text-sm">{factory.commercialIdeas?.length ?? 0} commercial ideas · {factory.sceneBank?.length ?? 0} scenes · {factory.videoRecipes?.length ?? 0} video recipes</p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {!approved ? (
+                <button onClick={handleApprove} className="flex items-center gap-2 bg-green-500/15 border border-green-500/25 text-green-400 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-green-500/20 transition">
+                  <CheckCircle2 size={13} /> Approve Strategy
+                </button>
+              ) : (
+                <span className="flex items-center gap-2 bg-green-500/15 border border-green-500/25 text-green-400 text-sm font-semibold px-4 py-2 rounded-lg">
+                  <Check size={13} /> Approved
+                </span>
+              )}
+              <button onClick={runFactory} className="flex items-center gap-2 border border-white/10 text-white/40 hover:text-white text-sm px-3 py-2 rounded-lg transition">
+                <RefreshCw size={12} /> Regenerate
               </button>
             </div>
           </div>
-        </div>
 
-        {/* ── Super Brain Panel ── */}
-        <div className="w-full lg:w-60 shrink-0 bg-[#0d0d0d] border border-white/8 rounded-2xl overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-white/6">
-            <div className="flex items-center gap-2 mb-0.5">
-              <Brain size={14} className="text-[#FF3B1A]" />
-              <p className="text-white font-semibold text-sm">Super Brain</p>
-              <span className="ml-auto text-[8px] font-bold bg-green-500/15 text-green-400 px-1.5 py-0.5 rounded-full">Live</span>
-            </div>
-            <p className="text-white/28 text-[11px]">Living memory used across the whole funnel.</p>
+          {/* Output Tabs */}
+          <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
+            {OUTPUT_TABS.map(t => (
+              <button key={t} onClick={() => setActiveTab(t)}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition shrink-0 ${activeTab === t ? 'bg-[#FF3B1A] text-white' : 'bg-white/4 border border-white/8 text-white/45 hover:text-white'}`}>
+                {t}
+              </button>
+            ))}
           </div>
-          <div className="divide-y divide-white/5">
-            {BRAIN_SECTIONS.map(({ key, stage, Icon, title, desc }) => {
-              const status = (brainStatus[stage] ?? 'new') as MemoryStatus
-              const count  = memoryCounts[stage] ?? 0
-              return (
-                <div key={key} className="flex items-center gap-3 px-4 py-3">
-                  <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                    <Icon size={13} className="text-white/40" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <p className="text-white/65 text-xs font-semibold">{title}</p>
-                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${STATUS_STYLES[status]}`}>{status}</span>
-                    </div>
-                    <p className="text-white/25 text-[10px] truncate">{count > 0 ? `${count} memor${count === 1 ? 'y' : 'ies'} saved` : desc}</p>
-                  </div>
+
+          {/* ── Tab: Overview ── */}
+          {activeTab === 'Overview' && (
+            <div className="space-y-4">
+              {factory.brandProductRead && (
+                <div className="bg-[#0d0d0d] border border-white/8 rounded-xl p-5">
+                  <p className="text-white font-semibold text-sm mb-2">Brand & Product Read</p>
+                  <p className="text-white/65 text-sm leading-relaxed">{factory.brandProductRead}</p>
                 </div>
-              )
-            })}
-          </div>
-          <div className="m-3 bg-white/3 border border-white/6 rounded-xl p-3">
-            <p className="text-white/30 text-[10px] leading-relaxed">Memory grows as you chat. All insights are connected and reused to generate stronger ideas and results.</p>
-            <button onClick={() => setShowAddMemory(true)} className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] font-semibold border border-white/10 text-white/35 hover:text-white rounded-lg py-1.5 transition">
-              <Plus size={9} /> Add Memory
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          GENERATED STRATEGY OUTPUT
-      ═══════════════════════════════════════════════════════════════════════ */}
-      <div id="strategy-output" className="space-y-4 pt-2">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-white font-semibold text-base">Generated AI Strategy</p>
-            <p className="text-white/35 text-sm mt-0.5">Hooks, captions, CTAs, content ideas, briefs, and growth direction — AI drafts it, you control it.</p>
-          </div>
-          {strategy && (
-            <div className="flex gap-2">
-              <button onClick={() => setOpenSections(new Set(ALL_ACCORDION_IDS))} className="text-xs text-white/35 hover:text-white border border-white/8 px-3 py-1.5 rounded-lg transition">Expand all</button>
-              <button onClick={() => setOpenSections(new Set())}                  className="text-xs text-white/35 hover:text-white border border-white/8 px-3 py-1.5 rounded-lg transition">Collapse all</button>
-            </div>
-          )}
-        </div>
-
-        {/* Running — premium Brain animation */}
-        {running && (
-          <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-10 text-center space-y-8">
-
-            {/* Brain + spinning ring */}
-            <div style={{ position: 'relative', width: 96, height: 96, margin: '0 auto' }}>
-              {/* Outer slow spin */}
-              <div className="animate-spin" style={{
-                position: 'absolute', inset: 0, borderRadius: '50%',
-                border: '2px solid transparent',
-                borderTopColor: '#FF3B1A',
-                borderRightColor: 'rgba(255,59,26,0.35)',
-                animationDuration: '1.6s',
-              }} />
-              {/* Inner counter-spin (segmented feel) */}
-              <div className="animate-spin" style={{
-                position: 'absolute', inset: 8, borderRadius: '50%',
-                border: '1.5px solid transparent',
-                borderBottomColor: '#FF3B1A',
-                borderLeftColor: 'rgba(255,59,26,0.25)',
-                animationDuration: '2.4s',
-                animationDirection: 'reverse',
-              }} />
-              {/* Brain icon with glow */}
-              <div style={{
-                position: 'absolute', inset: 16, borderRadius: '50%',
-                background: 'rgba(255,59,26,0.08)',
-                boxShadow: '0 0 28px rgba(255,59,26,0.25), 0 0 8px rgba(255,59,26,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Brain size={26} style={{ color: '#FF3B1A' }} />
-              </div>
-            </div>
-
-            {/* Copy */}
-            <div className="space-y-2">
-              <p className="text-white font-semibold text-base">Building your strategy…</p>
-              <p className="text-white/45 text-sm">Generating hooks, captions, CTAs, briefs, and growth plan</p>
-              <p className="text-white/25 text-xs">This may take a few moments</p>
-            </div>
-
-            {/* Prompt cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
-              {[
-                { title: 'Hooks Prompt',    desc: 'Write 10 scroll-stopping hooks for this brand and offer.' },
-                { title: 'CTAs Prompt',     desc: 'Write 10 clear CTAs that drive clicks, calls, signups, or purchases.' },
-                { title: 'Captions Prompt', desc: 'Write 10 engaging captions that build trust and drive action.' },
-                { title: 'UGC Brief Prompt',desc: 'Create a UGC brief with angle, audience, deliverables, and tone.' },
-              ].map(({ title, desc }) => (
-                <div key={title} className="bg-white/3 border border-white/8 rounded-xl p-4 text-left space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-white/70 text-xs font-semibold">{title}</p>
-                    <span className="flex items-center gap-1 text-[9px] font-bold bg-[#FF3B1A]/15 text-[#FF3B1A] px-2 py-0.5 rounded-full">
-                      <span className="w-1 h-1 rounded-full bg-[#FF3B1A] animate-pulse" />
-                      Generating
-                    </span>
+              )}
+              <div className="grid sm:grid-cols-2 gap-4">
+                {factory.contentIngredients?.length > 0 && (
+                  <div className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4">
+                    <p className="text-white font-semibold text-sm mb-2">Content Ingredients</p>
+                    <ListItems items={factory.contentIngredients} />
                   </div>
-                  <p className="text-white/30 text-[11px] leading-relaxed">{desc}</p>
-                  <div className="space-y-1.5">
-                    {[75, 55, 85].map((w, i) => (
-                      <div key={i} className="h-1 bg-white/6 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#FF3B1A]/25 rounded-full animate-pulse" style={{ width: `${w}%`, animationDelay: `${i * 200}ms` }} />
+                )}
+                {factory.bestOpportunities?.length > 0 && (
+                  <div className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4">
+                    <p className="text-white font-semibold text-sm mb-2">Best Opportunities</p>
+                    <ListItems items={factory.bestOpportunities} />
+                  </div>
+                )}
+              </div>
+              {factory.firstBatchRecommendation?.length > 0 && (
+                <div className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4">
+                  <p className="text-white font-semibold text-sm mb-2">First Batch Summary</p>
+                  <div className="space-y-1">
+                    {factory.firstBatchRecommendation.slice(0, 4).map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-white/60">
+                        <span className="w-4 h-4 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                        <span><span className="text-white/80 font-medium">{item.title}</span> — {item.whyMakeThisFirst}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Empty state */}
-        {!running && !strategy && (
-          <div className="bg-[#0d0d0d] border border-white/8 rounded-xl p-10 text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#FF3B1A]/10 flex items-center justify-center mx-auto">
-              <Sparkles size={24} className="text-[#FF3B1A]" />
-            </div>
-            <div>
-              <p className="text-white font-semibold">Run Strategy AI to generate your plan</p>
-              <p className="text-white/35 text-sm mt-1.5 max-w-sm mx-auto">Talk to Strategy AI above to build your Super Brain, then click Run Strategy AI to generate hooks, captions, briefs, CTAs, and your full growth plan.</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto pt-2">
-              {([['Hooks', Zap], ['Captions', AlignLeft], ['Briefs', FileText], ['Growth Plan', TrendingUp]] as [string, React.ElementType][]).map(([label, Icon]) => (
-                <div key={label} className="bg-white/3 border border-white/6 rounded-xl p-3 text-center">
-                  <div className="w-6 h-6 rounded-lg bg-[#FF3B1A]/12 flex items-center justify-center mx-auto mb-2"><Icon size={12} className="text-[#FF3B1A]" /></div>
-                  <p className="text-white/40 text-[11px] font-semibold">{label}</p>
-                  <div className="mt-2 space-y-1">{[70, 50, 80].map((w, i) => <div key={i} className="h-1 bg-white/6 rounded-full mx-auto" style={{ width: `${w}%` }} />)}</div>
+          {/* ── Tab: Angles ── */}
+          {activeTab === 'Angles' && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {(factory.ugcMarketingAngles ?? []).map((angle, i) => (
+                <div key={i} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4 space-y-2">
+                  <p className="text-white font-semibold text-sm">{angle.title}</p>
+                  <p className="text-white/40 text-xs"><span className="text-white/25">Why it works:</span> {angle.whyItWorks}</p>
+                  <p className="text-white/40 text-xs"><span className="text-white/25">Best use case:</span> {angle.bestUseCase}</p>
+                  <div className="bg-white/3 border border-white/6 rounded-lg p-2">
+                    <p className="text-white/25 text-[10px] uppercase tracking-wide mb-0.5">Example Idea</p>
+                    <p className="text-white/60 text-xs">{angle.exampleCommercialIdea}</p>
+                  </div>
                 </div>
               ))}
             </div>
-            <button onClick={runStrategy} className="inline-flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition">
-              <Play size={13} /> Run Strategy AI
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* ── Accordions ── */}
-        {!running && strategy && (
-          <div className="space-y-3">
-
-            {/* 1. Strategy Summary */}
-            <AccordionSection id="summary" title="Strategy Summary" Icon={Star} isOpen={openSections.has('summary')} onToggle={() => toggleSection('summary')}>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {([
-                  ['mainDirection',    'Main Direction',              strategy.strategySummary.mainDirection],
-                  ['thisWeeksFocus',   "This Week's Focus",          strategy.strategySummary.thisWeeksFocus],
-                  ['bestOpportunity',  'Best Opportunity',            strategy.strategySummary.bestOpportunity],
-                  ['whyThisMatters',   'Why This Strategy Matters',   strategy.strategySummary.whyThisMatters],
-                ] as [string, string, string][]).map(([field, label, value]) => (
-                  <div key={field} className="bg-white/3 border border-white/6 rounded-xl p-4 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-white/35 text-[10px] font-semibold uppercase tracking-wide">{label}</p>
-                      <EditControls section="summary" index={0} item={{ [field]: value }} />
-                    </div>
-                    {isEditing('summary', 0) && editDraft[field] !== undefined ? (
-                      <><InlineEditArea field={field} /><SaveCancelRow /></>
-                    ) : (
-                      <p className="text-white/75 text-sm leading-relaxed">{value}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* 2. Hooks */}
-            <AccordionSection id="hooks" title={`Hooks (${strategy.hooks.length})`} Icon={Zap} isOpen={openSections.has('hooks')} onToggle={() => toggleSection('hooks')}>
-              <div className="space-y-2">
-                {strategy.hooks.map((h, i) => (
-                  <div key={i} className="bg-white/3 border border-white/6 rounded-xl px-4 py-3 space-y-2">
-                    <div className="flex items-start gap-3">
-                      <span className="w-5 h-5 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        {isEditing('hooks', i) ? (
-                          <><InlineEditArea field="text" /><SaveCancelRow /></>
-                        ) : (
-                          <p className="text-white/80 text-sm leading-relaxed italic">&ldquo;{h.text}&rdquo;</p>
+          {/* ── Tab: Scene Bank ── */}
+          {activeTab === 'Scene Bank' && (
+            <div className="space-y-4">
+              {factory.reusableScenesToCaptureFirst?.length > 0 && (
+                <div className="bg-[#FF3B1A]/5 border border-[#FF3B1A]/20 rounded-xl p-4">
+                  <p className="text-[#FF3B1A] font-semibold text-sm mb-3">Reusable Scenes to Capture First</p>
+                  <div className="space-y-2">
+                    {factory.reusableScenesToCaptureFirst.map((s, i) => (
+                      <div key={i} className="bg-white/3 border border-white/6 rounded-lg p-3">
+                        <p className="text-white/80 text-xs font-semibold">{s.sceneTitle}</p>
+                        <p className="text-white/40 text-xs mt-0.5">{s.whyReusable}</p>
+                        {s.usedInCommercialIdeas?.length > 0 && (
+                          <p className="text-white/25 text-[10px] mt-1">Used in: {s.usedInCommercialIdeas.join(', ')}</p>
                         )}
                       </div>
-                    </div>
-                    {!isEditing('hooks', i) && (
-                      <div className="flex items-center gap-1.5 flex-wrap pl-8">
-                        <span className="text-[9px] font-semibold bg-white/6 text-white/35 px-2 py-0.5 rounded-full">{h.type}</span>
-                        <CopyBtn text={h.text} />
-                        <EditControls section="hooks" index={i} item={{ text: h.text, type: h.type }} />
-                        <ActionBtn icon={BookOpen} label="Brief" onClick={() => { /* future: create brief from hook */ }} />
-                        <ActionBtn icon={Trash2} label="Delete" danger onClick={() => deleteItem('hooks', i)} />
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* 3. Captions */}
-            <AccordionSection id="captions" title={`Captions (${strategy.captions.length})`} Icon={AlignLeft} isOpen={openSections.has('captions')} onToggle={() => toggleSection('captions')}>
-              <div className="space-y-3">
-                {strategy.captions.map((c, i) => (
-                  <div key={i} className="bg-white/3 border border-white/6 rounded-xl p-4 space-y-2">
-                    {isEditing('captions', i) ? (
-                      <>
-                        <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide">Caption</p>
-                        <InlineEditArea field="text" />
-                        <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mt-2">Platform</p>
-                        <input value={editDraft.platform ?? ''} onChange={e => setEditDraft(p => ({ ...p, platform: e.target.value }))} className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none" />
-                        <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mt-2">CTA</p>
-                        <input value={editDraft.cta ?? ''} onChange={e => setEditDraft(p => ({ ...p, cta: e.target.value }))} className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none" />
-                        <SaveCancelRow />
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-white/80 text-sm leading-relaxed">{c.text}</p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] bg-[#FF3B1A]/10 text-[#FF3B1A] px-2 py-0.5 rounded-full font-medium">{c.platform}</span>
-                          <span className="text-[10px] bg-white/6 text-white/35 px-2 py-0.5 rounded-full">CTA: {c.cta}</span>
-                          <div className="flex items-center gap-1.5 ml-auto">
-                            <CopyBtn text={c.text} />
-                            <EditControls section="captions" index={i} item={{ text: c.text, platform: c.platform, cta: c.cta }} />
-                            <ActionBtn icon={Trash2} label="Delete" danger onClick={() => deleteItem('captions', i)} />
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* 4. CTA Strategy */}
-            <AccordionSection id="cta" title="CTA Strategy" Icon={Target} isOpen={openSections.has('cta')} onToggle={() => toggleSection('cta')}>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {strategy.ctaStrategy.map((c, i) => (
-                  <div key={i} className="bg-white/3 border border-white/6 rounded-xl p-4 space-y-2">
-                    {isEditing('ctaStrategy', i) ? (
-                      <>
-                        {(['cta', 'bestUseCase', 'whyItWorks'] as const).map(field => (
-                          <div key={field}>
-                            <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">{field === 'cta' ? 'CTA Text' : field === 'bestUseCase' ? 'Best Use Case' : 'Why It Works'}</p>
-                            <input value={editDraft[field] ?? ''} onChange={e => setEditDraft(p => ({ ...p, [field]: e.target.value }))} className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none" />
-                          </div>
-                        ))}
-                        <SaveCancelRow />
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <p className="text-white font-semibold text-sm">{c.cta}</p>
-                          <div className="flex gap-1">
-                            <CopyBtn text={c.cta} />
-                            <EditControls section="ctaStrategy" index={i} item={{ cta: c.cta, bestUseCase: c.bestUseCase, whyItWorks: c.whyItWorks }} />
-                            <ActionBtn icon={Trash2} label="" danger onClick={() => deleteItem('ctaStrategy', i)} />
-                          </div>
-                        </div>
-                        <p className="text-white/40 text-[11px]"><span className="text-white/25">Use case:</span> {c.bestUseCase}</p>
-                        <p className="text-white/40 text-[11px]"><span className="text-white/25">Why:</span> {c.whyItWorks}</p>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* 5. Content Ideas */}
-            <AccordionSection id="ideas" title={`Content Ideas (${strategy.contentIdeas.length})`} Icon={Lightbulb} isOpen={openSections.has('ideas')} onToggle={() => toggleSection('ideas')}>
-              <div className="space-y-2">
-                {strategy.contentIdeas.map((idea, i) => (
-                  <div key={i} className="bg-white/3 border border-white/6 rounded-xl px-4 py-3 space-y-2">
-                    {isEditing('contentIdeas', i) ? (
-                      <>
-                        {(['title', 'angle', 'platform'] as const).map(field => (
-                          <div key={field}>
-                            <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">{field.charAt(0).toUpperCase() + field.slice(1)}</p>
-                            <input value={editDraft[field] ?? ''} onChange={e => setEditDraft(p => ({ ...p, [field]: e.target.value }))} className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none" />
-                          </div>
-                        ))}
-                        <SaveCancelRow />
-                      </>
-                    ) : (
-                      <div className="flex items-start gap-3">
-                        <span className="w-5 h-5 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white/90 text-sm font-medium">{idea.title}</p>
-                          <p className="text-white/40 text-xs mt-0.5 leading-relaxed">{idea.angle}</p>
-                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                            <span className="text-[10px] bg-[#FF3B1A]/10 text-[#FF3B1A] px-2 py-0.5 rounded-full font-medium">{idea.platform}</span>
-                            <EditControls section="contentIdeas" index={i} item={{ title: idea.title, angle: idea.angle, platform: idea.platform }} />
-                            <ActionBtn icon={FileText} label="Create Brief" onClick={() => setBriefModal({
-                              title: idea.title, hook: `Hook for: ${idea.title}`, angle: idea.angle,
-                              script: '', shotList: [], cta: 'Book a call',
-                              platforms: [idea.platform], whyItWorks: idea.whyItWorks ?? '',
-                            })} />
-                            <ActionBtn icon={Trash2} label="Delete" danger onClick={() => deleteItem('contentIdeas', i)} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* 6. UGC Video Briefs */}
-            <AccordionSection id="briefs" title={`UGC Video Briefs (${strategy.ugcVideoBriefs.length})`} Icon={FileText} isOpen={openSections.has('briefs')} onToggle={() => toggleSection('briefs')}>
-              <div className="space-y-4">
-                {strategy.ugcVideoBriefs.map((b, i) => (
-                  <div key={i} className="bg-white/3 border border-white/6 rounded-xl p-5 space-y-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-white font-semibold text-sm">{b.title}</p>
-                        <div className="flex gap-1.5 mt-1 flex-wrap">
-                          {(b.platforms ?? []).map(p => <span key={p} className="text-[10px] bg-[#FF3B1A]/10 text-[#FF3B1A] px-2 py-0.5 rounded-full font-medium">{p}</span>)}
-                          {b.status === 'Sent to Fire Creator' && <span className="text-[10px] bg-green-500/15 text-green-400 px-2 py-0.5 rounded-full font-medium">Sent to Fire Creator</span>}
-                        </div>
-                      </div>
-                      <div className="flex gap-1.5 flex-wrap shrink-0">
-                        <button onClick={() => { setBriefModal(b); setEditBrief(null) }} className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border border-white/10 text-white/40 hover:text-white hover:border-white/20 transition">
-                          <Pencil size={9} /> Edit
-                        </button>
-                        <button
-                          onClick={() => updateBriefStatus(b.title, 'Sent to Fire Creator')}
-                          disabled={b.status === 'Sent to Fire Creator'}
-                          className="flex items-center gap-1.5 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:bg-white/10 disabled:text-white/30 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg transition"
-                        >
-                          <Flame size={10} /> Send to Fire Creator
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {([['Hook', b.hook], ['Angle', b.angle], ['Script', b.script], ['Why This Works', b.whyItWorks]] as [string, string][]).map(([label, text]) => (
-                        <div key={label} className="space-y-1">
-                          <p className="text-white/25 text-[10px] font-semibold uppercase tracking-wide">{label}</p>
-                          <p className="text-white/60 text-xs leading-relaxed">{text}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {b.shotList?.length ? (
-                      <div className="space-y-1">
-                        <p className="text-white/25 text-[10px] font-semibold uppercase tracking-wide">Shot List</p>
-                        <div className="flex flex-wrap gap-2">
-                          {b.shotList.map((s, si) => <span key={si} className="text-[10px] bg-white/5 border border-white/8 text-white/50 px-2.5 py-1 rounded-lg">{s}</span>)}
-                        </div>
-                      </div>
-                    ) : null}
-                    <div className="flex items-center gap-3">
-                      <span className="text-white/25 text-[10px] font-semibold uppercase tracking-wide">CTA:</span>
-                      <span className="text-[#FF3B1A] text-xs font-semibold">{b.cta}</span>
-                    </div>
-                    <div className="flex gap-1.5">
-                      <ActionBtn icon={Trash2} label="Delete" danger onClick={() => deleteItem('ugcVideoBriefs', i)} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* 7. Fire Creator Tasks */}
-            <AccordionSection id="tasks" title={`Fire Creator Tasks (${strategy.fireCreatorTasks.length})`} Icon={Flame} isOpen={openSections.has('tasks')} onToggle={() => toggleSection('tasks')}>
-              <div className="space-y-2">
-                {strategy.fireCreatorTasks.map((t, i) => (
-                  <div key={i} className="bg-white/3 border border-white/6 rounded-xl px-4 py-3 space-y-2">
-                    {isEditing('fireCreatorTasks', i) ? (
-                      <>
-                        <div>
-                          <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Task</p>
-                          <input value={editDraft.task ?? ''} onChange={e => setEditDraft(p => ({ ...p, task: e.target.value }))} className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none" />
-                        </div>
-                        <div className="flex gap-3">
-                          <div className="flex-1">
-                            <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Priority</p>
-                            <select value={editDraft.priority ?? 'Medium'} onChange={e => setEditDraft(p => ({ ...p, priority: e.target.value }))} className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none">
-                              <option value="High">High</option>
-                              <option value="Medium">Medium</option>
-                              <option value="Low">Low</option>
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Status</p>
-                            <input value={editDraft.status ?? ''} onChange={e => setEditDraft(p => ({ ...p, status: e.target.value }))} className="w-full bg-white/5 border border-[#FF3B1A]/40 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none" />
-                          </div>
-                        </div>
-                        <SaveCancelRow />
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <span className="w-5 h-5 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[9px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                        <p className="text-white/80 text-sm flex-1">{t.task}</p>
-                        <PriorityBadge p={t.priority} />
-                        <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${t.status === 'Done' ? 'bg-green-500/15 text-green-400' : t.status === 'Sent to Fire Creator' ? 'bg-blue-500/15 text-blue-300' : 'bg-white/6 text-white/30'}`}>{t.status}</span>
-                        <div className="flex gap-1">
-                          <EditControls section="fireCreatorTasks" index={i} item={{ task: t.task, priority: t.priority, status: t.status }} />
-                          <ActionBtn icon={CheckCircle2} label="Done" onClick={() => updateTaskStatus(i, 'Done')} />
-                          <ActionBtn icon={Flame} label="Send" onClick={() => updateTaskStatus(i, 'Sent to Fire Creator')} />
-                          <ActionBtn icon={Trash2} label="" danger onClick={() => deleteItem('fireCreatorTasks', i)} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-
-            {/* 8. Growth Plan */}
-            <AccordionSection id="growth" title="Growth Plan" Icon={TrendingUp} isOpen={openSections.has('growth')} onToggle={() => toggleSection('growth')}>
-              <div className="space-y-5">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {([
-                    ['Where to Post',        BarChart2,    strategy.growthPlan.whereToPost,         'text-[#FF3B1A]'],
-                    ['Weekly Posting Plan',   CheckCircle2, strategy.growthPlan.weeklyPostingPlan,    'text-green-400'],
-                    ['What to Test',          Mic2,         strategy.growthPlan.whatToTest,            'text-[#FF3B1A]'],
-                    ['What to Measure',       BarChart2,    strategy.growthPlan.whatToMeasure,         'text-white/30'],
-                  ] as [string, React.ElementType, string[], string][]).map(([label, Icon, items]) => (
-                    <div key={label} className="space-y-2">
-                      <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide">{label}</p>
-                      {items.map((item, ii) => (
-                        <div key={ii} className="flex items-start gap-2 bg-white/3 border border-white/6 rounded-lg px-3 py-2">
-                          <Icon size={11} className="text-[#FF3B1A] mt-0.5 shrink-0" />
-                          <p className="text-white/60 text-xs flex-1">{item}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
                 </div>
-                {strategy.growthPlan.whatToDoubleDownOn?.length ? (
-                  <div className="bg-[#FF3B1A]/8 border border-[#FF3B1A]/20 rounded-xl p-4">
-                    <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-2">Double Down On</p>
-                    {strategy.growthPlan.whatToDoubleDownOn.map((item, i) => <p key={i} className="text-white/70 text-sm leading-relaxed">{item}</p>)}
-                  </div>
-                ) : null}
-                {strategy.growthPlan.nextSevenDays?.length ? (
+              )}
+              {/* Group scenes by category */}
+              {Array.from(new Set((factory.sceneBank ?? []).map(s => s.category))).map(cat => (
+                <div key={cat}>
+                  <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-2">{cat}</p>
                   <div className="space-y-2">
-                    <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide">Next 7-Day Action Plan</p>
-                    {strategy.growthPlan.nextSevenDays.map((item, i) => (
-                      <div key={i} className="flex items-start gap-3 bg-white/3 border border-white/6 rounded-xl px-4 py-3">
-                        <span className="w-5 h-5 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                        <p className="text-white/70 text-sm">{item}</p>
+                    {(factory.sceneBank ?? []).filter(s => s.category === cat).map((scene, i) => (
+                      <div key={i} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4 space-y-2">
+                        <p className="text-white font-semibold text-sm">{scene.sceneTitle}</p>
+                        <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                          {[['Purpose', scene.purpose], ['What to Show', scene.whatToShow], ['Location', scene.location], ['Talent Direction', scene.talentDirection]].filter(([, v]) => v).map(([label, val]) => (
+                            <div key={label}><p className="text-white/25 mb-0.5">{label}</p><p className="text-white/60">{val}</p></div>
+                          ))}
+                        </div>
+                        {scene.propsNeeded?.length > 0 && <p className="text-white/35 text-xs">Props: {scene.propsNeeded.join(', ')}</p>}
+                        {scene.suggestedSpokenMoment && <p className="text-white/35 text-xs italic">&ldquo;{scene.suggestedSpokenMoment}&rdquo;</p>}
                       </div>
                     ))}
                   </div>
-                ) : null}
-              </div>
-            </AccordionSection>
-
-          </div>
-        )}
-      </div>
-
-      {/* ── Brief View/Edit Modal ── */}
-      {briefModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => { setBriefModal(null); setEditBrief(null) }}>
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-2xl space-y-4 my-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <p className="text-white font-semibold">{editBrief ? 'Edit Brief' : 'UGC Video Brief'}</p>
-              <div className="flex gap-2">
-                {!editBrief && <button onClick={() => setEditBrief({ ...briefModal })} className="flex items-center gap-1 text-[10px] font-semibold border border-white/10 text-white/40 hover:text-white px-2.5 py-1.5 rounded-lg transition"><Pencil size={9} /> Edit</button>}
-                <button onClick={() => { setBriefModal(null); setEditBrief(null) }}><X size={16} className="text-white/30 hover:text-white" /></button>
-              </div>
+                </div>
+              ))}
             </div>
+          )}
 
-            {editBrief ? (
-              <div className="space-y-3">
-                {([
-                  ['title', 'Title'], ['hook', 'Hook'], ['angle', 'Angle'], ['script', 'Script (talking points)'],
-                  ['cta', 'CTA'], ['whyItWorks', 'Why This Works'], ['fireCreatorNotes', 'Creator Notes'],
-                ] as [keyof Brief, string][]).map(([field, label]) => (
-                  <div key={field}>
-                    <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">{label}</p>
-                    {field === 'script' || field === 'whyItWorks' || field === 'fireCreatorNotes' ? (
-                      <textarea
-                        value={(editBrief[field] as string) ?? ''}
-                        onChange={e => setEditBrief(prev => prev ? ({ ...prev, [field]: e.target.value }) : null)}
-                        rows={3}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FF3B1A] resize-none"
-                      />
-                    ) : (
-                      <input
-                        value={(editBrief[field] as string) ?? ''}
-                        onChange={e => setEditBrief(prev => prev ? ({ ...prev, [field]: e.target.value }) : null)}
-                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FF3B1A]"
-                      />
+          {/* ── Tab: Commercial Ideas ── */}
+          {activeTab === 'Commercial Ideas' && (
+            <div className="space-y-3">
+              <p className="text-white/35 text-xs">{factory.commercialIdeas?.length ?? 0} commercial ideas generated</p>
+              {(factory.commercialIdeas ?? []).map((idea, i) => (
+                <CommercialIdeaCard key={i} idea={idea} index={i} />
+              ))}
+            </div>
+          )}
+
+          {/* ── Tab: Video Recipes ── */}
+          {activeTab === 'Video Recipes' && (
+            <div className="space-y-4">
+              {(factory.videoRecipes ?? []).map((recipe, i) => (
+                <div key={i} className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-white font-semibold">{recipe.recipeName}</p>
+                      <div className="flex gap-2 mt-1">
+                        <span className="text-[9px] bg-white/6 text-white/40 px-2 py-0.5 rounded-full">{recipe.length}</span>
+                        <span className="text-[9px] bg-white/6 text-white/40 px-2 py-0.5 rounded-full">{recipe.bestFor}</span>
+                      </div>
+                    </div>
+                    {recipe.aiVideoPrompt && <CopyBtn text={recipe.aiVideoPrompt} label="Copy Recipe Prompt" />}
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {recipe.sceneSequence?.length > 0 && (
+                      <div>
+                        <p className="text-white/30 text-[10px] uppercase tracking-wide mb-1">Scene Sequence</p>
+                        <ListItems items={recipe.sceneSequence} />
+                      </div>
+                    )}
+                    {recipe.shotOrder?.length > 0 && (
+                      <div>
+                        <p className="text-white/30 text-[10px] uppercase tracking-wide mb-1">Shot Order</p>
+                        <ListItems items={recipe.shotOrder} />
+                      </div>
                     )}
                   </div>
-                ))}
-                <div>
-                  <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Shot List (one per line)</p>
-                  <textarea
-                    value={editBrief.shotList?.join('\n') ?? ''}
-                    onChange={e => setEditBrief(prev => prev ? ({ ...prev, shotList: e.target.value.split('\n').filter(Boolean) }) : null)}
-                    rows={3}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FF3B1A] resize-none"
-                  />
+                  {recipe.aiVideoPrompt && (
+                    <div className="bg-[#FF3B1A]/5 border border-[#FF3B1A]/18 rounded-xl p-3">
+                      <p className="text-[#FF3B1A] text-[10px] font-semibold uppercase tracking-wide mb-1">AI Video Prompt</p>
+                      <p className="text-white/60 text-xs leading-relaxed">{recipe.aiVideoPrompt}</p>
+                    </div>
+                  )}
+                  {recipe.doNotInclude?.length > 0 && (
+                    <div className="bg-red-500/5 border border-red-500/12 rounded-xl p-3">
+                      <p className="text-red-400/60 text-[10px] uppercase tracking-wide mb-1">Do Not Include</p>
+                      <ListItems items={recipe.doNotInclude} />
+                    </div>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={saveBriefEdit} className="flex-1 bg-[#FF3B1A] hover:bg-[#e02e10] text-white font-semibold text-sm py-2.5 rounded-xl transition">Save Brief</button>
-                  <button onClick={() => setEditBrief(null)} className="flex-1 border border-white/10 text-white/40 hover:text-white text-sm py-2.5 rounded-xl transition">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {([
-                  ['Hook', briefModal.hook], ['Angle', briefModal.angle],
-                  ['Script', briefModal.script], ['Why This Works', briefModal.whyItWorks],
-                  ['CTA', briefModal.cta],
-                ] as [string, string][]).filter(([, v]) => v).map(([label, text]) => (
-                  <div key={label}>
-                    <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">{label}</p>
-                    <p className="text-white/70 text-sm leading-relaxed">{text}</p>
-                  </div>
-                ))}
-                {briefModal.shotList?.length ? (
-                  <div>
-                    <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-2">Shot List</p>
-                    <div className="flex flex-wrap gap-2">
-                      {briefModal.shotList.map((s, i) => <span key={i} className="text-[10px] bg-white/5 border border-white/8 text-white/50 px-2.5 py-1 rounded-lg">{s}</span>)}
+              ))}
+            </div>
+          )}
+
+          {/* ── Tab: First Batch ── */}
+          {activeTab === 'First Batch' && (
+            <div className="space-y-3">
+              <p className="text-white font-semibold text-sm">Recommended First Batch</p>
+              {(factory.firstBatchRecommendation ?? []).map((item, i) => (
+                <div key={i} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <span className="w-5 h-5 rounded-full bg-[#FF3B1A]/15 text-[#FF3B1A] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-white font-semibold text-sm">{item.title}</p>
+                        <DiffBadge d={item.difficulty} />
+                        <PriorityBadge p={item.priority} />
+                        <span className="text-[9px] bg-white/6 text-white/35 px-2 py-0.5 rounded-full">{item.productionType}</span>
+                      </div>
+                      <p className="text-white/50 text-xs mt-1">{item.whyMakeThisFirst}</p>
                     </div>
                   </div>
-                ) : null}
+                  <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                    {item.assetsNeeded?.length > 0 && (
+                      <div><p className="text-white/25 mb-1">Assets Needed</p><ListItems items={item.assetsNeeded} /></div>
+                    )}
+                    {item.sceneBankScenesUsed?.length > 0 && (
+                      <div><p className="text-white/25 mb-1">Scene Bank Scenes</p><ListItems items={item.sceneBankScenesUsed} /></div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── Tab: Creative Rules ── */}
+          {activeTab === 'Creative Rules' && factory.creativeRules && (
+            <div className="space-y-4">
+              {[
+                ['Brand Rules', factory.creativeRules.brandRules, Star],
+                ['Production Rules', factory.creativeRules.productionRules, Video],
+                ['What Makes This Work', factory.creativeRules.whatMakesThisWork, Zap],
+                ['Quality Notes', factory.creativeRules.qualityNotes, CheckCircle2],
+              ].map(([label, items, Icon]) => Array.isArray(items) && items.length > 0 ? (
+                <div key={label as string} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-lg bg-[#FF3B1A]/12 flex items-center justify-center">
+                      {<(Icon as React.ElementType) size={12} className="text-[#FF3B1A]" />}
+                    </div>
+                    <p className="text-white font-semibold text-sm">{label as string}</p>
+                  </div>
+                  <ListItems items={items as string[]} />
+                </div>
+              ) : null)}
+              {[
+                ['Claims to Avoid', factory.creativeRules.claimsToAvoid],
+                ['Creative Avoid List', factory.creativeRules.creativeAvoidList],
+                ['Do Not Include Rules', factory.creativeRules.doNotIncludeRules],
+              ].map(([label, items]) => Array.isArray(items) && items.length > 0 ? (
+                <div key={label as string} className="bg-red-500/5 border border-red-500/12 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Shield size={13} className="text-red-400/70" />
+                    <p className="text-white/70 font-semibold text-sm">{label as string}</p>
+                  </div>
+                  <ListItems items={items as string[]} />
+                </div>
+              ) : null)}
+            </div>
+          )}
+
+          {/* Expansion buttons */}
+          <div className="pt-2">
+            <p className="text-white/25 text-xs mb-3">Generate more ideas</p>
+            <div className="flex flex-wrap gap-2">
+              {['Generate More Commercial Ideas', 'Generate More Scene Ideas', 'Create Product Demo Concepts', 'Create Lifestyle Concepts', 'Create Reaction Concepts', 'Make Ideas More Premium', 'Make Ideas More Fun', 'Make Ideas More Direct Response'].map(action => (
+                <button key={action} onClick={() => sendChat(action)}
+                  className="text-xs border border-white/8 text-white/35 hover:text-white hover:border-[#FF3B1A]/40 px-3 py-1.5 rounded-full transition">
+                  {action}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Secondary Chat ── */}
+      <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/6">
+          <div className="flex items-center gap-2">
+            <Sparkles size={14} className="text-[#FF3B1A]" />
+            <p className="text-white font-semibold text-sm">Ask Strategy AI</p>
+          </div>
+          <p className="text-white/28 text-xs mt-0.5 pl-5">Ask for more commercial ideas, new scenes, script changes, or a different creative direction.</p>
+        </div>
+
+        <div className="overflow-y-auto p-4 space-y-3" style={{ minHeight: 180, maxHeight: 300 }}>
+          {messages.map(msg => (
+            <div key={msg.id}>
+              {msg.role === 'assistant' ? (
+                <div className="flex items-start gap-2.5 max-w-[95%]">
+                  <div className="w-6 h-6 rounded-full bg-[#FF3B1A]/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles size={11} className="text-[#FF3B1A]" />
+                  </div>
+                  <div className="bg-white/4 border border-white/6 rounded-2xl rounded-tl-sm px-4 py-3">
+                    <p className="text-white/80 text-sm leading-relaxed">{msg.text}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-end">
+                  <div className="flex items-start gap-2 max-w-[90%]">
+                    <div className="bg-[#FF3B1A]/10 border border-[#FF3B1A]/18 rounded-2xl rounded-tr-sm px-4 py-3">
+                      <p className="text-white/90 text-sm">{msg.text}</p>
+                    </div>
+                    <div className="w-6 h-6 rounded-full bg-white/8 flex items-center justify-center shrink-0 mt-0.5">
+                      <User size={11} className="text-white/50" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {chatLoading && (
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-[#FF3B1A]/20 flex items-center justify-center shrink-0">
+                <Sparkles size={11} className="text-[#FF3B1A]" />
               </div>
-            )}
-          </div>
+              <div className="bg-white/4 border border-white/6 rounded-2xl rounded-tl-sm px-4 py-3">
+                <div className="flex gap-1">
+                  {[0, 150, 300].map(delay => <span key={delay} className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: `${delay}ms` }} />)}
+                </div>
+              </div>
+            </div>
+          )}
+          {chatError && <div className="text-red-400 text-xs px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg">{chatError}</div>}
+          <div ref={chatEndRef} />
         </div>
-      )}
 
-      {/* ── Add Memory Modal ── */}
-      {showAddMemory && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowAddMemory(false)}>
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <p className="text-white font-semibold">Add Memory</p>
-              <button onClick={() => setShowAddMemory(false)}><X size={16} className="text-white/30 hover:text-white" /></button>
-            </div>
-            <div>
-              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Stage</p>
-              <select value={memStage} onChange={e => setMemStage(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A]">
-                {['brand', 'competitors', 'content', 'strategy', 'growth'].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-              </select>
-            </div>
-            <div>
-              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Title</p>
-              <input value={memTitle} onChange={e => setMemTitle(e.target.value)} placeholder="e.g. Brand differentiator" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A] placeholder:text-white/20" />
-            </div>
-            <div>
-              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Notes</p>
-              <textarea value={memContent} onChange={e => setMemContent(e.target.value)} rows={4} placeholder="What should Strategy AI remember?" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A] resize-none placeholder:text-white/20" />
-            </div>
-            <div className="flex gap-2">
-              <button onClick={saveMemory} disabled={!memTitle.trim() || !memContent.trim() || modalSaving} className="flex-1 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-50 text-white font-semibold text-sm py-2.5 rounded-xl transition">
-                {modalSaving ? 'Saving…' : 'Save Memory'}
-              </button>
-              <button onClick={() => setShowAddMemory(false)} className="flex-1 border border-white/10 text-white/40 hover:text-white text-sm py-2.5 rounded-xl transition">Cancel</button>
-            </div>
-          </div>
+        {/* Chips */}
+        <div className="px-4 pb-2 flex flex-wrap gap-1.5">
+          {CHAT_CHIPS.map(chip => (
+            <button key={chip} onClick={() => sendChat(chip)} disabled={chatLoading}
+              className="text-[11px] font-medium border border-white/8 text-white/40 hover:text-white hover:border-[#FF3B1A]/40 px-2.5 py-1 rounded-full transition">
+              {chip}
+            </button>
+          ))}
         </div>
-      )}
 
-      {/* ── Add Link Modal ── */}
-      {showAddLink && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowAddLink(false)}>
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-md space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <p className="text-white font-semibold">Add Link</p>
-              <button onClick={() => setShowAddLink(false)}><X size={16} className="text-white/30 hover:text-white" /></button>
-            </div>
-            <div>
-              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Stage</p>
-              <select value={linkStage} onChange={e => setLinkStage(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A]">
-                {['brand', 'competitors', 'content', 'strategy', 'growth'].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
-              </select>
-            </div>
-            <div>
-              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">URL</p>
-              <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://…" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A] placeholder:text-white/20" />
-            </div>
-            <div>
-              <p className="text-white/30 text-[10px] font-semibold uppercase tracking-wide mb-1">Notes (optional)</p>
-              <textarea value={linkNotes} onChange={e => setLinkNotes(e.target.value)} rows={3} placeholder="What's this link for?" className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#FF3B1A] resize-none placeholder:text-white/20" />
-            </div>
-            <div className="flex gap-2">
-              <button onClick={saveLink} disabled={!linkUrl.trim() || modalSaving} className="flex-1 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-50 text-white font-semibold text-sm py-2.5 rounded-xl transition">
-                {modalSaving ? 'Saving…' : 'Save Link'}
-              </button>
-              <button onClick={() => setShowAddLink(false)} className="flex-1 border border-white/10 text-white/40 hover:text-white text-sm py-2.5 rounded-xl transition">Cancel</button>
-            </div>
+        {/* Input */}
+        <div className="p-4 border-t border-white/6">
+          <div className="flex gap-2 items-end">
+            <textarea ref={textareaRef} value={chatInput} onChange={e => setChatInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
+              placeholder="Ask for more ideas, different styles, or creative direction…"
+              rows={2}
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/22 focus:outline-none focus:border-[#FF3B1A] resize-none" />
+            <button onClick={() => sendChat()} disabled={!chatInput.trim() || chatLoading}
+              className="bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-35 text-white p-3 rounded-xl transition shrink-0">
+              <Send size={15} />
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
     </div>
   )
