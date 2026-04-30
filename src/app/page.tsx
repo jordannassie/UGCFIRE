@@ -2125,6 +2125,24 @@ export default function Home() {
                   <InstagramIcon size={28} />
                 </a>
               </div>
+              <a
+                href="tel:9497361560"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  marginTop: 16,
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.40)",
+                  textDecoration: "none",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#FF3B1A")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.40)")}
+              >
+                <Phone size={13} strokeWidth={2} />
+                (949) 736-1560
+              </a>
             </div>
             {([
               {
