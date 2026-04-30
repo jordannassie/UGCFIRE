@@ -12,17 +12,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const ICON_URL = "https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/icon/ICONS.png";
+const OG_IMAGE = "https://ugcfire.com/og-image.png";
 
 export const metadata: Metadata = {
   title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
   description:
     "A monthly AI-assisted UGC content subscription for brands that need consistent short-form videos without hiring a full content team.",
-  icons: {
-    icon: ICON_URL,
-    apple: ICON_URL,
-    shortcut: ICON_URL,
-  },
   openGraph: {
     title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
     description: "Your brand's content team. On subscription.",
@@ -30,7 +25,7 @@ export const metadata: Metadata = {
     url: "https://ugcfire.com",
     images: [
       {
-        url: ICON_URL,
+        url: OG_IMAGE,
         width: 1024,
         height: 1024,
         alt: "UGCFire",
@@ -41,7 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
     description: "Your brand's content team. On subscription.",
-    images: [ICON_URL],
+    images: [OG_IMAGE],
   },
 };
 
