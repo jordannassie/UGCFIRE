@@ -8,7 +8,7 @@ const BOOKING_URL =
 
 const actions = [
   { label: 'Phone',       icon: Phone,          href: `tel:${PHONE}`,  ariaLabel: 'Call us' },
-  { label: 'Text',        icon: MessageSquare,   href: `sms:${PHONE}`,  ariaLabel: 'Text us' },
+  { label: 'Text',        icon: MessageSquare,   href: `sms:${PHONE}?body=${encodeURIComponent('Hey UGC Fire, I am interested in your services.')}`,  ariaLabel: 'Text us' },
   { label: 'Book a Call', icon: CalendarCheck,   href: BOOKING_URL,     ariaLabel: 'Book a discovery call', target: '_blank' },
 ]
 
