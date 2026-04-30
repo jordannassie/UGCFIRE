@@ -778,22 +778,22 @@ export default function StrategyAIPage() {
           {/* ── Tab: Creative Rules ── */}
           {activeTab === 'Creative Rules' && factory.creativeRules && (
             <div className="space-y-4">
-              {[
-                ['Brand Rules', factory.creativeRules.brandRules, Star],
-                ['Production Rules', factory.creativeRules.productionRules, Video],
-                ['What Makes This Work', factory.creativeRules.whatMakesThisWork, Zap],
-                ['Quality Notes', factory.creativeRules.qualityNotes, CheckCircle2],
-              ].map(([label, items, Icon]) => Array.isArray(items) && items.length > 0 ? (
-                <div key={label as string} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-lg bg-[#FF3B1A]/12 flex items-center justify-center">
-                      {<(Icon as React.ElementType) size={12} className="text-[#FF3B1A]" />}
-                    </div>
-                    <p className="text-white font-semibold text-sm">{label as string}</p>
-                  </div>
-                  <ListItems items={items as string[]} />
+          {([
+            ['Brand Rules', factory.creativeRules.brandRules, Star] as const,
+            ['Production Rules', factory.creativeRules.productionRules, Video] as const,
+            ['What Makes This Work', factory.creativeRules.whatMakesThisWork, Zap] as const,
+            ['Quality Notes', factory.creativeRules.qualityNotes, CheckCircle2] as const,
+          ] as [string, string[], React.ElementType][]).map(([label, items, RuleIcon]) => Array.isArray(items) && items.length > 0 ? (
+            <div key={label} className="bg-[#0d0d0d] border border-white/8 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 rounded-lg bg-[#FF3B1A]/12 flex items-center justify-center">
+                  <RuleIcon size={12} className="text-[#FF3B1A]" />
                 </div>
-              ) : null)}
+                <p className="text-white font-semibold text-sm">{label}</p>
+              </div>
+              <ListItems items={items} />
+            </div>
+          ) : null)}
               {[
                 ['Claims to Avoid', factory.creativeRules.claimsToAvoid],
                 ['Creative Avoid List', factory.creativeRules.creativeAvoidList],
