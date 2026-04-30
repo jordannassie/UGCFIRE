@@ -1,15 +1,16 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Component } from 'react'
+import type { ReactNode, ErrorInfo } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getMyCompany } from '@/lib/data'
-import { isDemoMode, DEMO_BRAND_BRIEF, DEMO_COMPANY } from '@/lib/demoData'
+import { isDemoMode, DEMO_BRAND_BRIEF } from '@/lib/demoData'
 import { calcBrandContext } from '@/lib/brandCompletion'
 import {
   Sparkles, Brain, Send, Copy, Check, X, ChevronDown, ChevronUp,
   Target, Users, Video, Layers, Film, Star, Shield, RefreshCw, User,
-  CheckCircle2, Zap,
+  CheckCircle2, Zap, RotateCcw,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -56,6 +57,126 @@ interface FactoryOutput {
 }
 
 interface ChatMsg { id: string; role: 'user' | 'assistant'; text: string }
+
+// ── Safe output normalizer ────────────────────────────────────────────────
+function arr(v: unknown): string[] {
+  return Array.isArray(v) ? (v as string[]) : []
+}
+function str(v: unknown, fallback = ''): string {
+  return typeof v === 'string' ? v : fallback
+}
+
+function normalizeFactoryOutput(raw: unknown): FactoryOutput {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const rules = (r.creativeRules && typeof r.creativeRules === 'object' ? r.creativeRules : {}) as Record<string, unknown>
+
+  const normalizeIdea = (idea: unknown): CommercialIdea => {
+    const d = (idea && typeof idea === 'object' ? idea : {}) as Record<string, unknown>
+    return {
+      title: str(d.title, 'Untitled Idea'),
+      goal: str(d.goal), productionType: str(d.productionType),
+      difficulty: str(d.difficulty, 'Easy'), bestFor: str(d.bestFor),
+      priority: str(d.priority, 'Medium'), openingMoment: str(d.openingMoment),
+      sceneDescription: str(d.sceneDescription), shotList: arr(d.shotList),
+      aiVideoPrompt: str(d.aiVideoPrompt), voiceoverSpokenDirection: str(d.voiceoverSpokenDirection),
+      ctaDirection: str(d.ctaDirection), editingStyle: str(d.editingStyle),
+      propsLocationTalent: arr(d.propsLocationTalent), variationIdeas: arr(d.variationIdeas),
+      ugcFireProductionNotes: str(d.ugcFireProductionNotes), doNotInclude: arr(d.doNotInclude),
+    }
+  }
+
+  const normalizeScene = (s: unknown): Scene => {
+    const d = (s && typeof s === 'object' ? s : {}) as Record<string, unknown>
+    return {
+      category: str(d.category, 'General'), sceneTitle: str(d.sceneTitle, 'Scene'),
+      purpose: str(d.purpose), whatToShow: str(d.whatToShow), location: str(d.location),
+      propsNeeded: arr(d.propsNeeded), talentDirection: str(d.talentDirection),
+      suggestedSpokenMoment: str(d.suggestedSpokenMoment), whyItWorks: str(d.whyItWorks),
+    }
+  }
+
+  const normalizeRecipe = (v: unknown): VideoRecipe => {
+    const d = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+    return {
+      recipeName: str(d.recipeName, 'Recipe'), length: str(d.length, '30 seconds'),
+      bestFor: str(d.bestFor), sceneSequence: arr(d.sceneSequence),
+      openingMoment: str(d.openingMoment), shotOrder: arr(d.shotOrder),
+      voiceoverSpokenDirection: str(d.voiceoverSpokenDirection), ctaDirection: str(d.ctaDirection),
+      editingNotes: str(d.editingNotes), aiVideoPrompt: str(d.aiVideoPrompt),
+      doNotInclude: arr(d.doNotInclude),
+    }
+  }
+
+  const normalizeFirstBatch = (v: unknown): FirstBatchItem => {
+    const d = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+    return {
+      title: str(d.title, 'Item'), whyMakeThisFirst: str(d.whyMakeThisFirst),
+      difficulty: str(d.difficulty, 'Easy'), productionType: str(d.productionType),
+      priority: str(d.priority, 'High'), assetsNeeded: arr(d.assetsNeeded),
+      sceneBankScenesUsed: arr(d.sceneBankScenesUsed),
+    }
+  }
+
+  const normalizeAngle = (v: unknown): UgcAngle => {
+    const d = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+    return {
+      title: str(d.title, 'Angle'), whyItWorks: str(d.whyItWorks),
+      bestUseCase: str(d.bestUseCase), exampleCommercialIdea: str(d.exampleCommercialIdea),
+    }
+  }
+
+  const normalizeReusable = (v: unknown): ReusableScene => {
+    const d = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>
+    return { sceneTitle: str(d.sceneTitle, 'Scene'), whyReusable: str(d.whyReusable), usedInCommercialIdeas: arr(d.usedInCommercialIdeas) }
+  }
+
+  return {
+    brandProductRead: str(r.brandProductRead),
+    contentIngredients: arr(r.contentIngredients),
+    bestOpportunities: arr(r.bestOpportunities),
+    ugcMarketingAngles: (Array.isArray(r.ugcMarketingAngles) ? r.ugcMarketingAngles : []).map(normalizeAngle),
+    sceneBank: (Array.isArray(r.sceneBank) ? r.sceneBank : []).map(normalizeScene),
+    reusableScenesToCaptureFirst: (Array.isArray(r.reusableScenesToCaptureFirst) ? r.reusableScenesToCaptureFirst : []).map(normalizeReusable),
+    commercialIdeas: (Array.isArray(r.commercialIdeas) ? r.commercialIdeas : []).map(normalizeIdea),
+    videoRecipes: (Array.isArray(r.videoRecipes) ? r.videoRecipes : []).map(normalizeRecipe),
+    firstBatchRecommendation: (Array.isArray(r.firstBatchRecommendation) ? r.firstBatchRecommendation : []).map(normalizeFirstBatch),
+    creativeRules: {
+      brandRules: arr(rules.brandRules), productionRules: arr(rules.productionRules),
+      claimsToAvoid: arr(rules.claimsToAvoid), doNotIncludeRules: arr(rules.doNotIncludeRules),
+      qualityNotes: arr(rules.qualityNotes), whatMakesThisWork: arr(rules.whatMakesThisWork),
+      creativeAvoidList: arr(rules.creativeAvoidList),
+    },
+  }
+}
+
+// ── Error boundary for output area ───────────────────────────────────────
+interface EBState { crashed: boolean; errMsg: string }
+class OutputErrorBoundary extends Component<{ children: ReactNode }, EBState> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { crashed: false, errMsg: '' }
+  }
+  static getDerivedStateFromError(err: Error) {
+    return { crashed: true, errMsg: err?.message ?? 'Render error' }
+  }
+  componentDidCatch(err: Error, info: ErrorInfo) {
+    console.error('[StrategyAI] Output render error:', err, info)
+  }
+  render() {
+    if (this.state.crashed) {
+      return (
+        <div className="bg-red-500/8 border border-red-500/20 rounded-2xl p-6 text-center space-y-3">
+          <p className="text-red-400 font-semibold text-sm">Strategy AI output could not render.</p>
+          <p className="text-white/35 text-xs">Please regenerate.</p>
+          {process.env.NODE_ENV === 'development' && (
+            <p className="text-white/20 text-[10px] font-mono">{this.state.errMsg}</p>
+          )}
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 const STORAGE_KEY = 'ugcfire_factory_v1'
 
@@ -273,14 +394,20 @@ export default function StrategyAIPage() {
 
   // ── Load brand brief + restore cached factory ──────────────────────────
   useEffect(() => {
-    // Restore factory from localStorage
+    // Restore factory from localStorage — always normalize before setting state
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) {
         const saved = JSON.parse(raw)
-        if (saved?.factory) { setFactory(saved.factory); setApproved(saved.approved ?? false) }
+        if (saved?.factory && typeof saved.factory === 'object') {
+          setFactory(normalizeFactoryOutput(saved.factory))
+          setApproved(saved.approved ?? false)
+        }
       }
-    } catch { /* ignore */ }
+    } catch (e) {
+      console.error('[StrategyAI] localStorage restore failed, ignoring:', e)
+      try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+    }
 
     async function load() {
       if (isDemoMode()) {
@@ -358,9 +485,16 @@ export default function StrategyAIPage() {
         return
       }
 
-      // Unwrap { ok, factory } envelope; fall back to data itself for backward compat
-      const factoryOutput = (data.factory ?? data) as FactoryOutput
-      console.log('[runFactory] Factory received. Ideas:', factoryOutput.commercialIdeas?.length ?? 0)
+      // Unwrap { ok/success, factory/data } envelope — handle any shape safely
+      const rawFactory = data.factory ?? data.data ?? (data.ok !== false && data.success !== false ? data : null)
+      if (!rawFactory || typeof rawFactory !== 'object') {
+        console.error('[runFactory] Response had no usable factory payload:', data)
+        setRunError('Strategy AI could not generate valid output. Please try again.')
+        return
+      }
+
+      const factoryOutput = normalizeFactoryOutput(rawFactory)
+      console.log('[runFactory] Factory normalized. Ideas:', factoryOutput.commercialIdeas.length)
 
       setFactory(factoryOutput)
       setActiveTab('Overview')
@@ -591,6 +725,7 @@ export default function StrategyAIPage() {
       {/* ── Factory Output ── */}
       {!running && factory && (
         <div id="factory-output" className="space-y-4">
+        <OutputErrorBoundary>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-white font-semibold">Your UGC Commercial Factory</p>
@@ -608,6 +743,16 @@ export default function StrategyAIPage() {
               )}
               <button onClick={runFactory} className="flex items-center gap-2 border border-white/10 text-white/40 hover:text-white text-sm px-3 py-2 rounded-lg transition">
                 <RefreshCw size={12} /> Regenerate
+              </button>
+              <button
+                onClick={() => {
+                  setFactory(null)
+                  setApproved(false)
+                  try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+                }}
+                className="flex items-center gap-2 border border-white/8 text-white/25 hover:text-white/50 text-sm px-3 py-2 rounded-lg transition"
+              >
+                <RotateCcw size={12} /> Reset Strategy AI Output
               </button>
             </div>
           </div>
@@ -854,6 +999,7 @@ export default function StrategyAIPage() {
               ))}
             </div>
           </div>
+        </OutputErrorBoundary>
         </div>
       )}
 
