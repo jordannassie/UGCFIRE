@@ -1,11 +1,117 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Phone, MessageSquare, Globe, MapPin, Plus, X, Star,
   Search, Download, RefreshCw, Calendar,
-  ClipboardList, PhoneCall, FileText, User, Save, Copy, Check,
+  ClipboardList, PhoneCall, FileText, User, Save, Copy, Check, Target, Minus,
 } from 'lucide-react'
+
+// ── Confetti ───────────────────────────────────────────────────────────────
+
+function fireConfetti() {
+  const canvas = document.createElement('canvas')
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999'
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
+  document.body.appendChild(canvas)
+  const ctx = canvas.getContext('2d')!
+  const COLORS = ['#FF3B1A', '#FF6B47', '#FFB347', '#ffffff', '#FF8C69', '#FF4500']
+  type Particle = { x: number; y: number; vx: number; vy: number; color: string; r: number; rot: number; vrot: number; alpha: number }
+  const particles: Particle[] = Array.from({ length: 120 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height * 0.4,
+    vx: (Math.random() - 0.5) * 6,
+    vy: Math.random() * 4 + 2,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    r: Math.random() * 7 + 3,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.2,
+    alpha: 1,
+  }))
+  let frame = 0
+  const MAX = 80
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.12
+      p.rot += p.vrot
+      p.alpha = Math.max(0, 1 - frame / MAX)
+      ctx.save()
+      ctx.globalAlpha = p.alpha
+      ctx.fillStyle = p.color
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.rot)
+      ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.5)
+      ctx.restore()
+    })
+    frame++
+    if (frame < MAX) requestAnimationFrame(draw)
+    else document.body.removeChild(canvas)
+  }
+  requestAnimationFrame(draw)
+}
+
+// ── Daily Call Tracker hook ────────────────────────────────────────────────
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function useDailyCallTracker() {
+  const day = todayKey()
+  const [count, setCount] = useState(0)
+  const [goal, setGoal] = useState(25)
+  const goalHitFiredRef = useRef(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`ugcfire_calls_count_${day}`)
+    const savedGoal = localStorage.getItem(`ugcfire_calls_goal_${day}`)
+    if (saved !== null) setCount(parseInt(saved, 10))
+    if (savedGoal !== null) setGoal(parseInt(savedGoal, 10))
+    goalHitFiredRef.current = localStorage.getItem(`ugcfire_calls_goal_hit_${day}`) === '1'
+  }, [day])
+
+  function persistCount(n: number, g: number) {
+    localStorage.setItem(`ugcfire_calls_count_${day}`, String(n))
+    if (!goalHitFiredRef.current && n >= g && g > 0) {
+      goalHitFiredRef.current = true
+      localStorage.setItem(`ugcfire_calls_goal_hit_${day}`, '1')
+      fireConfetti()
+    }
+  }
+
+  function increment() {
+    setCount(prev => {
+      const next = prev + 1
+      persistCount(next, goal)
+      return next
+    })
+  }
+
+  function decrement() {
+    setCount(prev => {
+      const next = Math.max(0, prev - 1)
+      localStorage.setItem(`ugcfire_calls_count_${day}`, String(next))
+      return next
+    })
+  }
+
+  function updateGoal(g: number) {
+    const clamped = Math.max(1, g)
+    setGoal(clamped)
+    localStorage.setItem(`ugcfire_calls_goal_${day}`, String(clamped))
+  }
+
+  function resetToday() {
+    setCount(0)
+    goalHitFiredRef.current = false
+    localStorage.setItem(`ugcfire_calls_count_${day}`, '0')
+    localStorage.removeItem(`ugcfire_calls_goal_hit_${day}`)
+  }
+
+  return { count, goal, increment, decrement, updateGoal, resetToday }
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -508,6 +614,7 @@ function CallQueueTab({ leads, scripts, onLeadUpdated, preSelectedLead }: {
   }
 
   const [copied, setCopied] = useState(false)
+  const tracker = useDailyCallTracker()
 
   function copyCallback() {
     navigator.clipboard.writeText('9497361560').catch(() => {})
@@ -515,26 +622,86 @@ function CallQueueTab({ leads, scripts, onLeadUpdated, preSelectedLead }: {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const goalHit = tracker.count >= tracker.goal && tracker.goal > 0
+
   return (
     <div className="space-y-4">
 
-    {/* Callback number bar */}
-    <div className="bg-[#111] border border-[#FF3B1A]/30 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 shadow-[0_0_20px_rgba(255,59,26,0.08)]">
-      <div className="flex-1 min-w-0">
-        <p className="text-[#FF3B1A] text-[10px] uppercase tracking-widest font-bold mb-1">Callback Number</p>
-        <p className="text-white font-bold text-3xl tracking-wide">949-736-1560</p>
-        <p className="text-white/35 text-xs mt-1">Use this number when leaving a voicemail or asking someone to call back.</p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1r9yLOh-Z6nt5dZAgnKaR9iXZ6ea-kOkrJxLqctzq_0C4uLmNgX2FpB6zTQl26FqmN21-zAquz?gv=true"
-          target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-xs font-bold px-4 py-2.5 rounded-lg transition">
-          <Calendar size={13}/> Book Call
-        </a>
-        <button onClick={copyCallback}
-          className={`flex items-center gap-2 border text-xs font-semibold px-4 py-2.5 rounded-lg transition ${copied ? 'border-green-500/40 text-green-400' : 'border-white/12 text-white/50 hover:text-white hover:border-white/25'}`}>
-          {copied ? <><Check size={12}/> Copied</> : <><Copy size={12}/> Copy</>}
-        </button>
+    {/* Callback number + Daily call tracker bar */}
+    <div className="bg-[#111] border border-[#FF3B1A]/30 rounded-xl px-5 py-4 shadow-[0_0_20px_rgba(255,59,26,0.08)]">
+      <div className="flex flex-col lg:flex-row gap-5">
+
+        {/* Left — callback number */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
+          <div className="flex-1 min-w-0">
+            <p className="text-[#FF3B1A] text-[10px] uppercase tracking-widest font-bold mb-1">Callback Number</p>
+            <p className="text-white font-bold text-3xl tracking-wide">949-736-1560</p>
+            <p className="text-white/35 text-xs mt-1">Use this number when leaving a voicemail or asking someone to call back.</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1r9yLOh-Z6nt5dZAgnKaR9iXZ6ea-kOkrJxLqctzq_0C4uLmNgX2FpB6zTQl26FqmN21-zAquz?gv=true"
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-xs font-bold px-4 py-2.5 rounded-lg transition">
+              <Calendar size={13}/> Book Call
+            </a>
+            <button onClick={copyCallback}
+              className={`flex items-center gap-2 border text-xs font-semibold px-4 py-2.5 rounded-lg transition ${copied ? 'border-green-500/40 text-green-400' : 'border-white/12 text-white/50 hover:text-white hover:border-white/25'}`}>
+              {copied ? <><Check size={12}/> Copied</> : <><Copy size={12}/> Copy</>}
+            </button>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="hidden lg:block w-px bg-white/8 self-stretch"/>
+        <div className="block lg:hidden h-px bg-white/8"/>
+
+        {/* Right — daily call tracker */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 lg:w-64 shrink-0">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Target size={11} className="text-[#FF3B1A]"/>
+              <p className="text-[#FF3B1A] text-[10px] uppercase tracking-widest font-bold">Calls Today</p>
+            </div>
+            {goalHit ? (
+              <p className="text-green-400 font-bold text-2xl tracking-wide">GOAL HIT</p>
+            ) : (
+              <p className="text-white font-bold text-3xl tracking-wide leading-none">
+                {tracker.count}
+                <span className="text-white/30 text-xl font-normal"> / {tracker.goal}</span>
+              </p>
+            )}
+            {goalHit && (
+              <p className="text-green-400/60 text-xs mt-0.5">{tracker.count} / {tracker.goal} calls</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <button onClick={tracker.decrement}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition">
+                <Minus size={13}/>
+              </button>
+              <button onClick={tracker.increment}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition">
+                <Plus size={13}/>
+              </button>
+              <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2 h-8">
+                <span className="text-white/30 text-[10px]">Goal</span>
+                <input
+                  type="number"
+                  value={tracker.goal}
+                  onChange={e => tracker.updateGoal(parseInt(e.target.value) || 1)}
+                  className="w-10 bg-transparent text-white text-xs font-semibold text-center focus:outline-none"
+                  min={1}
+                />
+              </div>
+              <button onClick={tracker.resetToday}
+                className="text-[10px] px-2.5 h-8 rounded-lg border border-white/10 text-white/35 hover:text-white hover:border-white/25 transition whitespace-nowrap">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -623,6 +790,7 @@ function CallQueueTab({ leads, scripts, onLeadUpdated, preSelectedLead }: {
               {selectedLead.phone && (
                 <>
                   <a href={`tel:${selectedLead.phone.replace(/\D/g,'')}`}
+                    onClick={() => tracker.increment()}
                     className="flex items-center gap-1.5 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-xs font-bold px-4 py-2 rounded-lg transition">
                     <Phone size={13}/> Call
                   </a>
