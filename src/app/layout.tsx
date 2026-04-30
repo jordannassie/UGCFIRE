@@ -17,25 +17,31 @@ const OG_IMAGE = "https://ugcfire.com/og-image.png";
 export const metadata: Metadata = {
   title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
   description:
-    "A monthly AI-assisted UGC content subscription for brands that need consistent short-form videos without hiring a full content team.",
+    "UGC content without hiring a content team. A monthly AI-assisted UGC subscription for brands that need consistent short-form videos.",
+  icons: {
+    icon: [{ url: "/favicon.png?v=2" }],
+    shortcut: [{ url: "/favicon.png?v=2" }],
+    apple: [{ url: "/apple-touch-icon.png?v=2" }],
+  },
   openGraph: {
-    title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
-    description: "Your brand's content team. On subscription.",
+    title: "UGCFire",
+    description: "UGC content without hiring a content team.",
     type: "website",
     url: "https://ugcfire.com",
+    siteName: "UGCFire",
     images: [
       {
         url: OG_IMAGE,
-        width: 1024,
-        height: 1024,
+        width: 1200,
+        height: 630,
         alt: "UGCFire",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "UGCFire — Monthly AI-Assisted UGC Content for Brands",
-    description: "Your brand's content team. On subscription.",
+    title: "UGCFire",
+    description: "UGC content without hiring a content team.",
     images: [OG_IMAGE],
   },
 };
