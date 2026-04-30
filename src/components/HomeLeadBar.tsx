@@ -15,6 +15,7 @@ const actions = [
 export default function HomeLeadBar() {
   return (
     <div
+      className="lg:hidden"
       style={{
         position: 'fixed',
         bottom: 0,

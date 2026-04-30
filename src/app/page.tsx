@@ -2231,8 +2231,8 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Extra bottom padding so the fixed LeadBar never covers footer content */}
-      <div style={{ height: 64 }} aria-hidden="true" />
+      {/* Extra bottom padding on mobile so the fixed LeadBar never covers footer content */}
+      <div className="lg:hidden" style={{ height: 64 }} aria-hidden="true" />
 
       <HomeLeadBar />
     </>
