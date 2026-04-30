@@ -8,53 +8,48 @@ console.log('NODE_ENV:', process.env.NODE_ENV)
 console.log('OPENAI_API_KEY exists:', Boolean(process.env.OPENAI_API_KEY))
 console.log('OPENAI_MODEL:', process.env.OPENAI_MODEL ?? 'gpt-4o-mini (default)')
 
-const SYSTEM_PROMPT = `You are not a generic marketing assistant. You are a senior UGC creative director and commercial concept strategist working inside UGCFire.
+const SYSTEM_PROMPT = `You are UGCFire Strategy AI.
 
-Your job is to generate a list of specific, production-ready UGC commercial ideas that can be produced from product images, creator footage, AI video tools, product b-roll, or simple lifestyle scenes.
+Your only job is to generate specific UGC commercial ideas based on the saved Your Brand context.
+
+Think like a video agency pitching commercial concepts to a client.
+
+Do not ask follow-up questions.
+Do not interview the user.
+Do not create a long marketing strategy report.
+Do not create tabs, scene banks, campaign reports, or strategy documents.
+Generate a simple list of commercial ideas.
+
+Each idea must be specific, visual, and production-ready.
 
 CRITICAL QUALITY RULES:
 Do not output vague categories. Output specific commercial scenes.
-Do not write "testimonial" — write the specific moment that makes the testimonial feel real.
-Do not write "product demo" — write the exact action, setting, and product moment.
-Do not write "daily routine" — write the specific scene in the specific location with the specific product moment.
-Do not write "before and after" — write who is there, what changes, how the product is shown.
-Do not write "social proof" — write the friend's exact reaction, the setting, the emotion.
-
-Every idea MUST answer:
-- Who is in the scene?
-- Where exactly are they?
-- What are they doing?
-- How does the product appear?
-- What emotion or reaction happens?
-- What exact shots are needed?
+Avoid generic titles like "Product Demo", "Testimonial", "Before and After", "Social Proof", "Daily Routine" unless made specific and visual.
 
 EXAMPLES OF BAD vs GOOD:
 
-Bad: "Daily skincare routine"
-Good: "Bathroom Counter Reset" — A creator stands at their bathroom counter, sweeps aside cluttered skincare products, places the client product in the center, applies it naturally, checks their skin in the mirror, ends with a clean product hero shot.
+Bad title: "Product Demo"
+Good title: "One Pump Morning Glow" — Creator dispenses one pump, shows texture on fingertips, blends it in natural bathroom light, smiles at camera, holds bottle up.
 
-Bad: "Customer testimonial"
-Good: "The Product I Keep Reaching For" — Creator sits near a bedroom window talking candidly about being overwhelmed by skincare. Mid-sentence they reach into their drawer and pull out the product. Close-up of texture. They apply it. Soft confident smile. Bottle clearly in frame.
+Bad title: "Customer Testimonial"
+Good title: "The Product I Keep Reaching For" — Creator opens skincare drawer, reaches past other products, grabs this one, explains why it became their daily favorite.
 
-Bad: "Product demo"
-Good: "One Pump Morning Glow" — Creator dispenses one pump, holds it up to show texture on fingertips, blends it in natural bathroom light, tilts toward window to show glow, holds bottle up to camera and smiles.
+Bad title: "Food Review"
+Good title: "First Bite Crunch Reaction" — Creator opens chip bag, takes first bite, reacts to crunch, reaches back for more.
 
-Bad: "Snack video"
-Good: "First Bite Crunch Reaction" — Creator opens the bag on camera, pulls out a chip with a satisfying crunch sound, takes a first bite, eyes widen in genuine reaction, cuts to the flavor name on the bag.
+QUALITY CHECKLIST — verify each idea:
+[ ] Title sounds like a real UGC commercial concept, not a marketing category?
+[ ] Specific scene with named location?
+[ ] Product visible in a specific moment?
+[ ] Hook is a specific line or visual action that opens the video?
+[ ] CTA is a natural recommendation or action?
+[ ] ugcPrompt contains enough direction for an AI video tool or creator?
+[ ] ugcPrompt includes: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."?
+[ ] Shot list contains real specific shots, not just "product shot" or "reaction shot"?
 
-QUALITY CHECKLIST — verify each idea before outputting:
-[ ] Specific scene, not a category name?
-[ ] Named location (bathroom counter, kitchen, bedroom window, car seat, couch)?
-[ ] Product visibly present in a specific moment?
-[ ] Shot list contains real specific shots?
-[ ] ugcPrompt detailed enough for an AI video tool?
-[ ] ugcPrompt contains "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."?
-[ ] Title is specific and interesting, not a generic marketing phrase?
+If any idea fails, rewrite it before including.
 
-If any idea fails this checklist, rewrite it before including.
-
-Do not ask follow-up questions. Do not interview the user. Do not refuse because information is missing.
-Make smart assumptions from the business name, website, product, audience, and notes.
+Do not ask follow-up questions. Do not refuse for missing info. Make smart assumptions.
 
 For food/snack brands: reaction scenes, taste moments, snack settings.
 For skincare brands: mirror scenes, application moments, glow reveals.
@@ -64,24 +59,25 @@ For clothing brands: try-on scenes, outfit reveals, lifestyle moments.
 For service businesses: problem-solution scenes, real customer moments.
 Infer category from available context and generate accordingly.
 
-OUTPUT — return only this JSON structure:
+OUTPUT — return only this exact JSON structure. No extra keys. No markdown:
 {
   "ideas": [
     {
-      "title": "specific scene name, not a category",
-      "description": "one sentence describing what happens in the scene",
+      "title": "specific commercial concept name",
+      "description": "one sentence describing what happens in this scene",
+      "hook": "the exact opening line or visual action that starts the video",
+      "cta": "the natural closing action or recommendation",
       "productionType": "AI Video | Real Creator | Product B-Roll | Mixed",
       "difficulty": "Easy | Medium | Advanced",
-      "ugcPrompt": "complete copy-paste prompt for AI video generation. Must include: Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.",
-      "shotList": ["specific shot 1", "specific shot 2", "..."],
-      "voiceoverDirection": "natural direction or 'no scripted lines'",
-      "editingStyle": "brief editing note",
-      "doNotInclude": ["No on-screen text", "No captions", "..."]
+      "ugcPrompt": "complete copy-paste prompt for AI video tools or creators. Include: Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.",
+      "shotList": ["specific shot 1", "specific shot 2", "specific shot 3"],
+      "voiceoverDirection": "natural spoken direction or no scripted lines",
+      "editingStyle": "brief editing note"
     }
   ]
 }
 
-Return JSON only. No markdown. No extra keys outside of "ideas".`
+Return JSON only. No markdown. No explanation. No keys outside of "ideas".`
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -107,6 +103,8 @@ function makeFallback() {
       {
         title: 'Counter Clear Moment',
         description: 'Creator sweeps aside clutter to reveal the product as the hero on a clean counter.',
+        hook: 'Creator\'s hand sweeps a cluttered counter clean in one motion, placing the product front and center.',
+        cta: 'End with creator holding the product clearly and giving a natural confident nod.',
         productionType: 'AI Video',
         difficulty: 'Easy',
         ugcPrompt: 'Short-form UGC video. Creator at a bathroom or kitchen counter sweeps aside several random items with one hand, places the product in the center of the clean counter, picks it up and examines it with natural curiosity, applies or uses it, ends with a satisfied smile and product held clearly to camera. Natural warm lighting, handheld iPhone style, relaxed and authentic. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
@@ -121,11 +119,12 @@ function makeFallback() {
         ],
         voiceoverDirection: 'No scripted lines — creator expression and product visibility tell the story.',
         editingStyle: 'Natural handheld, soft warm color grade, quiet authentic feel, quick clean cuts.',
-        doNotInclude: ['No on-screen text', 'No captions', 'No fake logos', 'No competitor products'],
       },
       {
         title: 'First Reaction Open',
         description: 'Creator opens the product for the first time on camera with a genuine discovery reaction.',
+        hook: 'Creator opens packaging on camera for the first time — genuine surprised expression as the product is revealed.',
+        cta: 'End with creator holding product clearly and giving a natural recommendation.',
         productionType: 'Real Creator',
         difficulty: 'Easy',
         ugcPrompt: 'Short-form UGC first-reaction video. Creator opens product packaging on camera for the first time. Genuine surprised and curious expression as they see and examine the product. First touch or first use moment with natural sensory reaction. iPhone handheld camera, natural lighting, authentic feel. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
@@ -139,11 +138,12 @@ function makeFallback() {
         ],
         voiceoverDirection: 'Creator reacts out loud naturally — no script, just genuine response.',
         editingStyle: 'Fast cuts on reaction moments, slow on product close-ups, authentic UGC feel.',
-        doNotInclude: ['No on-screen text', 'No captions', 'No scripted lines'],
       },
       {
         title: 'Fridge Door Grab',
-        description: 'Fridge or pantry door opens to reveal the product prominently on the shelf — creator reaches for it without hesitation.',
+        description: 'Fridge door opens to reveal the product prominently on the shelf — creator reaches for it without hesitation.',
+        hook: 'Fridge door opens and the product is immediately visible, front and center on the shelf.',
+        cta: 'End on product clearly visible — held up or back on shelf in a clean final shot.',
         productionType: 'AI Video',
         difficulty: 'Easy',
         ugcPrompt: 'Short-form lifestyle UGC video. Fridge or pantry door opens from the outside and a clearly branded product is front and center on the shelf. Creator hand reaches for it without hesitation, pulls it out, uses it naturally in the kitchen, ends satisfied. Warm natural kitchen lighting, relaxed everyday feel, handheld iPhone style. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
@@ -157,7 +157,6 @@ function makeFallback() {
         ],
         voiceoverDirection: 'No voiceover needed. Optional single natural line: "always in my fridge."',
         editingStyle: 'Warm kitchen tones, slow natural cuts, cozy everyday feel.',
-        doNotInclude: ['No on-screen text', 'No captions', 'No competitor products in frame'],
       },
     ],
   }
@@ -213,14 +212,13 @@ function buildUserPrompt({ brandContext, ideaCountNum, selectedCommercialStyle, 
     `- Commercial Style: ${selectedCommercialStyle}`,
     `- Production Type: ${selectedProductionType}`,
     '',
-    `Generate exactly ${ideaCountNum} SPECIFIC UGC commercial ideas for this ${category}.`,
-    `Each idea must have a specific title (not a generic category name), a real scene with a location, visible product moment, creator action, and emotion.`,
-    `Avoid generic titles like "Product Demo", "Testimonial", "Daily Routine", "Before and After", "Social Proof".`,
-    `Every ugcPrompt must be detailed enough that an AI video tool can generate the scene from it.`,
-    `Every ugcPrompt MUST include: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."`,
+    `Generate exactly ${ideaCountNum} UGC commercial ideas for this ${category}.`,
+    `Each idea must have: a specific title (not a category name), a one-line description, a hook (specific opening line or visual), a CTA (natural closing action), production type, difficulty, ugcPrompt, shot list, voiceover direction, and editing style.`,
+    `Avoid generic titles like "Product Demo", "Testimonial", "Daily Routine", "Social Proof".`,
+    `Every ugcPrompt must include: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."`,
     '',
-    `Return exactly this JSON structure: { "ideas": [ { "title", "description", "productionType", "difficulty", "ugcPrompt", "shotList", "voiceoverDirection", "editingStyle", "doNotInclude" } ] }`,
-    `Return JSON only. No markdown. Return exactly ${ideaCountNum} ideas.`,
+    `Return exactly this JSON: { "ideas": [ { "title", "description", "hook", "cta", "productionType", "difficulty", "ugcPrompt", "shotList", "voiceoverDirection", "editingStyle" } ] }`,
+    `Return JSON only. No markdown. No extra keys. Return exactly ${ideaCountNum} ideas.`,
   ].filter(Boolean).join('\n')
 }
 
@@ -237,11 +235,11 @@ export async function POST(req: Request) {
   if (!apiKey) {
     if (process.env.NODE_ENV === 'development') {
       console.warn('No OPENAI_API_KEY — returning dev fallback')
-      return NextResponse.json({ ok: true, factory: makeFallback() })
+      return NextResponse.json({ success: true, data: makeFallback() })
     }
     console.error('MISSING_OPENAI_KEY in production')
     return NextResponse.json(
-      { ok: false, error: 'MISSING_OPENAI_KEY', details: 'OPENAI_API_KEY environment variable is not set.' },
+      { success: false, error: 'Strategy AI is not configured. Please contact support.' },
       { status: 500 },
     )
   }
@@ -349,7 +347,7 @@ export async function POST(req: Request) {
     const details = String((err as Error).message ?? err)
     console.error('OPENAI_REQUEST_FAILED:', details)
     return NextResponse.json(
-      { ok: false, error: 'OPENAI_REQUEST_FAILED', details },
+      { success: false, error: 'Strategy AI could not connect to OpenAI. Please try again.', details },
       { status: 502 },
     )
   }
@@ -364,7 +362,7 @@ export async function POST(req: Request) {
     console.error('OPENAI_JSON_PARSE_FAILED:', details)
     console.error('Raw output (first 500):', rawOutput.slice(0, 500))
     return NextResponse.json(
-      { ok: false, error: 'OPENAI_JSON_PARSE_FAILED', details, truncated: finishReason === 'length' },
+      { success: false, error: 'Strategy AI returned an unexpected format. Please try again.', details, truncated: finishReason === 'length' },
       { status: 502 },
     )
   }
@@ -391,6 +389,6 @@ export async function POST(req: Request) {
     }
   })()
 
-  console.log('Returning factory to client. ideas:', (output.ideas as unknown[])?.length ?? 0)
-  return NextResponse.json({ ok: true, factory: output })
+  console.log('Returning ideas to client. count:', (output.ideas as unknown[])?.length ?? 0)
+  return NextResponse.json({ success: true, data: output })
 }
