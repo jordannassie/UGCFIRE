@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useState, useEffect, type CSSProperties } from "react";
 import { Phone, Inbox, MessageSquare, CreditCard, Star, Building2, Users, Video, Brain, TrendingUp, Palmtree, Sun, Waves } from "lucide-react";
+import HomeLeadBar from "@/components/HomeLeadBar";
 import FireButton from "@/components/FireButton";
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -2229,6 +2230,11 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Extra bottom padding so the fixed LeadBar never covers footer content */}
+      <div style={{ height: 64 }} aria-hidden="true" />
+
+      <HomeLeadBar />
     </>
   );
 }
