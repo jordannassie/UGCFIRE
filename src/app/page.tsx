@@ -1406,7 +1406,7 @@ export default function Home() {
             <button
               onClick={() => setBillingCycle("yearly")}
               style={{
-                background: billingCycle === "yearly" ? "#FF3B1A" : "transparent",
+                background: billingCycle === "yearly" ? "#22c55e" : "transparent",
                 color: billingCycle === "yearly" ? "#fff" : "rgba(255,255,255,0.45)",
                 border: "none",
                 borderRadius: 32,
@@ -1423,8 +1423,8 @@ export default function Home() {
             >
               Yearly
               <span style={{
-                background: billingCycle === "yearly" ? "rgba(255,255,255,0.25)" : "rgba(255,59,26,0.25)",
-                color: billingCycle === "yearly" ? "#fff" : "#FF3B1A",
+                background: billingCycle === "yearly" ? "rgba(255,255,255,0.25)" : "rgba(34,197,94,0.20)",
+                color: billingCycle === "yearly" ? "#fff" : "#22c55e",
                 fontSize: 10,
                 fontWeight: 800,
                 padding: "2px 7px",

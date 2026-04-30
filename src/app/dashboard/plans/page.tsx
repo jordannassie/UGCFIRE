@@ -199,12 +199,12 @@ export default function PlansPage() {
           <button
             onClick={() => setBillingCycle('yearly')}
             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-              billingCycle === 'yearly' ? 'bg-[#FF3B1A] text-white' : 'text-white/45 hover:text-white/70'
+              billingCycle === 'yearly' ? 'bg-green-500 text-white' : 'text-white/45 hover:text-white/70'
             }`}
           >
             Yearly
             <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
-              billingCycle === 'yearly' ? 'bg-white/25 text-white' : 'bg-[#FF3B1A]/20 text-[#FF3B1A]'
+              billingCycle === 'yearly' ? 'bg-white/25 text-white' : 'bg-green-500/20 text-green-400'
             }`}>-20%</span>
           </button>
         </div>
