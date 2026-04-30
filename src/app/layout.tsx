@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   description:
     "UGC content without hiring a content team. A monthly AI-assisted UGC subscription for brands that need consistent short-form videos.",
   icons: {
-    icon: [{ url: "/favicon.png?v=2" }],
-    shortcut: [{ url: "/favicon.png?v=2" }],
-    apple: [{ url: "/apple-touch-icon.png?v=2" }],
+    icon: [{ url: "/favicon.png?v=3" }],
+    shortcut: [{ url: "/favicon.png?v=3" }],
+    apple: [{ url: "/apple-touch-icon.png?v=3" }],
   },
   openGraph: {
     title: "UGCFire",
