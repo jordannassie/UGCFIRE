@@ -117,9 +117,7 @@ OUTPUT — return only this exact JSON structure. No extra keys. No markdown:
       "productionType": "AI Video | Real Creator | Product B-Roll | Mixed",
       "difficulty": "Easy | Medium | Advanced",
       "ugcPrompt": "complete copy-paste AI video generation prompt. Use Create/Generate/Show language. Include: Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.",
-      "shotList": ["specific shot 1", "specific shot 2"],
-      "voiceoverDirection": "AI-friendly voiceover direction or 'no voiceover needed'",
-      "editingStyle": "brief editing note"
+      "shotList": ["specific shot 1", "specific shot 2"]
     }
   ]
 }
@@ -165,8 +163,6 @@ function makeFallback() {
           'Over-shoulder mirror reflection or close-up reaction',
           'Final — product held up to camera, creator smiles',
         ],
-        voiceoverDirection: 'No scripted lines — creator expression and product visibility tell the story.',
-        editingStyle: 'Natural handheld, soft warm color grade, quiet authentic feel, quick clean cuts.',
       },
       {
         title: 'First Reaction Open',
@@ -185,8 +181,6 @@ function makeFallback() {
           'Creator reaction after first use — satisfied expression',
           'Final — product held clearly toward camera',
         ],
-        voiceoverDirection: 'Creator reacts out loud naturally — no script, just genuine response.',
-        editingStyle: 'Fast cuts on reaction moments, slow on product close-ups, authentic UGC feel.',
       },
       {
         title: 'Fridge Door Grab',
@@ -205,8 +199,6 @@ function makeFallback() {
           'Satisfied expression or soft smile after use',
           'Final — product back on shelf or held toward camera',
         ],
-        voiceoverDirection: 'No voiceover needed. Optional single natural line: "always in my fridge."',
-        editingStyle: 'Warm kitchen tones, slow natural cuts, cozy everyday feel.',
       },
     ],
   }
@@ -282,10 +274,11 @@ function buildUserPrompt({ brandContext, ideaCountNum, selectedVideoLength, sele
     `All ugcPrompts must use AI-generation language (Create/Generate/Show/Depict), not recording language (Record/Film/Shoot/Capture).`,
     `IMPORTANT: Do NOT include explicit duration wording ("5-second", "15-second", "30-second", "60-second") inside any ugcPrompt. Use complexity and shot count to reflect the length instead.`,
     `Every ugcPrompt must include: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."`,
-    `Each idea must include: title, description, hook, cta, videoLength (set to "${selectedVideoLength}"), productionType, difficulty, ugcPrompt, shotList, voiceoverDirection, editingStyle.`,
+    `Each idea must include: title, description, hook, cta, videoLength (set to "${selectedVideoLength}"), productionType, difficulty, ugcPrompt, shotList.`,
+    `Do not include voiceoverDirection or editingStyle — these fields are not needed.`,
     `Avoid generic titles like "Product Demo", "Testimonial", "Daily Routine", "Social Proof".`,
     '',
-    `Return exactly this JSON: { "ideas": [ { "title", "description", "hook", "cta", "videoLength", "productionType", "difficulty", "ugcPrompt", "shotList", "voiceoverDirection", "editingStyle" } ] }`,
+    `Return exactly this JSON: { "ideas": [ { "title", "description", "hook", "cta", "videoLength", "productionType", "difficulty", "ugcPrompt", "shotList" } ] }`,
     `Return JSON only. No markdown. No extra keys. Return exactly ${ideaCountNum} ideas.`,
   ].filter(Boolean).join('\n')
 }

@@ -24,8 +24,6 @@ interface Idea {
   difficulty: string
   ugcPrompt: string
   shotList: string[]
-  voiceoverDirection: string
-  editingStyle: string
 }
 
 interface IdeasOutput { ideas: Idea[] }
@@ -52,8 +50,6 @@ function normalizeIdea(raw: unknown): Idea {
     difficulty: str(d.difficulty, 'Easy'),
     ugcPrompt: str(d.ugcPrompt || d.aiVideoPrompt),
     shotList: arr(d.shotList),
-    voiceoverDirection: str(d.voiceoverDirection || d.voiceoverSpokenDirection),
-    editingStyle: str(d.editingStyle),
   }
 }
 
@@ -120,9 +116,7 @@ function buildCopyText(idea: Idea): string {
     idea.hook ? `\nHook:\n${idea.hook}` : '',
     idea.ugcPrompt ? `\nUGC Video Prompt:\n${idea.ugcPrompt}` : '',
     idea.shotList?.length ? `\nShot List:\n${idea.shotList.map(s => `- ${s}`).join('\n')}` : '',
-    idea.voiceoverDirection ? `\nVoiceover Direction:\n${idea.voiceoverDirection}` : '',
     idea.cta ? `\nCTA:\n${idea.cta}` : '',
-    idea.editingStyle ? `\nEditing Style:\n${idea.editingStyle}` : '',
   ].filter(Boolean).join('')
 }
 
@@ -217,22 +211,6 @@ function IdeaCard({ idea, index }: { idea: Idea; index: number }) {
               </ul>
             </div>
           )}
-
-          {/* Voiceover + Editing */}
-          <div className="grid sm:grid-cols-2 gap-3">
-            {idea.voiceoverDirection && (
-              <div className="bg-white/3 border border-white/6 rounded-xl p-3">
-                <p className="text-white/25 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Voiceover Direction</p>
-                <p className="text-white/60 text-xs leading-relaxed">{idea.voiceoverDirection}</p>
-              </div>
-            )}
-            {idea.editingStyle && (
-              <div className="bg-white/3 border border-white/6 rounded-xl p-3">
-                <p className="text-white/25 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Editing Style</p>
-                <p className="text-white/60 text-xs leading-relaxed">{idea.editingStyle}</p>
-              </div>
-            )}
-          </div>
 
           {/* CTA */}
           {idea.cta && (
