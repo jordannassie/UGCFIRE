@@ -314,28 +314,55 @@ export default function StrategyAIPage() {
     setRunning(true)
     setRunError('')
     setApproved(false)
+
+    const ERROR_MESSAGES: Record<string, string> = {
+      MISSING_OPENAI_KEY: 'Strategy AI is not configured yet. Please contact support.',
+      OPENAI_GENERATION_FAILED: 'Strategy AI could not connect to OpenAI. Please try again in a moment.',
+      JSON_PARSE_FAILED: 'Strategy AI returned an unexpected response. Please try again.',
+      SUPABASE_SAVE_FAILED: 'Strategy was generated but could not be saved. Your results are still shown below.',
+    }
+
     try {
+      const payload = {
+        userId,
+        setupLevel: context.setupLevel,
+        completionPercentage: context.completionPercentage,
+        confidenceLabel: context.confidenceLabel,
+        brandBrief,
+        selectedIdeaCount: ideaCount,
+        selectedCommercialStyle: commercialStyle,
+        selectedProductionType: productionType,
+      }
+      console.log('[runFactory] Calling /api/strategy/run', { setupLevel: payload.setupLevel, ideaCount })
+
       const res = await fetch('/api/strategy/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          setupLevel: context.setupLevel,
-          completionPercentage: context.completionPercentage,
-          confidenceLabel: context.confidenceLabel,
-          brandBrief,
-          selectedIdeaCount: ideaCount,
-          selectedCommercialStyle: commercialStyle,
-          selectedProductionType: productionType,
-        }),
+        body: JSON.stringify(payload),
       })
+
+      console.log('[runFactory] Response status:', res.status)
       const data = await res.json()
-      if (!res.ok || data.error) { setRunError(data.error ?? 'Strategy AI could not generate right now. Please try again.'); return }
-      setFactory(data as FactoryOutput)
+      console.log('[runFactory] Response body keys:', Object.keys(data ?? {}).join(', '))
+
+      if (!res.ok || data.ok === false) {
+        const code = data.error as string | undefined
+        const msg = (code && ERROR_MESSAGES[code]) ?? code ?? 'Strategy AI could not generate right now. Please try again.'
+        console.error('[runFactory] Error:', code, data.detail ?? '')
+        setRunError(msg)
+        return
+      }
+
+      // Unwrap { ok, factory } envelope; fall back to data itself for backward compat
+      const factoryOutput = (data.factory ?? data) as FactoryOutput
+      console.log('[runFactory] Factory received. Ideas:', factoryOutput.commercialIdeas?.length ?? 0)
+
+      setFactory(factoryOutput)
       setActiveTab('Overview')
-      persist({ factory: data, approved: false })
+      persist({ factory: factoryOutput, approved: false })
       document.getElementById('factory-output')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    } catch {
+    } catch (e) {
+      console.error('[runFactory] Fetch error:', (e as Error).message)
       setRunError('Strategy AI could not generate right now. Please try again.')
     } finally {
       setRunning(false)
