@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Phone, MessageSquare, Globe, MapPin, Plus, X, Star,
   Search, Download, RefreshCw, Calendar,
-  ClipboardList, PhoneCall, FileText, User, Save,
+  ClipboardList, PhoneCall, FileText, User, Save, Copy, Check,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -295,7 +295,7 @@ function CallQueueRightPanel({ selectedLead, scripts, selectedScript, onScriptCh
         {/* Script text */}
         <div className="px-4 py-3 border-b border-white/6">
           {selectedScript
-            ? <pre className="text-white/55 text-xs leading-relaxed font-sans whitespace-pre-wrap break-words">{selectedScript.script}</pre>
+            ? <pre className="text-white text-sm leading-relaxed font-sans whitespace-pre-wrap break-words">{selectedScript.script}</pre>
             : <p className="text-white/25 text-xs">No script selected.</p>}
         </div>
 
@@ -478,7 +478,36 @@ function CallQueueTab({ leads, scripts, onLeadUpdated }: {
     if (data.lead) { setSelectedLead(data.lead); onLeadUpdated(data.lead) }
   }
 
+  const [copied, setCopied] = useState(false)
+
+  function copyCallback() {
+    navigator.clipboard.writeText('9497361560').catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
+    <div className="space-y-4">
+
+    {/* Callback number bar */}
+    <div className="bg-[#111] border border-[#FF3B1A]/30 rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 shadow-[0_0_20px_rgba(255,59,26,0.08)]">
+      <div className="flex-1 min-w-0">
+        <p className="text-[#FF3B1A] text-[10px] uppercase tracking-widest font-bold mb-1">Callback Number</p>
+        <p className="text-white font-bold text-3xl tracking-wide">949-736-1560</p>
+        <p className="text-white/35 text-xs mt-1">Use this number when leaving a voicemail or asking someone to call back.</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <a href="tel:9497361560"
+          className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-xs font-bold px-4 py-2.5 rounded-lg transition">
+          <Phone size={13}/> Call Myself
+        </a>
+        <button onClick={copyCallback}
+          className={`flex items-center gap-2 border text-xs font-semibold px-4 py-2.5 rounded-lg transition ${copied ? 'border-green-500/40 text-green-400' : 'border-white/12 text-white/50 hover:text-white hover:border-white/25'}`}>
+          {copied ? <><Check size={12}/> Copied</> : <><Copy size={12}/> Copy</>}
+        </button>
+      </div>
+    </div>
+
     <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_340px] gap-4 min-h-[700px]">
 
       {/* LEFT — queue list */}
@@ -701,6 +730,7 @@ function CallQueueTab({ leads, scripts, onLeadUpdated }: {
         saveMsg={saveMsg}
       />
 
+    </div>
     </div>
   )
 }
