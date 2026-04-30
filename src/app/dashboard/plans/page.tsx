@@ -33,7 +33,7 @@ export default function PlansPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [billing, setBilling] = useState<Partial<BillingRecord> | null>(null)
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null)
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [loading, setLoading] = useState(true)
   const [selecting, setSelecting] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)

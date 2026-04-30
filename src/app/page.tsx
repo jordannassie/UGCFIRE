@@ -168,7 +168,7 @@ const PLANS = [
       "Hook and script creation",
       "AI-assisted content production",
       "Captions and creative direction",
-      "Revisions included",
+      "1 revision round included",
       "Cancel anytime",
     ],
     cta: "Book Growth Call",
@@ -190,7 +190,7 @@ const PLANS = [
       "AI-assisted content production",
       "Captions and creative direction",
       "Priority delivery",
-      "Revisions included",
+      "1 revision round included",
       "Cancel anytime",
     ],
     cta: "Book Scale Call",
@@ -540,7 +540,7 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [heroVideo, setHeroVideo] = useState(0);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
 
   // Calendar booking state
   interface CalSlot { iso: string; label: string }
