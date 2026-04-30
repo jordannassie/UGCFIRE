@@ -10,17 +10,21 @@ console.log('OPENAI_MODEL:', process.env.OPENAI_MODEL ?? 'gpt-4o-mini (default)'
 
 const SYSTEM_PROMPT = `You are UGCFire Strategy AI.
 
-Your only job is to generate specific UGC commercial ideas based on the saved Your Brand context.
+Your job is to generate specific UGC commercial ideas designed for AI video creation.
 
 Think like a video agency pitching commercial concepts to a client.
+Write prompts for AI video tools, not for human videographers.
 
-Do not ask follow-up questions.
-Do not interview the user.
-Do not create a long marketing strategy report.
-Do not create tabs, scene banks, campaign reports, or strategy documents.
-Generate a simple list of commercial ideas.
+CRITICAL LANGUAGE RULES:
+Use language like:
+- "Create a realistic..."
+- "Generate an iPhone-style..."
+- "Show a creator..."
+- "Depict a natural UGC-style scene..."
+- "Create a short UGC commercial where..."
 
-Each idea must be specific, visual, and production-ready.
+Do NOT use: "Record", "Film", "Shoot", "Capture footage", "Have the creator record"
+unless productionType is specifically "Real Creator".
 
 CRITICAL QUALITY RULES:
 Do not output vague categories. Output specific commercial scenes.
@@ -28,24 +32,56 @@ Avoid generic titles like "Product Demo", "Testimonial", "Before and After", "So
 
 EXAMPLES OF BAD vs GOOD:
 
+Bad prompt: "Record a 30-day skincare journey."
+Good prompt (5 sec): "Create a realistic 5-second iPhone-style UGC clip showing a skincare product on a bathroom counter, a creator applying one pump, and smiling softly in the mirror."
+Good prompt (15 sec): "Create a realistic 15-second iPhone-style UGC commercial showing a creator starting their morning routine, applying the product in natural bathroom light, checking their skin, and ending with the product clearly visible."
+Good prompt (30 sec): "Create a realistic 30-second UGC commercial showing a creator talking through a simple morning routine, applying the product, showing texture close-ups, reacting naturally, and ending with a clear product recommendation."
+Good prompt (60 sec): "Create a realistic 60-second UGC-style routine video where a creator explains how they simplified their skincare routine, shows the product in use, demonstrates texture and application, shares a natural reaction, and ends with a clear product moment."
+
 Bad title: "Product Demo"
-Good title: "One Pump Morning Glow" — Creator dispenses one pump, shows texture on fingertips, blends it in natural bathroom light, smiles at camera, holds bottle up.
+Good title: "One Pump Morning Glow"
 
 Bad title: "Customer Testimonial"
-Good title: "The Product I Keep Reaching For" — Creator opens skincare drawer, reaches past other products, grabs this one, explains why it became their daily favorite.
+Good title: "The Product I Keep Reaching For"
 
 Bad title: "Food Review"
-Good title: "First Bite Crunch Reaction" — Creator opens chip bag, takes first bite, reacts to crunch, reaches back for more.
+Good title: "First Bite Crunch Reaction"
+
+VIDEO LENGTH RULES — build every idea for the selected video length:
+
+For 5-second ideas:
+- One simple visual moment
+- One product action or reaction
+- Very short ugcPrompt (1–2 sentences)
+- No complex story
+- Minimal or no voiceover
+- 1–2 shots max
+
+For 15-second ideas:
+- Hook → product moment → reaction or benefit → CTA
+- Short clear ugcPrompt
+- 3–5 shots max
+
+For 30-second ideas:
+- Hook → problem or routine setup → product use → benefit/reaction → CTA
+- Full but concise ugcPrompt
+- 5–7 shots max
+
+For 60-second ideas:
+- Mini story: hook → routine/demo → multiple product moments → voiceover → CTA
+- Detailed ugcPrompt
+- 7–10 shots max
 
 QUALITY CHECKLIST — verify each idea:
-[ ] Title sounds like a real UGC commercial concept, not a marketing category?
+[ ] Title sounds like a real UGC commercial, not a marketing category?
 [ ] Specific scene with named location?
 [ ] Product visible in a specific moment?
-[ ] Hook is a specific line or visual action that opens the video?
+[ ] Hook is a specific opening line or visual?
 [ ] CTA is a natural recommendation or action?
-[ ] ugcPrompt contains enough direction for an AI video tool or creator?
+[ ] ugcPrompt uses AI-generation language (Create/Generate/Show/Depict)?
+[ ] ugcPrompt matches the selected video length?
 [ ] ugcPrompt includes: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."?
-[ ] Shot list contains real specific shots, not just "product shot" or "reaction shot"?
+[ ] Shot list length matches the video length?
 
 If any idea fails, rewrite it before including.
 
@@ -67,11 +103,12 @@ OUTPUT — return only this exact JSON structure. No extra keys. No markdown:
       "description": "one sentence describing what happens in this scene",
       "hook": "the exact opening line or visual action that starts the video",
       "cta": "the natural closing action or recommendation",
+      "videoLength": "5 sec | 15 sec | 30 sec | 60 sec",
       "productionType": "AI Video | Real Creator | Product B-Roll | Mixed",
       "difficulty": "Easy | Medium | Advanced",
-      "ugcPrompt": "complete copy-paste prompt for AI video tools or creators. Include: Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.",
-      "shotList": ["specific shot 1", "specific shot 2", "specific shot 3"],
-      "voiceoverDirection": "natural spoken direction or no scripted lines",
+      "ugcPrompt": "complete copy-paste AI video generation prompt. Use Create/Generate/Show language. Include: Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.",
+      "shotList": ["specific shot 1", "specific shot 2"],
+      "voiceoverDirection": "AI-friendly voiceover direction or 'no voiceover needed'",
       "editingStyle": "brief editing note"
     }
   ]
@@ -102,12 +139,13 @@ function makeFallback() {
     ideas: [
       {
         title: 'Counter Clear Moment',
-        description: 'Creator sweeps aside clutter to reveal the product as the hero on a clean counter.',
-        hook: 'Creator\'s hand sweeps a cluttered counter clean in one motion, placing the product front and center.',
-        cta: 'End with creator holding the product clearly and giving a natural confident nod.',
+        description: 'A product is revealed as the hero when a creator sweeps a cluttered counter clean in one motion.',
+        hook: 'A hand sweeps a cluttered counter clean in one motion, placing the product front and center.',
+        cta: 'Creator picks up the product and holds it clearly toward the camera.',
+        videoLength: '15 sec',
         productionType: 'AI Video',
         difficulty: 'Easy',
-        ugcPrompt: 'Short-form UGC video. Creator at a bathroom or kitchen counter sweeps aside several random items with one hand, places the product in the center of the clean counter, picks it up and examines it with natural curiosity, applies or uses it, ends with a satisfied smile and product held clearly to camera. Natural warm lighting, handheld iPhone style, relaxed and authentic. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
+        ugcPrompt: 'Create a realistic 15-second iPhone-style UGC clip. Show a bathroom or kitchen counter with several items scattered on it. A hand sweeps the items aside in one smooth motion and places the product in the center. The creator picks it up, examines it with natural curiosity, applies or uses it, and ends with a satisfied smile holding the product clearly toward the camera. Natural warm lighting, handheld style, relaxed and authentic. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
         shotList: [
           'Wide shot of cluttered counter — creator hand enters frame',
           'Slow sweep clearing items aside',
@@ -122,12 +160,13 @@ function makeFallback() {
       },
       {
         title: 'First Reaction Open',
-        description: 'Creator opens the product for the first time on camera with a genuine discovery reaction.',
-        hook: 'Creator opens packaging on camera for the first time — genuine surprised expression as the product is revealed.',
-        cta: 'End with creator holding product clearly and giving a natural recommendation.',
+        description: 'A creator opens the product for the first time with a genuine discovery and reaction.',
+        hook: 'Packaging opens on camera — genuine surprised expression as the product is revealed for the first time.',
+        cta: 'Creator holds the product clearly toward the camera with a natural, satisfied expression.',
+        videoLength: '15 sec',
         productionType: 'Real Creator',
         difficulty: 'Easy',
-        ugcPrompt: 'Short-form UGC first-reaction video. Creator opens product packaging on camera for the first time. Genuine surprised and curious expression as they see and examine the product. First touch or first use moment with natural sensory reaction. iPhone handheld camera, natural lighting, authentic feel. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
+        ugcPrompt: 'Create a realistic 15-second iPhone-style UGC first-reaction video. Show a creator opening product packaging on camera for the first time. Depict a genuine surprised and curious expression as they see and examine the product. Show the first touch or first use moment with a natural sensory reaction. Handheld camera, natural lighting, authentic UGC feel. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
         shotList: [
           'Close-up of hands opening packaging',
           'Creator face — genuine curiosity or surprise reaction',
@@ -141,12 +180,13 @@ function makeFallback() {
       },
       {
         title: 'Fridge Door Grab',
-        description: 'Fridge door opens to reveal the product prominently on the shelf — creator reaches for it without hesitation.',
-        hook: 'Fridge door opens and the product is immediately visible, front and center on the shelf.',
-        cta: 'End on product clearly visible — held up or back on shelf in a clean final shot.',
+        description: 'The fridge opens to reveal the product prominently on the shelf — a hand reaches for it without hesitation.',
+        hook: 'Fridge door swings open and the product is immediately visible, front and center on the shelf.',
+        cta: 'End on the product clearly visible — held up or placed back on the shelf in a clean final shot.',
+        videoLength: '15 sec',
         productionType: 'AI Video',
         difficulty: 'Easy',
-        ugcPrompt: 'Short-form lifestyle UGC video. Fridge or pantry door opens from the outside and a clearly branded product is front and center on the shelf. Creator hand reaches for it without hesitation, pulls it out, uses it naturally in the kitchen, ends satisfied. Warm natural kitchen lighting, relaxed everyday feel, handheld iPhone style. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
+        ugcPrompt: 'Create a realistic 15-second iPhone-style lifestyle UGC video. Show a fridge or pantry door opening from the outside with a clearly branded product front and center on the shelf. Depict a hand reaching for the product without hesitation, pulling it out naturally, using it in the kitchen, ending with a satisfied expression. Warm natural kitchen lighting, relaxed everyday feel, handheld style. Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested.',
         shotList: [
           'Fridge or cabinet door opens — product visible and prominent on shelf',
           'Creator hand reaches directly for product without hesitation',
@@ -184,9 +224,20 @@ function inferCategory(brief: Record<string, unknown> | undefined): string {
   return 'consumer product'
 }
 
-function buildUserPrompt({ brandContext, ideaCountNum, selectedCommercialStyle, selectedProductionType, brandBrief }: {
+function lengthInstruction(videoLength: string): string {
+  switch (videoLength) {
+    case '5 sec': return 'Make every idea a single quick visual moment — one action, one product, one emotion. Very short ugcPrompt (1–2 sentences). 1–2 shots max. Minimal or no voiceover.'
+    case '15 sec': return 'Make every idea a short hook-product-CTA commercial. ugcPrompt should be concise and direct. 3–5 shots max. Simple voiceover or none.'
+    case '30 sec': return 'Make every idea a complete short UGC ad: hook → setup → product use → reaction → CTA. ugcPrompt should be full but focused. 5–7 shots.'
+    case '60 sec': return 'Make every idea a deeper routine or story concept: hook → routine/demo → multiple product moments → voiceover → CTA. ugcPrompt should be detailed. 7–10 shots.'
+    default: return 'Make every idea a complete short UGC commercial appropriate for the selected length.'
+  }
+}
+
+function buildUserPrompt({ brandContext, ideaCountNum, selectedVideoLength, selectedCommercialStyle, selectedProductionType, brandBrief }: {
   brandContext: string
   ideaCountNum: number
+  selectedVideoLength: string
   selectedCommercialStyle: string
   selectedProductionType: string
   brandBrief: Record<string, unknown> | undefined
@@ -208,16 +259,22 @@ function buildUserPrompt({ brandContext, ideaCountNum, selectedCommercialStyle, 
     goal ? `Primary Goal: ${goal}` : '',
     '',
     `Generation Settings:`,
-    `- Commercial Ideas to generate: ${ideaCountNum}`,
+    `- Ideas to generate: ${ideaCountNum}`,
+    `- Video Length: ${selectedVideoLength}`,
     `- Commercial Style: ${selectedCommercialStyle}`,
     `- Production Type: ${selectedProductionType}`,
     '',
     `Generate exactly ${ideaCountNum} UGC commercial ideas for this ${category}.`,
-    `Each idea must have: a specific title (not a category name), a one-line description, a hook (specific opening line or visual), a CTA (natural closing action), production type, difficulty, ugcPrompt, shot list, voiceover direction, and editing style.`,
-    `Avoid generic titles like "Product Demo", "Testimonial", "Daily Routine", "Social Proof".`,
+    `Selected video length: ${selectedVideoLength}. ${lengthInstruction(selectedVideoLength)}`,
+    `Do not create long documentary-style concepts unless 60 sec is selected.`,
+    `Do not create 30-day journey concepts for 5 sec or 15 sec videos.`,
+    ``,
+    `All ugcPrompts must use AI-generation language (Create/Generate/Show/Depict), not recording language (Record/Film/Shoot/Capture).`,
     `Every ugcPrompt must include: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."`,
+    `Each idea must include: title, description, hook, cta, videoLength (set to "${selectedVideoLength}"), productionType, difficulty, ugcPrompt, shotList, voiceoverDirection, editingStyle.`,
+    `Avoid generic titles like "Product Demo", "Testimonial", "Daily Routine", "Social Proof".`,
     '',
-    `Return exactly this JSON: { "ideas": [ { "title", "description", "hook", "cta", "productionType", "difficulty", "ugcPrompt", "shotList", "voiceoverDirection", "editingStyle" } ] }`,
+    `Return exactly this JSON: { "ideas": [ { "title", "description", "hook", "cta", "videoLength", "productionType", "difficulty", "ugcPrompt", "shotList", "voiceoverDirection", "editingStyle" } ] }`,
     `Return JSON only. No markdown. No extra keys. Return exactly ${ideaCountNum} ideas.`,
   ].filter(Boolean).join('\n')
 }
@@ -248,19 +305,20 @@ export async function POST(req: Request) {
   let body: {
     userId?: string; setupLevel?: string; completionPercentage?: number
     confidenceLabel?: string; brandBrief?: Record<string, unknown>
-    selectedIdeaCount?: string; selectedCommercialStyle?: string
-    selectedProductionType?: string; actionType?: string
+    selectedIdeaCount?: string; selectedVideoLength?: string
+    selectedCommercialStyle?: string; selectedProductionType?: string; actionType?: string
   }
   try { body = await req.json() } catch { body = {} }
 
   const {
     userId, brandBrief,
-    selectedIdeaCount = '8 ideas', selectedCommercialStyle = 'Mixed',
-    selectedProductionType = 'Mixed Production', setupLevel = 'Empty', confidenceLabel = 'Low',
+    selectedIdeaCount = '8 ideas', selectedVideoLength = '15 sec',
+    selectedCommercialStyle = 'Mixed', selectedProductionType = 'Mixed Production',
+    setupLevel = 'Empty', confidenceLabel = 'Low',
   } = body
 
   const model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
-  console.log('Model:', model, '| Ideas:', selectedIdeaCount, '| Style:', selectedCommercialStyle, '| Setup:', setupLevel)
+  console.log('Model:', model, '| Ideas:', selectedIdeaCount, '| Length:', selectedVideoLength, '| Setup:', setupLevel)
 
   // ── Build brand context string ────────────────────────────────────────────
   let brandContext = 'No brand setup found. Generate a solid general UGC commercial strategy based on the selected style and production type.'
@@ -330,7 +388,7 @@ export async function POST(req: Request) {
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
-          content: buildUserPrompt({ brandContext, ideaCountNum, selectedCommercialStyle, selectedProductionType, brandBrief }),
+          content: buildUserPrompt({ brandContext, ideaCountNum, selectedVideoLength, selectedCommercialStyle, selectedProductionType, brandBrief }),
         },
       ],
       max_tokens: maxTokens,

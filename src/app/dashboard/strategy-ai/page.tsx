@@ -19,6 +19,7 @@ interface Idea {
   description: string
   hook: string
   cta: string
+  videoLength: string
   productionType: string
   difficulty: string
   ugcPrompt: string
@@ -46,6 +47,7 @@ function normalizeIdea(raw: unknown): Idea {
     description: str(d.description || d.sceneDescription || d.goal),
     hook: str(d.hook || d.openingMoment),
     cta: str(d.cta || d.ctaDirection),
+    videoLength: str(d.videoLength, ''),
     productionType: str(d.productionType, 'Mixed'),
     difficulty: str(d.difficulty, 'Easy'),
     ugcPrompt: str(d.ugcPrompt || d.aiVideoPrompt),
@@ -82,8 +84,10 @@ class OutputErrorBoundary extends Component<{ children: ReactNode }, { crashed: 
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'ugcfire_ideas_v3'
+const STORAGE_KEY = 'ugcfire_ideas_v4'
 const IDEA_COUNTS = [8, 20, 40] as const
+const VIDEO_LENGTHS = ['5 sec', '15 sec', '30 sec', '60 sec'] as const
+type VideoLength = typeof VIDEO_LENGTHS[number]
 
 const CHAT_CHIPS = [
   'Give me more ideas', 'Make ideas more premium', 'Make ideas more fun',
@@ -166,11 +170,14 @@ function IdeaCard({ idea, index }: { idea: Idea; index: number }) {
               )}
             </div>
 
-            {idea.productionType && (
-              <span className="inline-block mt-2 text-[9px] bg-white/5 text-white/30 px-2 py-0.5 rounded-full">
-                {idea.productionType}
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+              {idea.videoLength && (
+                <span className="text-[9px] bg-white/5 text-white/35 px-2 py-0.5 rounded-full">{idea.videoLength}</span>
+              )}
+              {idea.productionType && (
+                <span className="text-[9px] bg-white/5 text-white/30 px-2 py-0.5 rounded-full">{idea.productionType}</span>
+              )}
+            </div>
           </div>
         </div>
       </button>
@@ -255,6 +262,7 @@ export default function StrategyAIPage() {
   const [context, setContext] = useState(calcBrandContext(null))
 
   const [ideaCount, setIdeaCount] = useState<8 | 20 | 40>(8)
+  const [videoLength, setVideoLength] = useState<VideoLength>('15 sec')
   const [output, setOutput] = useState<IdeasOutput | null>(null)
   const [running, setRunning] = useState(false)
   const [runError, setRunError] = useState('')
@@ -324,10 +332,11 @@ export default function StrategyAIPage() {
         confidenceLabel: context.confidenceLabel,
         brandBrief,
         selectedIdeaCount: `${ideaCount} ideas`,
+        selectedVideoLength: videoLength,
         selectedCommercialStyle: 'Mixed',
         selectedProductionType: 'Mixed Production',
       }
-      console.log('[generate] Calling /api/strategy/run, ideaCount:', ideaCount)
+      console.log('[generate] Calling /api/strategy/run, ideaCount:', ideaCount, 'videoLength:', videoLength)
 
       const res = await fetch('/api/strategy/run', {
         method: 'POST',
@@ -449,21 +458,42 @@ export default function StrategyAIPage() {
           )}
         </div>
 
-        {/* Idea count */}
-        <div>
-          <p className="text-white/35 text-[11px] font-semibold uppercase tracking-widest mb-2">Number of Ideas</p>
-          <div className="flex gap-2 flex-wrap">
-            {IDEA_COUNTS.map(n => (
-              <button
-                key={n}
-                onClick={() => setIdeaCount(n)}
-                className={`px-5 py-2 rounded-lg text-sm font-semibold border transition ${ideaCount === n
-                  ? 'bg-[#FF3B1A]/15 border-[#FF3B1A]/40 text-white'
-                  : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'}`}
-              >
-                {n}
-              </button>
-            ))}
+        {/* Controls row */}
+        <div className="grid sm:grid-cols-2 gap-5">
+          {/* Idea count */}
+          <div>
+            <p className="text-white/35 text-[11px] font-semibold uppercase tracking-widest mb-2">Number of Ideas</p>
+            <div className="flex gap-2 flex-wrap">
+              {IDEA_COUNTS.map(n => (
+                <button
+                  key={n}
+                  onClick={() => setIdeaCount(n)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition ${ideaCount === n
+                    ? 'bg-[#FF3B1A]/15 border-[#FF3B1A]/40 text-white'
+                    : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'}`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Video length */}
+          <div>
+            <p className="text-white/35 text-[11px] font-semibold uppercase tracking-widest mb-2">Video Length</p>
+            <div className="flex gap-2 flex-wrap">
+              {VIDEO_LENGTHS.map(l => (
+                <button
+                  key={l}
+                  onClick={() => setVideoLength(l)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition ${videoLength === l
+                    ? 'bg-[#FF3B1A]/15 border-[#FF3B1A]/40 text-white'
+                    : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'}`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -553,8 +583,10 @@ export default function StrategyAIPage() {
       {/* Empty state */}
       {!running && !output && !runError && (
         <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-10 text-center space-y-2">
-          <p className="text-white/40 font-medium text-sm">Choose your idea count and click Generate Ideas</p>
-          <p className="text-white/20 text-xs max-w-sm mx-auto">Strategy AI will pitch {ideaCount} specific, production-ready UGC commercial ideas from your brand setup.</p>
+          <p className="text-white/40 font-medium text-sm">Choose your settings and click Generate Ideas</p>
+          <p className="text-white/20 text-xs max-w-sm mx-auto">
+            Strategy AI will pitch {ideaCount} {videoLength} UGC commercial ideas built for AI video tools.
+          </p>
         </div>
       )}
 
