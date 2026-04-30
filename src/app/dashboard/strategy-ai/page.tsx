@@ -317,7 +317,9 @@ export default function StrategyAIPage() {
 
     const ERROR_MESSAGES: Record<string, string> = {
       MISSING_OPENAI_KEY: 'Strategy AI is not configured yet. Please contact support.',
+      OPENAI_REQUEST_FAILED: 'Strategy AI could not generate right now. Check your OpenAI key, API route logs, or JSON response format.',
       OPENAI_GENERATION_FAILED: 'Strategy AI could not connect to OpenAI. Please try again in a moment.',
+      OPENAI_JSON_PARSE_FAILED: 'Strategy AI returned an unexpected response format. Please try again.',
       JSON_PARSE_FAILED: 'Strategy AI returned an unexpected response. Please try again.',
       SUPABASE_SAVE_FAILED: 'Strategy was generated but could not be saved. Your results are still shown below.',
     }
@@ -425,37 +427,37 @@ export default function StrategyAIPage() {
       )}
 
       {/* ── Brand Context Card ── */}
-      <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-5 space-y-4">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
+      <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-5 space-y-4 overflow-hidden max-w-full">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
             <p className="text-white font-semibold text-sm">Brand Context</p>
-            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs">
-              <span className="text-white/40">Setup Level: <span className="text-white font-semibold">{context.setupLevel}</span></span>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs">
+              <span className="text-white/40">Setup: <span className="text-white font-semibold">{context.setupLevel}</span></span>
               <span className="text-white/20">·</span>
-              <span className="text-white/40">Brand Completion: <span className="text-white font-semibold">{context.completionPercentage}%</span></span>
+              <span className="text-white/40">Completion: <span className="text-white font-semibold">{context.completionPercentage}%</span></span>
               <span className="text-white/20">·</span>
-              <span className="text-white/40">Strategy Confidence: <span className={`font-semibold ${confColor}`}>{context.confidenceLabel}</span></span>
+              <span className="text-white/40">Confidence: <span className={`font-semibold ${confColor}`}>{context.confidenceLabel}</span></span>
             </div>
             {brandBrief && (
               <div className="flex flex-wrap gap-3 mt-2 text-xs text-white/35">
-                {brandBrief.offer && <span><span className="text-white/20">Offer:</span> {String(brandBrief.offer).slice(0, 60)}{String(brandBrief.offer).length > 60 ? '…' : ''}</span>}
+                {brandBrief.offer && <span className="break-words max-w-full"><span className="text-white/20">Offer:</span> {String(brandBrief.offer).slice(0, 60)}{String(brandBrief.offer).length > 60 ? '…' : ''}</span>}
                 {(brandBrief as Record<string, unknown> & { notes?: string }).notes?.includes('"main_goal"') && (
                   <span><span className="text-white/20">Goal:</span> {(JSON.parse((brandBrief as Record<string, unknown> & { notes?: string }).notes ?? '{}') as Record<string, string>).main_goal}</span>
                 )}
               </div>
             )}
           </div>
-          <div className="flex gap-2 flex-wrap shrink-0">
-            <Link href="/dashboard/your-brand" className="flex items-center gap-1.5 text-xs font-semibold border border-white/12 text-white/50 hover:text-white hover:border-white/25 px-3.5 py-2 rounded-lg transition">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:shrink-0">
+            <Link href="/dashboard/your-brand" className="flex items-center justify-center gap-1.5 text-xs font-semibold border border-white/12 text-white/50 hover:text-white hover:border-white/25 px-3.5 py-2.5 rounded-lg transition w-full sm:w-auto">
               <Target size={11} /> Improve Your Brand
             </Link>
             <button
               onClick={runFactory}
               disabled={running}
-              className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-semibold text-sm px-4 py-2 rounded-lg transition"
+              className="flex items-center justify-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition w-full sm:w-auto"
             >
-              {running ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Sparkles size={13} />}
-              {running ? 'Building…' : 'Generate UGC Commercial Factory'}
+              {running ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin shrink-0" /> : <Sparkles size={13} className="shrink-0" />}
+              <span className="truncate">{running ? 'Building…' : 'Generate UGC Commercial Factory'}</span>
             </button>
           </div>
         </div>
@@ -551,10 +553,10 @@ export default function StrategyAIPage() {
         <button
           onClick={runFactory}
           disabled={running}
-          className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-bold text-sm px-6 py-3 rounded-xl transition"
+          className="flex items-center justify-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] disabled:opacity-60 text-white font-bold text-sm px-6 py-3 rounded-xl transition w-full sm:w-auto"
         >
-          {running ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Sparkles size={14} />}
-          {running ? 'Building your UGC Commercial Factory…' : 'Generate UGC Commercial Factory'}
+          {running ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin shrink-0" /> : <Sparkles size={14} className="shrink-0" />}
+          <span className="truncate">{running ? 'Building your UGC Commercial Factory…' : 'Generate UGC Commercial Factory'}</span>
         </button>
       </div>
 

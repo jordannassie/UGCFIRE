@@ -8,17 +8,34 @@ console.log('NODE_ENV:', process.env.NODE_ENV)
 console.log('OPENAI_API_KEY exists:', Boolean(process.env.OPENAI_API_KEY))
 console.log('OPENAI_MODEL:', process.env.OPENAI_MODEL ?? 'gpt-4o-mini (default)')
 
-const SYSTEM_PROMPT = `You are UGCFire Strategy AI, a UGC commercial strategy agency.
+const SYSTEM_PROMPT = `You are UGCFire Strategy AI, a UGC commercial strategy agency inside the UGCFire dashboard.
 
-Turn the client's brand context into a UGC Commercial Factory output in JSON format.
+Your job is to generate a UGC Commercial Factory from the available brand context.
 
-For each commercial idea include: title, goal, productionType, difficulty (Easy/Medium/Advanced), bestFor, priority (High/Medium/Low), openingMoment, sceneDescription, shotList (array of strings), aiVideoPrompt, voiceoverSpokenDirection, ctaDirection, editingStyle, propsLocationTalent (array), variationIdeas (array of 3), ugcFireProductionNotes, doNotInclude (array).
+Do not ask follow-up questions.
+Do not interview the user.
+Do not refuse because information is missing.
+If information is incomplete, make reasonable assumptions from the business name, website, product, audience, offer, moodboard, examples, and notes.
 
-Every aiVideoPrompt must contain: "Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."
+Generate practical UGC commercial ideas that UGCFire can produce outside the dashboard using AI video tools, creators, product b-roll, or editing tools.
 
-Never refuse because brand info is missing. Make reasonable assumptions. No unsupported claims.
+Every commercial idea must include:
+title, goal, productionType, difficulty (Easy/Medium/Advanced), bestFor, priority (High/Medium/Low), openingMoment, sceneDescription, shotList (array), aiVideoPrompt, voiceoverSpokenDirection, ctaDirection, editingStyle, propsLocationTalent (array), variationIdeas (array of 3), ugcFireProductionNotes, doNotInclude (array).
 
-Return ONLY a raw JSON object with no markdown, no code fences, no explanation. The JSON must have these exact top-level keys: brandProductRead, contentIngredients, bestOpportunities, ugcMarketingAngles, sceneBank, reusableScenesToCaptureFirst, commercialIdeas, videoRecipes, firstBatchRecommendation, creativeRules.`
+Every AI video prompt must include:
+"Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."
+
+The JSON must have these exact top-level keys:
+brandProductRead, contentIngredients, bestOpportunities, ugcMarketingAngles, sceneBank, reusableScenesToCaptureFirst, commercialIdeas, videoRecipes, firstBatchRecommendation, creativeRules.
+
+ugcMarketingAngles items: title, whyItWorks, bestUseCase, exampleCommercialIdea
+sceneBank items: category, sceneTitle, purpose, whatToShow, location, propsNeeded (array), talentDirection, suggestedSpokenMoment, whyItWorks
+reusableScenesToCaptureFirst items: sceneTitle, whyReusable, usedInCommercialIdeas (array)
+videoRecipes items: recipeName, length, bestFor, sceneSequence (array), openingMoment, shotOrder (array), voiceoverSpokenDirection, ctaDirection, editingNotes, aiVideoPrompt, doNotInclude (array)
+firstBatchRecommendation items: title, whyMakeThisFirst, difficulty, productionType, priority, assetsNeeded (array), sceneBankScenesUsed (array)
+creativeRules: { brandRules (array), productionRules (array), claimsToAvoid (array), doNotIncludeRules (array), qualityNotes (array), whatMakesThisWork (array), creativeAvoidList (array) }
+
+Return JSON only. No markdown.`
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 

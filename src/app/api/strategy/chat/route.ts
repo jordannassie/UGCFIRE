@@ -2,23 +2,30 @@ import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 
-const SYSTEM_PROMPT = `You are Strategy AI for UGCFire.
+const SYSTEM_PROMPT = `You are Strategy AI for UGCFire, a UGC commercial strategy agency.
 
-UGCFire is a strategy-first content company. We don't just make UGC videos — we build the hook, angle, CTA, and strategic purpose behind every piece of content.
+Your job is to help clients generate UGC commercial ideas, hooks, scenes, scripts, and creative direction from available brand context.
 
-Your job:
-- Talk naturally with the business owner
-- Avoid long forms — extract info from conversation
-- Organize everything into the funnel: Brand, Competitors, Content, Strategy, Growth
-- Ask one focused follow-up question when needed
-- Be concise, practical, and marketing-focused
+CRITICAL RULES:
+- Do NOT ask follow-up questions by default.
+- Do NOT interview the user.
+- Do NOT say "tell me more" or "can you share more about..."
+- Do NOT say "I need more info before I can help."
+- Generate a useful, practical response immediately from whatever context is available.
+- If information is missing, make reasonable assumptions from the business name, product, audience, or goal.
+- The client can improve their brand setup later. Generate with what you have now.
 
-Every content idea should connect to: Hook, Angle, CTA, Platform, Goal, Why it works.
+When the user sends a commercial idea request or asks for help with content:
+- Generate practical UGC commercial ideas, hooks, scene descriptions, or AI video prompts immediately.
+- Be specific, direct, and actionable.
+- Keep responses focused on production-ready commercial ideas.
+
+Every AI video prompt you write must include:
+"Do not include captions, subtitles, floating text, graphics, or on-screen text unless specifically requested."
 
 ALWAYS respond with valid JSON in this exact shape:
 {
-  "assistantMessage": "your conversational reply here",
-  "nextQuestion": "optional follow-up question",
+  "assistantMessage": "your full helpful response here",
   "extractedMemories": [
     {
       "stage": "brand | competitors | content | strategy | growth",
@@ -38,10 +45,11 @@ ALWAYS respond with valid JSON in this exact shape:
 }
 
 Rules:
-- extractedMemories can be empty array [] if the message doesn't contain useful memory
-- superBrainStatus should reflect all stages including ones not mentioned (use "new" for untouched stages)
-- assistantMessage should be friendly, direct, and 1-3 sentences
-- Do NOT use markdown in assistantMessage — plain text only`
+- extractedMemories can be empty array [] if nothing new was captured
+- superBrainStatus should reflect all stages (use "new" for untouched stages)
+- assistantMessage should be direct, helpful, and immediately actionable
+- Do NOT use markdown in assistantMessage — plain text only
+- Do NOT end responses with a question unless the user explicitly asked for guidance on their brand setup`
 
 export async function POST(req: Request) {
   const apiKey = process.env.OPENAI_API_KEY
@@ -61,45 +69,59 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Message is required.' }, { status: 400 })
   }
 
-  const supabase = await createClient()
+  // Supabase is best-effort — never crash if it fails
+  let supabase: Awaited<ReturnType<typeof createClient>> | null = null
+  try {
+    supabase = await createClient()
+  } catch (e) {
+    console.warn('[strategy/chat] Supabase init failed (non-fatal):', (e as Error).message)
+  }
 
-  // Save user message
+  // Save user message (non-blocking)
   if (supabase && (userId || clientId)) {
-    await supabase.from('strategy_messages').insert({
+    supabase.from('strategy_messages').insert({
       role: 'user',
       content: message,
       user_id: userId ?? null,
       client_id: clientId ?? null,
-    })
+    }).catch((e: Error) => console.warn('[strategy/chat] save user msg failed:', e.message))
   }
 
   // Load recent conversation history (last 16 messages)
   let history: { role: 'user' | 'assistant'; content: string }[] = []
   if (supabase && userId) {
-    const { data } = await supabase
-      .from('strategy_messages')
-      .select('role, content')
-      .eq('user_id', userId)
-      .in('role', ['user', 'assistant'])
-      .order('created_at', { ascending: false })
-      .limit(16)
-    if (data) {
-      history = (data as { role: 'user' | 'assistant'; content: string }[]).reverse().slice(0, -1)
+    try {
+      const { data } = await supabase
+        .from('strategy_messages')
+        .select('role, content')
+        .eq('user_id', userId)
+        .in('role', ['user', 'assistant'])
+        .order('created_at', { ascending: false })
+        .limit(16)
+      if (data) {
+        history = (data as { role: 'user' | 'assistant'; content: string }[]).reverse().slice(0, -1)
+      }
+    } catch (e) {
+      console.warn('[strategy/chat] load history failed (non-fatal):', (e as Error).message)
     }
   }
 
   // Load existing memories as context
   let memorySummary = ''
   if (supabase && userId) {
-    const { data: mems } = await supabase
-      .from('strategy_memories')
-      .select('stage, title, summary')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(40)
-    if (mems?.length) {
-      memorySummary = '\n\nCurrent Super Brain memories:\n' +
-        mems.map(m => `[${m.stage}] ${m.title}: ${m.summary}`).join('\n')
+    try {
+      const { data: mems } = await supabase
+        .from('strategy_memories')
+        .select('stage, title, summary')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(30)
+      if (mems?.length) {
+        memorySummary = '\n\nBrand context from memory:\n' +
+          mems.map((m: { stage: string; title: string; summary: string }) => `[${m.stage}] ${m.title}: ${m.summary}`).join('\n')
+      }
+    } catch (e) {
+      console.warn('[strategy/chat] load memories failed (non-fatal):', (e as Error).message)
     }
   }
 
@@ -144,19 +166,19 @@ export async function POST(req: Request) {
   parsed.extractedMemories ??= []
   parsed.superBrainStatus ??= {}
 
-  // Save assistant message
+  // Save assistant message (non-blocking)
   if (supabase && (userId || clientId)) {
-    await supabase.from('strategy_messages').insert({
+    supabase.from('strategy_messages').insert({
       role: 'assistant',
       content: parsed.assistantMessage,
       user_id: userId ?? null,
       client_id: clientId ?? null,
-    })
+    }).catch((e: Error) => console.warn('[strategy/chat] save assistant msg failed:', e.message))
   }
 
-  // Save extracted memories
+  // Save extracted memories (non-blocking)
   if (supabase && parsed.extractedMemories.length && (userId || clientId)) {
-    const rows = parsed.extractedMemories.map(mem => ({
+    const rows = parsed.extractedMemories.map((mem: { stage: string; memoryType: string; title: string; summary: string; data: object }) => ({
       user_id: userId ?? null,
       client_id: clientId ?? null,
       stage: mem.stage,
@@ -165,7 +187,8 @@ export async function POST(req: Request) {
       summary: mem.summary,
       data: mem.data ?? {},
     }))
-    await supabase.from('strategy_memories').insert(rows)
+    supabase.from('strategy_memories').insert(rows)
+      .catch((e: Error) => console.warn('[strategy/chat] save memories failed:', e.message))
   }
 
   return NextResponse.json(parsed)
