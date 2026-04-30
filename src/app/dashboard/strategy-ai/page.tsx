@@ -347,8 +347,11 @@ export default function StrategyAIPage() {
 
       if (!res.ok || data.ok === false) {
         const code = data.error as string | undefined
+        const details = (data.details ?? data.detail ?? '') as string
         const msg = (code && ERROR_MESSAGES[code]) ?? code ?? 'Strategy AI could not generate right now. Please try again.'
-        console.error('[runFactory] Error:', code, data.detail ?? '')
+        console.error('[runFactory] API error code:', code)
+        console.error('[runFactory] API error details:', details)
+        if (data.truncated) console.warn('[runFactory] Output was truncated by OpenAI (token limit hit)')
         setRunError(msg)
         return
       }
