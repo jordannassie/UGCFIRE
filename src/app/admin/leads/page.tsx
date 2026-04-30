@@ -526,9 +526,10 @@ function CallQueueTab({ leads, scripts, onLeadUpdated, preSelectedLead }: {
         <p className="text-white/35 text-xs mt-1">Use this number when leaving a voicemail or asking someone to call back.</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <a href="tel:9497361560"
+        <a href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1r9yLOh-Z6nt5dZAgnKaR9iXZ6ea-kOkrJxLqctzq_0C4uLmNgX2FpB6zTQl26FqmN21-zAquz?gv=true"
+          target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-2 bg-[#FF3B1A] hover:bg-[#e02e10] text-white text-xs font-bold px-4 py-2.5 rounded-lg transition">
-          <Phone size={13}/> Call Myself
+          <Calendar size={13}/> Book Call
         </a>
         <button onClick={copyCallback}
           className={`flex items-center gap-2 border text-xs font-semibold px-4 py-2.5 rounded-lg transition ${copied ? 'border-green-500/40 text-green-400' : 'border-white/12 text-white/50 hover:text-white hover:border-white/25'}`}>
