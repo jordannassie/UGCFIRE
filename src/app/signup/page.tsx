@@ -1,61 +1,72 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { hasSupabaseConfig } from '@/lib/supabase/env'
 import { enterDemoMode } from '@/lib/demoData'
 
 export default function SignupPage() {
-  const [tab, setTab]           = useState<'signup' | 'login'>('signup')
+  const [tab, setTab]           = useState<'signup' | 'login'>('login')
   const [mode, setMode]         = useState<'form' | 'reset' | 'reset-sent'>('form')
   const [name, setName]         = useState('')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
+  const [notice, setNotice]     = useState('')
+
+  useEffect(() => {
+    setError(new URLSearchParams(window.location.search).get('error') ?? '')
+  }, [])
+
+  function getConfiguredClient() {
+    if (!hasSupabaseConfig()) {
+      setError('Supabase is not configured yet. Create .env.local from .env.local.example and add your project URL and publishable key.')
+      setLoading(false)
+      return null
+    }
+    return createClient()
+  }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true); setError('')
-    const supabase = createClient()
+    setLoading(true); setError(''); setNotice('')
+    const supabase = getConfiguredClient()
+    if (!supabase) return
     const { data, error: err } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: name, role: 'client' } },
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
     if (err) { setError(err.message); setLoading(false); return }
-    if (data.user) {
-      await supabase.from('companies').insert({
-        name: name + "'s Brand",
-        owner_user_id: data.user.id,
-        onboarding_status: 'needs_plan',
-      })
-      await supabase.from('activity_logs').insert({
-        company_id: null,
-        actor_user_id: data.user.id,
-        actor_role: 'client',
-        event_type: 'user_signed_up',
-        event_message: `${name} signed up.`,
-      })
-      window.location.href = '/dashboard'
+    if (data.session) {
+      window.location.href = '/auth/complete'
+      return
     }
+    setNotice('Check your inbox to confirm your email, then you can continue into UGCFire.')
     setLoading(false)
   }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true); setError('')
-    const supabase = createClient()
+    setLoading(true); setError(''); setNotice('')
+    const supabase = getConfiguredClient()
+    if (!supabase) return
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) { setError(err.message); setLoading(false); return }
-    window.location.href = '/dashboard'
+    window.location.href = '/auth/complete'
   }
 
   async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true); setError('')
-    const supabase = createClient()
+    setLoading(true); setError(''); setNotice('')
+    const supabase = getConfiguredClient()
+    if (!supabase) return
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: `${window.location.origin}/auth/callback`,
     })
     if (err) { setError(err.message); setLoading(false); return }
     setMode('reset-sent')
@@ -63,11 +74,12 @@ export default function SignupPage() {
   }
 
   async function handleGoogleAuth() {
-    setLoading(true); setError('')
-    const supabase = createClient()
+    setLoading(true); setError(''); setNotice('')
+    const supabase = getConfiguredClient()
+    if (!supabase) return
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     if (err) { setError(err.message); setLoading(false) }
   }
@@ -107,6 +119,8 @@ export default function SignupPage() {
               width={140}
               height={56}
               className="mx-auto"
+              style={{ width: "auto", height: "auto" }}
+              loading="eager"
               unoptimized
             />
           </Link>
@@ -120,7 +134,7 @@ export default function SignupPage() {
             <div className="space-y-4">
               <div>
                 <h2 className="text-white font-bold text-lg">Reset your password</h2>
-                <p className="text-white/40 text-sm mt-1">Enter your email and we'll send a reset link.</p>
+                <p className="text-white/40 text-sm mt-1">Enter your email and we&apos;ll send a reset link.</p>
               </div>
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-lg">
@@ -189,6 +203,11 @@ export default function SignupPage() {
               {error && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-3 rounded-lg mb-4">
                   {error}
+                </div>
+              )}
+              {notice && (
+                <div className="bg-green-500/10 border border-green-500/20 text-green-300 text-sm px-4 py-3 rounded-lg mb-4">
+                  {notice}
                 </div>
               )}
 

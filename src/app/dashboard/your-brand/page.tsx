@@ -73,6 +73,36 @@ export default function YourBrandPage() {
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [context, setContext] = useState(calcBrandContext(null))
 
+  async function ensureCompanyExists(params: {
+    supabase: ReturnType<typeof createClient>
+    ownerId: string
+    desiredName: string
+    desiredWebsite: string
+  }) {
+    const { supabase, ownerId, desiredName, desiredWebsite } = params
+    const existing = await supabase
+      .from('companies')
+      .select('id, name, website')
+      .eq('owner_user_id', ownerId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (existing.data?.[0]?.id) return existing.data[0]
+
+    const inserted = await supabase
+      .from('companies')
+      .insert({
+        owner_user_id: ownerId,
+        name: desiredName || 'My Brand',
+        website: desiredWebsite || null,
+        onboarding_status: 'needs_plan',
+      })
+      .select('id, name, website')
+      .single()
+
+    return inserted.data ?? null
+  }
+
   // ── Basic form ────────────────────────────────────────────────────────────
   const [basic, setBasic] = useState({
     company_name: '',
@@ -109,93 +139,115 @@ export default function YourBrandPage() {
   const moodInputRef = useRef<HTMLInputElement>(null)
 
   // ── Load data ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    async function load() {
-      if (isDemoMode()) {
-        setCompany(DEMO_COMPANY as unknown as Company)
-        const b = DEMO_BRAND_BRIEF as unknown as Record<string, unknown>
-        setBasic({
-          company_name: String(b.company_name ?? ''),
-          website: String(b.website ?? ''),
-          offer: String(b.offer ?? ''),
-          target_customer: String(b.target_customer ?? ''),
-          main_goal: '',
-          logo_url: '',
-          content_inspiration_links: String(b.examples ?? ''),
-        })
-        setLoading(false)
-        return
-      }
-
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) setUserId(user.id)
-
-      const co = await getMyCompany()
-      setCompany(co)
-      if (!co) { setLoading(false); return }
-      setCompanyId(co.id)
-
-      const { data: brief } = await supabase
-        .from('brand_briefs')
-        .select('*')
-        .eq('company_id', co.id)
-        .single()
-
-      if (brief) {
-        const ext = parseExtendedNotes(brief.notes as string)
-        setBasic({
-          company_name: brief.company_name ?? '',
-          website: brief.website ?? '',
-          offer: brief.offer ?? '',
-          target_customer: brief.target_customer ?? '',
-          main_goal: ext.main_goal ?? '',
-          logo_url: ext.logo_url ?? '',
-          content_inspiration_links: ext.content_inspiration_links ?? (brief.examples ?? ''),
-        })
-        setPro({
-          brand_voice: brief.brand_voice ?? ext.brand_voice ?? '',
-          brand_colors: ext.brand_colors ?? '',
-          tagline: ext.tagline ?? '',
-          words_to_use: ext.words_to_use ?? '',
-          words_to_avoid: ext.words_to_avoid ?? '',
-          additional_brand_notes: ext.additional_brand_notes ?? '',
-          main_product: ext.main_product ?? '',
-          main_offer: ext.main_offer ?? (brief.offer ?? ''),
-          top_benefits: ext.top_benefits ?? '',
-          top_selling_points: ext.top_selling_points ?? '',
-          price_range: ext.price_range ?? '',
-          product_links: ext.product_links ?? '',
-          product_photo_urls: ext.product_photo_urls ?? [],
-          bundles_promotions: ext.bundles_promotions ?? '',
-          reviews_testimonials: ext.reviews_testimonials ?? '',
-          ideal_customer: ext.ideal_customer ?? (brief.target_customer ?? ''),
-          pain_points: ext.pain_points ?? '',
-          desires: ext.desires ?? '',
-          buying_triggers: ext.buying_triggers ?? '',
-          objections: ext.objections ?? '',
-          use_situations: ext.use_situations ?? '',
-          style_feel: ext.style_feel ?? '',
-          creator_type: ext.creator_type ?? '',
-          locations: ext.locations ?? '',
-          visual_style: ext.visual_style ?? (brief.video_styles ?? ''),
-          examples_like: ext.examples_like ?? '',
-          examples_dislike: ext.examples_dislike ?? '',
-          competitor_inspiration: ext.competitor_inspiration ?? '',
-          claims_to_avoid: ext.claims_to_avoid ?? '',
-          compliance_notes: ext.compliance_notes ?? '',
-          do_dont_notes: ext.do_dont_notes ?? '',
-          content_formats: ext.content_formats ?? [],
-          moodboard_items: ext.moodboard_items ?? [],
-        })
-        setContext(calcBrandContext(brief as Record<string, unknown>))
-      } else {
-        setBasic(b => ({ ...b, company_name: co.name, website: co.website ?? '' }))
-      }
+  const load = useCallback(async () => {
+    if (isDemoMode()) {
+      setCompany(DEMO_COMPANY as unknown as Company)
+      const b = DEMO_BRAND_BRIEF as unknown as Record<string, unknown>
+      setBasic({
+        company_name: String(b.company_name ?? ''),
+        website: String(b.website ?? ''),
+        offer: String(b.offer ?? ''),
+        target_customer: String(b.target_customer ?? ''),
+        main_goal: '',
+        logo_url: '',
+        content_inspiration_links: String(b.examples ?? ''),
+      })
       setLoading(false)
+      return
     }
+
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) setUserId(user.id)
+
+    let co = await getMyCompany()
+    if (!co && user) {
+      const created = await ensureCompanyExists({
+        supabase,
+        ownerId: user.id,
+        desiredName: 'My Brand',
+        desiredWebsite: '',
+      })
+      if (created) {
+        co = {
+          id: created.id,
+          name: created.name ?? 'My Brand',
+          website: created.website ?? null,
+        } as Company
+      }
+    }
+
+    setCompany(co)
+    if (!co) { setLoading(false); return }
+    setCompanyId(co.id)
+
+    // Add cache buster to ensure fresh data
+    const { data: brief } = await supabase
+      .from('brand_briefs')
+      .select('*')
+      .eq('company_id', co.id)
+      .maybeSingle()
+
+    if (brief) {
+      const ext = parseExtendedNotes(brief.notes as string)
+      setBasic({
+        company_name: brief.company_name ?? '',
+        website: brief.website ?? '',
+        offer: brief.offer ?? '',
+        target_customer: brief.target_customer ?? '',
+        main_goal: ext.main_goal ?? '',
+        logo_url: ext.logo_url ?? '',
+        content_inspiration_links: ext.content_inspiration_links ?? (brief.examples ?? ''),
+      })
+      setPro({
+        brand_voice: brief.brand_voice ?? ext.brand_voice ?? '',
+        brand_colors: ext.brand_colors ?? '',
+        tagline: ext.tagline ?? '',
+        words_to_use: ext.words_to_use ?? '',
+        words_to_avoid: ext.words_to_avoid ?? '',
+        additional_brand_notes: ext.additional_brand_notes ?? '',
+        main_product: ext.main_product ?? '',
+        main_offer: ext.main_offer ?? (brief.offer ?? ''),
+        top_benefits: ext.top_benefits ?? '',
+        top_selling_points: ext.top_selling_points ?? '',
+        price_range: ext.price_range ?? '',
+        product_links: ext.product_links ?? '',
+        product_photo_urls: ext.product_photo_urls ?? [],
+        bundles_promotions: ext.bundles_promotions ?? '',
+        reviews_testimonials: ext.reviews_testimonials ?? '',
+        ideal_customer: ext.ideal_customer ?? (brief.target_customer ?? ''),
+        pain_points: ext.pain_points ?? '',
+        desires: ext.desires ?? '',
+        buying_triggers: ext.buying_triggers ?? '',
+        objections: ext.objections ?? '',
+        use_situations: ext.use_situations ?? '',
+        style_feel: ext.style_feel ?? '',
+        creator_type: ext.creator_type ?? '',
+        locations: ext.locations ?? '',
+        visual_style: ext.visual_style ?? (brief.video_styles ?? ''),
+        examples_like: ext.examples_like ?? '',
+        examples_dislike: ext.examples_dislike ?? '',
+        competitor_inspiration: ext.competitor_inspiration ?? '',
+        claims_to_avoid: ext.claims_to_avoid ?? '',
+        compliance_notes: ext.compliance_notes ?? '',
+        do_dont_notes: ext.do_dont_notes ?? '',
+        content_formats: ext.content_formats ?? [],
+        moodboard_items: ext.moodboard_items ?? [],
+      })
+      setContext(calcBrandContext(brief as Record<string, unknown>))
+    } else {
+      setBasic(b => ({ ...b, company_name: co.name, website: co.website ?? '' }))
+    }
+    setLoading(false)
+  }, [userId])
+
+  useEffect(() => {
     load()
-  }, [])
+    // Small delay to ensure DB propagation
+    const handleSync = () => setTimeout(load, 500)
+    window.addEventListener('dashboard-sync', handleSync)
+    return () => window.removeEventListener('dashboard-sync', handleSync)
+  }, [load])
 
   // ── Build notes JSON ──────────────────────────────────────────────────────
   const buildNotes = useCallback(() => {
@@ -231,12 +283,21 @@ export default function YourBrandPage() {
         completed_at: new Date().toISOString(),
       }, { onConflict: 'company_id' })
 
+      await supabase
+        .from('companies')
+        .update({
+          name: basic.company_name || 'My Brand',
+          website: basic.website || null,
+        })
+        .eq('id', companyId!)
+
       // Refresh context
-      const { data: brief } = await supabase.from('brand_briefs').select('*').eq('company_id', companyId!).single()
+      const { data: brief } = await supabase.from('brand_briefs').select('*').eq('company_id', companyId!).maybeSingle()
       if (brief) setContext(calcBrandContext(brief as Record<string, unknown>))
 
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
+      window.dispatchEvent(new Event('dashboard-sync'))
     } finally {
       setSaving(false)
     }
@@ -252,15 +313,46 @@ export default function YourBrandPage() {
     const file = e.target.files?.[0]
     if (!file || !userId) return
     setLogoUploading(true)
-    const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `brands/${userId}/logo.${ext}`
-    const { error } = await supabase.storage.from('UGC Fire').upload(path, file, { upsert: true })
-    if (!error) {
-      const { data } = supabase.storage.from('UGC Fire').getPublicUrl(path)
-      setBasic(b => ({ ...b, logo_url: data.publicUrl }))
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `brands/${userId}/logo-${Date.now()}.${ext}`
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('path', path)
+
+      const res = await fetch('/api/upload-avatar', {
+        method: 'POST',
+        body: formData,
+      })
+      if (!res.ok) throw new Error('Upload failed')
+      const { success, publicUrl } = await res.json()
+      if (success) {
+        setBasic(b => ({ ...b, logo_url: publicUrl }))
+        
+        // Auto-save the logo URL to database
+        if (companyId) {
+          const supabase = createClient()
+          const { data: brief } = await supabase.from('brand_briefs').select('notes').eq('company_id', companyId).maybeSingle()
+          let notes: any = {}
+          if (brief?.notes) {
+            try { notes = JSON.parse(brief.notes as string) } catch (e) {}
+          }
+          notes.logo_url = publicUrl
+          await supabase.from('brand_briefs').upsert({
+            company_id: companyId,
+            notes: JSON.stringify(notes),
+            company_name: basic.company_name || 'My Brand',
+          }, { onConflict: 'company_id' })
+          
+          window.dispatchEvent(new Event('dashboard-sync'))
+        }
+      }
+    } catch (err) {
+      console.error('[your-brand] Logo upload failed:', err)
+    } finally {
+      setLogoUploading(false)
+      e.target.value = ''
     }
-    setLogoUploading(false)
   }
 
   // ── Moodboard upload ──────────────────────────────────────────────────────
@@ -268,20 +360,39 @@ export default function YourBrandPage() {
     const files = Array.from(e.target.files ?? [])
     if (!files.length || !userId) return
     setMoodUploading(true)
-    const supabase = createClient()
     const newItems: MoodboardItem[] = []
-    for (const file of files) {
-      const path = `brands/${userId}/moodboard/${Date.now()}_${file.name}`
-      const { error } = await supabase.storage.from('UGC Fire').upload(path, file, { upsert: true })
-      if (!error) {
-        const { data } = supabase.storage.from('UGC Fire').getPublicUrl(path)
-        const type = file.type.startsWith('video') ? 'video' : 'image'
-        newItems.push({ id: `${Date.now()}_${Math.random()}`, type, url: data.publicUrl, filename: file.name, label: 'I like the style', note: '' })
+    try {
+      for (const file of files) {
+        const path = `brands/${userId}/moodboard/${Date.now()}_${file.name}`
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('path', path)
+
+        const res = await fetch('/api/upload-avatar', {
+          method: 'POST',
+          body: formData,
+        })
+        if (!res.ok) continue
+        const { success, publicUrl } = await res.json()
+        if (success) {
+          const type = file.type.startsWith('video') ? 'video' : 'image'
+          newItems.push({
+            id: `${Date.now()}_${Math.random()}`,
+            type,
+            url: publicUrl,
+            filename: file.name,
+            label: 'I like the style',
+            note: ''
+          })
+        }
       }
+      setPro(p => ({ ...p, moodboard_items: [...(p.moodboard_items ?? []), ...newItems] }))
+    } catch (err) {
+      console.error('[your-brand] Moodboard upload failed:', err)
+    } finally {
+      setMoodUploading(false)
+      e.target.value = ''
     }
-    setPro(p => ({ ...p, moodboard_items: [...(p.moodboard_items ?? []), ...newItems] }))
-    setMoodUploading(false)
-    if (e.target) e.target.value = ''
   }
 
   function addMoodLink() {

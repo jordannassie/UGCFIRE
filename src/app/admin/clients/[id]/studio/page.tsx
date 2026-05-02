@@ -25,6 +25,7 @@ function ClientStudioDrive({ clientId }: { clientId: string }) {
   const [allClients, setAllClients] = useState<{ id: string; name: string }[]>([])
   const [switchOpen, setSwitchOpen] = useState(false)
   const [fcProfile, setFcProfile] = useState<FireCreatorProfile>(DEFAULT_FC)
+  const [demoMode, setDemoMode] = useState(false)
 
   useEffect(() => {
     // Load Fire Creator profile from localStorage
@@ -34,7 +35,10 @@ function ClientStudioDrive({ clientId }: { clientId: string }) {
     } catch {}
 
     // Load client list
-    if (isDemoMode()) {
+    const isDemo = isDemoMode()
+    setDemoMode(isDemo)
+
+    if (isDemo) {
       const match = DEMO_COMPANIES.find(c => c.id === clientId)
       setClientName(match?.name ?? 'Client')
       setAllClients(DEMO_COMPANIES.map(c => ({ id: c.id, name: c.name })))
@@ -128,7 +132,7 @@ function ClientStudioDrive({ clientId }: { clientId: string }) {
         role="admin"
         initialClientId={clientId}
         fireCreatorProfile={fcProfile}
-        demoMode={isDemoMode()}
+        demoMode={demoMode}
       />
     </div>
   )

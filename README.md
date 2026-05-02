@@ -29,7 +29,9 @@ Then fill in your Supabase credentials from the [Supabase dashboard](https://sup
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+UGCFIRE_ADMIN_EMAILS=founder@ugcfire.com,ops@ugcfire.com
 ```
 
 ### 3. Run locally
@@ -56,8 +58,28 @@ Before uploading to Netlify or making branches ready for review, run `npm run bu
 4. Netlify reads `netlify.toml` + `_redirects` and wires `@netlify/plugin-nextjs` automatically.
 5. Add these environment variables when ready (they can stay blank until you have them):
    - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `UGCFIRE_ADMIN_EMAILS`
 6. Deploy! Every request rewrites to Netlify’s Next.js handler via `_redirects`.
+
+## Auth Setup
+
+UGCFire uses Supabase Auth for email/password and Google login. Both providers complete through `/auth/callback`, then `/auth/complete` syncs the Supabase user into `profiles`, ensures client companies exist, and routes admins to `/admin` or clients to `/dashboard`.
+
+Run the Supabase migrations, then add admin addresses to `public.admin_allowed_emails`:
+
+```sql
+insert into public.admin_allowed_emails (email)
+values ('founder@ugcfire.com')
+on conflict do nothing;
+```
+
+Also add those same emails to `UGCFIRE_ADMIN_EMAILS` in Netlify for server-side bootstrap checks. In Supabase Auth, enable the Google provider and add your deployed callback URL:
+
+```text
+https://your-site.netlify.app/auth/callback
+```
 
 ### Netlify build settings
 

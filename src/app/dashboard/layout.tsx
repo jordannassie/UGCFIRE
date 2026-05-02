@@ -48,25 +48,48 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [])
 
   useEffect(() => {
-    // Demo mode: skip Supabase entirely
-    if (isDemoMode() && getDemoRole() === 'client') {
-      setUserEmail(localStorage.getItem(DEMO_EMAIL_KEY) ?? 'demo@ugcfire.com')
-      setCompany(DEMO_COMPANY as unknown as Company)
-      return
+    function loadData() {
+      // Demo mode: skip Supabase entirely
+      if (isDemoMode() && getDemoRole() === 'client') {
+        setUserEmail(localStorage.getItem(DEMO_EMAIL_KEY) ?? 'demo@ugcfire.com')
+        setCompany(DEMO_COMPANY as unknown as Company)
+        return
+      }
+
+      // Real auth
+      const supabase = createClient()
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) { router.push('/signup'); return }
+        setUserEmail(user.email ?? '')
+        setUserId(user.id)
+      })
+
+      getMyCompany().then(async (co) => {
+        setCompany(co)
+        if (co) {
+          const { data: brief } = await supabase
+            .from('brand_briefs')
+            .select('notes')
+            .eq('company_id', co.id)
+            .maybeSingle()
+          
+          if (brief?.notes) {
+            try {
+              const notes = JSON.parse(brief.notes as string)
+              if (notes.logo_url) {
+                setAvatarUrl(notes.logo_url)
+              }
+            } catch (e) {
+              console.error('Failed to parse brand notes', e)
+            }
+          }
+        }
+      })
     }
 
-    // Real auth
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { router.push('/signup'); return }
-      setUserEmail(user.email ?? '')
-      setUserId(user.id)
-      // Load avatar from profile
-      supabase.from('profiles').select('avatar_url').eq('id', user.id).single().then(({ data }) => {
-        if (data?.avatar_url) setAvatarUrl(data.avatar_url)
-      })
-    })
-    getMyCompany().then(setCompany)
+    loadData()
+    window.addEventListener('dashboard-sync', loadData)
+    return () => window.removeEventListener('dashboard-sync', loadData)
   }, [router])
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -74,16 +97,64 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!file || !userId) return
     setAvatarUploading(true)
     const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${userId}/avatar.${ext}`
-    const { error: upErr } = await supabase.storage.from('UGC Fire').upload(path, file, { upsert: true })
-    if (!upErr) {
-      const { data: urlData } = supabase.storage.from('UGC Fire').getPublicUrl(path)
-      const publicUrl = urlData.publicUrl
-      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId)
+
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `avatars/${userId}/avatar-${Date.now()}.${ext}`
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('path', path)
+
+      const res = await fetch('/api/upload-avatar', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) throw new Error('Upload failed')
+
+      const { success, publicUrl, error: apiErr } = await res.json()
+      if (!success) throw new Error(apiErr || 'Upload unsuccessful')
+
+      if (company?.id) {
+        // Fetch current brief to preserve other notes
+        const { data: brief, error: fetchErr } = await supabase
+          .from('brand_briefs')
+          .select('notes')
+          .eq('company_id', company.id)
+          .maybeSingle()
+        
+        if (fetchErr) console.error('[dashboard] Fetch brief failed:', fetchErr)
+
+        let notes: any = {}
+        if (brief?.notes) {
+          try { notes = JSON.parse(brief.notes as string) } catch (e) {}
+        }
+        notes.logo_url = publicUrl
+
+        const { error: upsertErr } = await supabase.from('brand_briefs').upsert({
+          company_id: company.id,
+          notes: JSON.stringify(notes),
+          company_name: company.name || 'My Brand',
+        }, { onConflict: 'company_id' })
+
+        if (upsertErr) {
+          console.error('[dashboard] Upsert brief failed:', upsertErr)
+          throw new Error('Failed to save brand logo to database')
+        }
+      } else {
+        // Fallback to profile if no company found
+        const { error: profileErr } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId)
+        if (profileErr) console.error('[dashboard] Profile update failed:', profileErr)
+      }
+
       setAvatarUrl(publicUrl)
+      window.dispatchEvent(new Event('dashboard-sync'))
+    } catch (err) {
+      console.error('[dashboard] Avatar upload failed:', err)
+    } finally {
+      setAvatarUploading(false)
+      e.target.value = ''
     }
-    setAvatarUploading(false)
   }
 
   async function signOut() {
