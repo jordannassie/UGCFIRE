@@ -123,7 +123,7 @@ export default function AdminDemoPage() {
     const supabase = createClient()
     const { data: company } = await supabase.from('companies').select('id').eq('name', 'Demo Brand').single()
     if (!company) throw new Error('Demo Brand not found. Run "Seed Demo Client" first.')
-    const { data: existing } = await supabase.from('brand_briefs').select('id').eq('company_id', company.id).single()
+    const { data: existing } = await supabase.from('brand_briefs').select('id').eq('company_id', company.id).maybeSingle()
     if (!existing) {
       const { error } = await supabase.from('brand_briefs').insert({
         company_id: company.id,

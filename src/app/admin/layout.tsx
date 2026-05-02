@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY } from '@/lib/demoData'
 import {
-  LayoutDashboard, Clapperboard, Users, CreditCard, FileText, Activity, Settings, Menu, LogOut, UserCircle, Target,
+  LayoutDashboard, Clapperboard, Users, CreditCard, FileText, Activity, Settings, Menu, LogOut, UserCircle, Target, Eye,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -71,7 +71,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       console.debug('[admin] session:', !!user, '| profile:', !!profile, '| role:', profile?.role)
 
       if (!profile || profile.role !== 'admin') {
-        if (!cancelled) setDenied(true)
+        if (!cancelled) {
+          const attemptedSync = new URLSearchParams(window.location.search).get('auth_synced') === '1'
+          if (attemptedSync) {
+            setDenied(true)
+          } else {
+            window.location.href = '/auth/complete?next=/admin'
+          }
+        }
         return
       }
 
@@ -90,6 +97,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const supabase = createClient()
     await supabase.auth.signOut()
     window.location.href = '/login'
+  }
+
+  function openUserView() {
+    document.cookie = 'ugcfire_admin_user_view=true; path=/; max-age=3600; SameSite=Lax'
+    window.location.href = '/dashboard'
   }
 
   if (denied) {
@@ -127,6 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   alt="UGCFire"
                   width={90}
                   height={36}
+                  style={{ width: "auto", height: "auto" }}
                   unoptimized
                 />
               </Link>
@@ -165,6 +178,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className="p-4 border-t border-white/5">
+          <button
+            onClick={openUserView}
+            className="group flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/40 hover:text-white hover:bg-white/5 transition-all duration-150 mb-3"
+          >
+            <Eye size={16} className="text-white/30 group-hover:text-[#FF3B1A] transition" />
+            User View
+          </button>
           <p className="text-white/30 text-xs truncate mb-2">{userEmail}</p>
           <button onClick={signOut} className="w-full text-left text-white/40 text-xs hover:text-white transition py-1">
             Sign Out

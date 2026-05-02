@@ -100,32 +100,36 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       { data: agreementData },
       { data: activityData },
     ] = await Promise.all([
-      supabase.from('companies').select('*').eq('id', id).single(),
+      supabase.from('companies').select('*').eq('id', id).maybeSingle(),
       supabase.from('content_items').select('*').eq('company_id', id).is('deleted_at', null).order('uploaded_at', { ascending: false }),
       supabase.from('client_uploads').select('*').eq('company_id', id).order('created_at', { ascending: false }),
       supabase.from('messages').select('*').eq('company_id', id).is('content_item_id', null).order('created_at', { ascending: true }),
-      supabase.from('billing_records').select('*').eq('company_id', id).single(),
-      supabase.from('agreements').select('*').eq('company_id', id).single(),
+      supabase.from('billing_records').select('*').eq('company_id', id).order('created_at', { ascending: false }).limit(1),
+      supabase.from('agreements').select('*').eq('company_id', id).order('created_at', { ascending: false }).limit(1),
       supabase.from('activity_logs').select('*').eq('company_id', id).order('created_at', { ascending: false }),
     ])
 
-    setCompany(comp)
+    setCompany(comp as Company | null)
     setContent((contentData ?? []) as ContentItem[])
     setClientUploads((uploadsData ?? []) as ClientUpload[])
     setMessages((messagesData ?? []) as Message[])
-    setBilling(billingData)
-    setAgreement(agreementData)
+    setBilling((billingData?.[0] as BillingRecord | null) || null)
+    setAgreement((agreementData?.[0] as Agreement | null) || null)
     setActivityLogs((activityData ?? []) as ActivityLog[])
 
     if (comp) {
       const [{ data: prof }, { data: planData }, { data: briefData }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', comp.owner_user_id).single(),
-        comp.plan_id ? supabase.from('plans').select('*').eq('id', comp.plan_id).single() : Promise.resolve({ data: null }),
-        supabase.from('brand_briefs').select('*').eq('company_id', id).single(),
+        supabase.from('profiles').select('*').eq('id', comp.owner_user_id).maybeSingle(),
+        comp.plan_id ? supabase.from('plans').select('*').eq('id', comp.plan_id).maybeSingle() : Promise.resolve({ data: null }),
+        supabase.from('brand_briefs')
+          .select('*')
+          .eq('company_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1),
       ])
-      setProfile(prof)
-      setPlan(planData)
-      setBrief(briefData)
+      setProfile(prof as Profile | null)
+      setPlan(planData as Plan | null)
+      setBrief((briefData?.[0] as BrandBrief | null) || null)
     }
 
     setLoading(false)

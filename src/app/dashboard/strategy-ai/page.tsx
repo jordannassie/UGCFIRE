@@ -279,7 +279,7 @@ export default function StrategyAIPage() {
       if (user) setUserId(user.id)
       const co = await getMyCompany()
       if (co) {
-        const { data: brief } = await supabase.from('brand_briefs').select('*').eq('company_id', co.id).single()
+        const { data: brief } = await supabase.from('brand_briefs').select('*').eq('company_id', co.id).maybeSingle()
         if (brief) {
           setBrandBrief(brief as Record<string, unknown>)
           setContext(calcBrandContext(brief as Record<string, unknown>))

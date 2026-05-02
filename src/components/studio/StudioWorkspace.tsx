@@ -1192,7 +1192,11 @@ export default function StudioWorkspace({
   demoMode, initialView, initialPanel, initialMode,
 }: StudioWorkspaceProps) {
   const fcProfile: FireCreatorProfile = fcProfileProp ?? DEFAULT_FC_PROFILE
-  const demo = demoMode ?? checkDemoMode()
+  const [demo, setDemo] = useState(demoMode ?? false)
+
+  useEffect(() => {
+    setDemo(demoMode ?? checkDemoMode())
+  }, [demoMode])
 
   // Data
   const [items, setItems]               = useState<ContentItem[]>([])

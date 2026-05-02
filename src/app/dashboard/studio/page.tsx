@@ -1,16 +1,22 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { isDemoMode } from '@/lib/demoData'
 import StudioWorkspace from '@/components/studio/StudioWorkspace'
 
 function StudioInner() {
   const p = useSearchParams()
+  const [demoMode, setDemoMode] = useState(false)
+
+  useEffect(() => {
+    setDemoMode(isDemoMode())
+  }, [])
+
   return (
     <StudioWorkspace
       role="client"
-      demoMode={isDemoMode()}
+      demoMode={demoMode}
       initialView={p.get('view') ?? undefined}
       initialPanel={p.get('panel') ?? undefined}
     />

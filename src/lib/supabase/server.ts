@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getSupabaseAuthCookieName, getSupabasePublishableKey, getSupabaseUrl } from "./env";
 
 export async function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseUrl = getSupabaseUrl();
+  const supabaseKey = getSupabasePublishableKey();
 
   if (!supabaseUrl || !supabaseKey) {
     return null;
@@ -15,6 +16,12 @@ export async function createClient() {
     supabaseUrl,
     supabaseKey,
     {
+      cookieOptions: {
+        name: getSupabaseAuthCookieName(),
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();

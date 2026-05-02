@@ -1,32 +1,30 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getSupabaseAuthCookieName, getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/env'
 
-export async function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
+  const adminUserView = request.cookies.get('ugcfire_admin_user_view')?.value === 'true'
 
-  // ── Demo mode cookie bypass ────────────────────────────────────────────────
-  // Cookies are set by enterDemoMode() in src/lib/demoData.ts
   const demoMode = request.cookies.get('ugcfire_demo_mode')?.value
   const demoRole = request.cookies.get('ugcfire_demo_role')?.value
 
   if (demoMode === 'true') {
-    if (path.startsWith('/admin')) {
-      // Only admin-role demo can access /admin
-      if (demoRole !== 'admin') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
+    if (path.startsWith('/admin') && demoRole !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-    // Allow all protected routes for valid demo sessions
     return NextResponse.next()
   }
 
-  // ── Real Supabase auth ─────────────────────────────────────────────────────
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    getSupabaseUrl(),
+    getSupabasePublishableKey(),
     {
+      cookieOptions: {
+        name: getSupabaseAuthCookieName(),
+      },
       cookies: {
         getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
@@ -40,20 +38,37 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+  console.log(`[proxy] Intercepting ${path} | cookies count:`, request.cookies.getAll().length)
+  console.log(`[proxy] getUser result:`, user ? user.email : 'NO USER', '| error:', userError?.message || 'none')
 
   if ((path.startsWith('/dashboard') || path.startsWith('/admin')) && !user) {
+    console.log(`[proxy] Redirecting to /login because NO USER`)
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (path.startsWith('/admin') && user) {
+  if (user && (path.startsWith('/dashboard') || path.startsWith('/admin'))) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
-    if (profile?.role !== 'admin') {
+      .maybeSingle()
+    const role = profile?.role === 'admin' ? 'admin' : 'client'
+
+    if (path.startsWith('/admin') && role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    if (path.startsWith('/admin') && adminUserView) {
+      supabaseResponse.cookies.set('ugcfire_admin_user_view', '', {
+        path: '/',
+        maxAge: 0,
+      })
+    }
+
+    if (path.startsWith('/dashboard') && role === 'admin' && !adminUserView) {
+      return NextResponse.redirect(new URL('/admin', request.url))
     }
   }
 

@@ -20,6 +20,36 @@ export default function ProfilePage() {
   const [companyId, setCompanyId]       = useState<string | null>(null)
   const avatarRef = useRef<HTMLInputElement>(null)
 
+  async function ensureCompanyExists(params: {
+    supabase: ReturnType<typeof createClient>
+    ownerId: string
+    desiredName: string
+    desiredWebsite: string
+  }) {
+    const { supabase, ownerId, desiredName, desiredWebsite } = params
+    const existing = await supabase
+      .from('companies')
+      .select('id, name, website')
+      .eq('owner_user_id', ownerId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (existing.data?.[0]?.id) return existing.data[0].id
+
+    const inserted = await supabase
+      .from('companies')
+      .insert({
+        owner_user_id: ownerId,
+        name: desiredName || 'My Brand',
+        website: desiredWebsite || null,
+        onboarding_status: 'needs_plan',
+      })
+      .select('id')
+      .single()
+
+    return inserted.data?.id ?? null
+  }
+
   useEffect(() => {
     if (isDemoMode()) {
       setFullName('Demo User')
@@ -35,20 +65,41 @@ export default function ProfilePage() {
       setUserId(user.id)
       setEmail(user.email ?? '')
 
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       if (profile) {
         setFullName(profile.full_name ?? '')
         setAvatarUrl(profile.avatar_url ?? null)
       }
 
-      const { data: co } = await supabase.from('companies').select('*').eq('owner_user_id', user.id).single()
+      const { data: companies } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('owner_user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      const co = companies?.[0]
       if (co) {
         setCompanyId(co.id)
         setCompanyName(co.name ?? '')
         setWebsite(co.website ?? '')
+      } else {
+        const fallbackName = profile?.full_name ? `${profile.full_name}'s Brand` : 'My Brand'
+        const createdCompanyId = await ensureCompanyExists({
+          supabase,
+          ownerId: user.id,
+          desiredName: fallbackName,
+          desiredWebsite: '',
+        })
+        if (createdCompanyId) {
+          setCompanyId(createdCompanyId)
+          setCompanyName(fallbackName)
+        }
       }
     }
     load()
+    const handleSync = () => setTimeout(load, 500)
+    window.addEventListener('dashboard-sync', handleSync)
+    return () => window.removeEventListener('dashboard-sync', handleSync)
   }, [])
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -56,16 +107,37 @@ export default function ProfilePage() {
     if (!file || !userId) return
     setAvatarUploading(true)
     const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${userId}/avatar.${ext}`
-    const { error } = await supabase.storage.from('UGC Fire').upload(path, file, { upsert: true })
-    if (!error) {
-      const { data: urlData } = supabase.storage.from('UGC Fire').getPublicUrl(path)
-      const url = urlData.publicUrl
-      await supabase.from('profiles').update({ avatar_url: url }).eq('id', userId)
-      setAvatarUrl(url)
+
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `avatars/${userId}/avatar-${Date.now()}.${ext}`
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('path', path)
+
+      const res = await fetch('/api/upload-avatar', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) throw new Error('Upload failed')
+
+      const { success, publicUrl, error: apiErr } = await res.json()
+      if (!success) throw new Error(apiErr || 'Upload unsuccessful')
+
+      await supabase.from('profiles').update({
+        full_name: fullName || null,
+        avatar_url: publicUrl,
+      }).eq('id', userId)
+
+      setAvatarUrl(publicUrl)
+      window.dispatchEvent(new Event('dashboard-sync'))
+    } catch (err) {
+      console.error('[profile] Avatar upload failed:', err)
+    } finally {
+      setAvatarUploading(false)
+      e.target.value = ''
     }
-    setAvatarUploading(false)
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -73,10 +145,40 @@ export default function ProfilePage() {
     if (isDemoMode()) { setSaved(true); setTimeout(() => setSaved(false), 2000); return }
     setSaving(true)
     const supabase = createClient()
-    if (userId) await supabase.from('profiles').update({ full_name: fullName }).eq('id', userId)
-    if (companyId) await supabase.from('companies').update({ name: companyName, website }).eq('id', companyId)
+    if (userId) {
+      await supabase.from('profiles').update({
+        full_name: fullName || null,
+        avatar_url: avatarUrl,
+      }).eq('id', userId)
+
+      const ensuredCompanyId = await ensureCompanyExists({
+        supabase,
+        ownerId: userId,
+        desiredName: companyName || `${fullName || 'My'} Brand`,
+        desiredWebsite: website,
+      })
+
+      if (ensuredCompanyId) {
+        setCompanyId(ensuredCompanyId)
+        const updatedName = companyName || `${fullName || 'My'} Brand`
+        const updatedWebsite = website || null
+
+        // Update company
+        await supabase.from('companies').update({
+          name: updatedName,
+          website: updatedWebsite,
+        }).eq('id', ensuredCompanyId)
+
+        // Sync to brand_briefs
+        await supabase.from('brand_briefs').update({
+          company_name: updatedName,
+          website: updatedWebsite,
+        }).eq('company_id', ensuredCompanyId)
+      }
+    }
     setSaving(false)
     setSaved(true)
+    window.dispatchEvent(new Event('dashboard-sync'))
     setTimeout(() => setSaved(false), 2500)
   }
 

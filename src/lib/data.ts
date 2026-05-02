@@ -5,7 +5,7 @@ export async function getMyProfile() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
   return data
 }
 
@@ -13,8 +13,13 @@ export async function getMyCompany() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  const { data } = await supabase.from('companies').select('*').eq('owner_user_id', user.id).single()
-  return data as Company | null
+  const { data } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('owner_user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+  return (data?.[0] as Company | null) || null
 }
 
 export async function getPlans(): Promise<Plan[]> {
