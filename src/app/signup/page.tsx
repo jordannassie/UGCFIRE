@@ -4,8 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { hasSupabaseConfig } from '@/lib/supabase/env'
-import { enterDemoMode } from '@/lib/demoData'
-
 export default function SignupPage() {
   const [tab, setTab]           = useState<'signup' | 'login'>('login')
   const [mode, setMode]         = useState<'form' | 'reset' | 'reset-sent'>('form')
@@ -82,13 +80,6 @@ export default function SignupPage() {
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     if (err) { setError(err.message); setLoading(false) }
-  }
-
-  function handleDemoLogin(role: 'admin' | 'client') {
-    // No passwords, no Supabase, no service role key required.
-    // Sets demo cookies + localStorage then redirects immediately.
-    enterDemoMode(role)
-    window.location.href = role === 'admin' ? '/admin' : '/dashboard'
   }
 
   const inputStyle = 'w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF3B1A] text-sm'
@@ -286,22 +277,6 @@ export default function SignupPage() {
                 </p>
               )}
 
-              {/* Demo access — no passwords, no seeds, instant redirect */}
-              <div className="mt-6 pt-6 border-t border-white/10 space-y-2">
-                <p className="text-center text-white/30 text-xs mb-3">Try the demo</p>
-                <button
-                  onClick={() => handleDemoLogin('client')}
-                  className="w-full border border-white/10 text-white/60 py-2.5 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition"
-                >
-                  Demo Client Login
-                </button>
-                <button
-                  onClick={() => handleDemoLogin('admin')}
-                  className="w-full border border-white/10 text-white/60 py-2.5 rounded-lg text-sm hover:border-[#FF3B1A] hover:text-white transition"
-                >
-                  Demo Admin Login
-                </button>
-              </div>
             </>
           )}
         </div>
