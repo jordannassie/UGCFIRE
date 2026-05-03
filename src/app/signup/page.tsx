@@ -116,10 +116,10 @@ export default function SignupPage() {
             <Image
               src="https://phhczohqidgrvcmszets.supabase.co/storage/v1/object/public/UGC%20Fire/images/UGCfirelog.png"
               alt="UGCFire"
-              width={140}
-              height={56}
+              width={120}
+              height={48}
               className="mx-auto"
-              style={{ width: "auto", height: "auto" }}
+              style={{ objectFit: "contain" }}
               loading="eager"
               unoptimized
             />
