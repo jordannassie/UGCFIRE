@@ -6,5 +6,8 @@
   node_bundler = "esbuild"
   included_files = ["node_modules/openai/**"]
 
+[functions."___netlify-server-handler"]
+  timeout = 26
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
