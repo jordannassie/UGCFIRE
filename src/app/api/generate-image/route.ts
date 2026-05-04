@@ -36,7 +36,7 @@ async function generateWithRefs(prompt: string, size: SupportedSize, refs: strin
   const files = refs.map(toImageFile)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const res = await (openai.images.edit as any)({
-    model: 'gpt-image-1',
+    model: 'gpt-image-2',
     image: files.length === 1 ? files[0] : files,
     prompt,
     size,
@@ -48,7 +48,7 @@ async function generateWithRefs(prompt: string, size: SupportedSize, refs: strin
 }
 
 async function generateTextOnly(prompt: string, size: SupportedSize): Promise<string> {
-  const res = await openai.images.generate({ model: 'gpt-image-1', prompt, size })
+  const res = await openai.images.generate({ model: 'gpt-image-2', prompt, size })
   const b64 = res.data[0]?.b64_json
   if (!b64) throw new Error('No image data in generate response')
   return b64
