@@ -29,6 +29,29 @@ function fileToBase64(file: File): Promise<string> {
   })
 }
 
+// Resize + compress image to max 1024px and ~800KB before sending
+function compressImage(file: File, maxPx = 1024, quality = 0.8): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height))
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, w, h)
+      const dataUrl = canvas.toDataURL('image/jpeg', quality)
+      resolve(dataUrl.split(',')[1])
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}
+
 function parseCount(prompt: string): number {
   const patterns = [
     /\b(\d+)\s+(?:image|photo|poster|version|asset|variation|design|concept|visual|render|shot|frame|card)s?\b/i,
@@ -151,7 +174,7 @@ export default function CreatePage() {
       arr.map(async file => ({
         file,
         preview: URL.createObjectURL(file),
-        b64: await fileToBase64(file),
+        b64: await compressImage(file),
       }))
     )
     setRefImages(prev => [...prev, ...next])
