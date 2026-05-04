@@ -13,7 +13,6 @@ interface RefImage {
   file: File
   preview: string
   b64: string
-  storagePath?: string
 }
 
 interface Job {
@@ -22,8 +21,8 @@ interface Job {
   asset_label: string
   size: string
   status: 'pending' | 'processing' | 'complete' | 'error'
-  image_url?: string
-  error?: string
+  image_url?: string | null
+  error?: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -38,8 +37,7 @@ function compressImage(file: File, maxPx = 1024, quality = 0.8): Promise<string>
       const w = Math.round(img.width * scale)
       const h = Math.round(img.height * scale)
       const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
+      canvas.width = w; canvas.height = h
       canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
       resolve(canvas.toDataURL('image/jpeg', quality).split(',')[1])
     }
@@ -60,25 +58,16 @@ function parseCount(prompt: string): number {
   return 9
 }
 
-function gridCols(count: number) {
-  if (count === 1) return 'grid-cols-1'
-  if (count <= 4)  return 'grid-cols-2'
-  if (count <= 9)  return 'grid-cols-3'
+function gridCols(n: number) {
+  if (n === 1) return 'grid-cols-1'
+  if (n <= 4)  return 'grid-cols-2'
+  if (n <= 9)  return 'grid-cols-3'
   return 'grid-cols-4'
 }
 
-function statusColor(status: Job['status']) {
-  if (status === 'complete')   return 'text-green-400'
-  if (status === 'error')      return 'text-red-400'
-  if (status === 'processing') return 'text-[#FF3B1A]'
-  return 'text-white/20'
-}
+// ─── Job Card ─────────────────────────────────────────────────────────────────
 
-// ─── Image Card ───────────────────────────────────────────────────────────────
-
-function JobCard({
-  job, onDownload, onRetry, disabled,
-}: {
+function JobCard({ job, onDownload, onRetry, disabled }: {
   job: Job
   onDownload: (job: Job) => void
   onRetry: (job: Job) => void
@@ -97,25 +86,13 @@ function JobCard({
 
         {job.status === 'complete' && job.image_url && (
           <>
-            <img
-              src={job.image_url}
-              alt={job.asset_label}
-              className="w-full h-full object-cover"
-            />
+            <img src={job.image_url} alt={job.asset_label} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <button
-                onClick={() => onDownload(job)}
-                className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition"
-                title="Download"
-              >
+              <button onClick={() => onDownload(job)} className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition" title="Download">
                 <Download size={14} />
               </button>
               {!disabled && (
-                <button
-                  onClick={() => onRetry(job)}
-                  className="bg-white/10 hover:bg-[#FF3B1A]/30 text-white p-2 rounded-lg transition"
-                  title="Regenerate"
-                >
+                <button onClick={() => onRetry(job)} className="bg-white/10 hover:bg-[#FF3B1A]/30 text-white p-2 rounded-lg transition" title="Regenerate">
                   <RefreshCw size={14} />
                 </button>
               )}
@@ -126,14 +103,9 @@ function JobCard({
         {job.status === 'error' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3">
             <AlertCircle size={18} className="text-red-400" />
-            <p className="text-red-400/60 text-[10px] text-center leading-tight line-clamp-3">
-              {job.error ?? 'Generation failed'}
-            </p>
+            <p className="text-red-400/60 text-[10px] text-center leading-tight line-clamp-3">{job.error ?? 'Failed'}</p>
             {!disabled && (
-              <button
-                onClick={() => onRetry(job)}
-                className="text-[10px] text-[#FF3B1A] hover:underline flex items-center gap-1 mt-1"
-              >
+              <button onClick={() => onRetry(job)} className="text-[10px] text-[#FF3B1A] hover:underline flex items-center gap-1 mt-1">
                 <RefreshCw size={10} /> Retry
               </button>
             )}
@@ -143,20 +115,15 @@ function JobCard({
 
       <div className="px-2.5 py-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className={`text-[10px] ${statusColor(job.status)}`}>
-            {job.status === 'complete' ? <CheckCircle2 size={10} className="inline" /> :
-             job.status === 'error'    ? <AlertCircle size={10} className="inline text-red-400" /> :
-             <Loader2 size={10} className="inline animate-spin" />}
-          </span>
-          <span className="text-white/30 text-[11px] tabular-nums truncate">
-            #{job.asset_number}
-          </span>
+          {job.status === 'complete'   && <CheckCircle2 size={10} className="text-green-400 flex-shrink-0" />}
+          {job.status === 'error'      && <AlertCircle  size={10} className="text-red-400 flex-shrink-0" />}
+          {(job.status === 'pending' || job.status === 'processing') && (
+            <Loader2 size={10} className="text-[#FF3B1A] animate-spin flex-shrink-0" />
+          )}
+          <span className="text-white/30 text-[11px] tabular-nums">#{job.asset_number}</span>
         </div>
         {job.status === 'complete' && job.image_url && (
-          <button
-            onClick={() => onDownload(job)}
-            className="text-[10px] text-white/30 hover:text-white flex items-center gap-1 transition flex-shrink-0"
-          >
+          <button onClick={() => onDownload(job)} className="text-[10px] text-white/30 hover:text-white flex items-center gap-1 transition flex-shrink-0">
             <Download size={10} /> PNG
           </button>
         )}
@@ -168,12 +135,12 @@ function JobCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CreatePage() {
-  const [prompt, setPrompt]           = useState('')
-  const [refImages, setRefImages]     = useState<RefImage[]>([])
-  const [jobs, setJobs]               = useState<Job[]>([])
+  const [prompt, setPrompt]             = useState('')
+  const [refImages, setRefImages]       = useState<RefImage[]>([])
+  const [jobs, setJobs]                 = useState<Job[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
-  const [sessionId, setSessionId]     = useState<string | null>(null)
   const [uploadingRefs, setUploadingRefs] = useState(false)
+  const [sessionId, setSessionId]       = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const channelRef   = useRef<ReturnType<ReturnType<typeof createBrowserClient>['channel']> | null>(null)
@@ -183,16 +150,12 @@ export default function CreatePage() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   )
 
-  // ── Cleanup Realtime on unmount ───────────────────────────────────────────
-  useEffect(() => {
-    return () => { channelRef.current?.unsubscribe() }
-  }, [])
+  useEffect(() => () => { channelRef.current?.unsubscribe() }, [])
 
-  // ── Reference image uploads ───────────────────────────────────────────────
+  // ── Reference images ──────────────────────────────────────────────────────
   async function addFiles(files: FileList | File[]) {
-    const arr = Array.from(files).filter(f => f.type.startsWith('image/'))
     const next: RefImage[] = await Promise.all(
-      arr.map(async file => ({
+      Array.from(files).filter(f => f.type.startsWith('image/')).map(async file => ({
         file,
         preview: URL.createObjectURL(file),
         b64: await compressImage(file),
@@ -202,43 +165,30 @@ export default function CreatePage() {
   }
 
   function removeImage(idx: number) {
-    setRefImages(prev => {
-      URL.revokeObjectURL(prev[idx].preview)
-      return prev.filter((_, i) => i !== idx)
-    })
+    setRefImages(prev => { URL.revokeObjectURL(prev[idx].preview); return prev.filter((_, i) => i !== idx) })
   }
 
-  // ── Subscribe to Realtime for a session ──────────────────────────────────
+  // ── Realtime subscription ─────────────────────────────────────────────────
   const subscribeToSession = useCallback((sid: string) => {
     channelRef.current?.unsubscribe()
-
-    const channel = supabase
+    channelRef.current = supabase
       .channel(`jobs:${sid}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'generation_jobs',
-          filter: `session_id=eq.${sid}`,
-        },
-        (payload) => {
-          const updated = payload.new as Job
-          setJobs(prev => prev.map(j => j.id === updated.id ? { ...j, ...updated } : j))
-        }
-      )
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public',
+        table: 'generation_jobs',
+        filter: `session_id=eq.${sid}`,
+      }, payload => {
+        setJobs(prev => prev.map(j => j.id === (payload.new as Job).id ? { ...j, ...payload.new as Job } : j))
+      })
       .subscribe()
-
-    channelRef.current = channel
   }, [supabase])
 
-  // ── Upload reference images to Supabase Storage ───────────────────────────
+  // ── Upload refs to Supabase Storage ───────────────────────────────────────
   async function uploadRefImages(sid: string): Promise<string[]> {
     const paths: string[] = []
     for (let i = 0; i < refImages.length; i++) {
-      const ref = refImages[i]
+      const buf  = Buffer.from(refImages[i].b64, 'base64')
       const path = `refs/${sid}/ref-${i}.jpg`
-      const buf = Buffer.from(ref.b64, 'base64')
       const { error } = await supabase.storage
         .from('campaign-assets')
         .upload(path, buf, { contentType: 'image/jpeg', upsert: true })
@@ -247,150 +197,109 @@ export default function CreatePage() {
     return paths
   }
 
-  // ── Process a single job ─────────────────────────────────────────────────
-  async function processJob(jobId: string) {
+  // ── Retry a single job ────────────────────────────────────────────────────
+  async function handleRetry(job: Job) {
+    if (isGenerating) return
+    setIsGenerating(true)
+    setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'pending', error: null } : j))
     try {
-      const res = await fetch('/api/process-job', {
+      await fetch('/api/process-job', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId }),
+        body: JSON.stringify({ jobId: job.id }),
       })
-      if (!res.ok) {
-        let errMsg = `Server error (${res.status})`
-        try { const d = await res.json(); errMsg = d.error || errMsg } catch { /* ignore */ }
-        throw new Error(errMsg)
-      }
-    } catch (err) {
-      console.error(`[create] processJob ${jobId} failed:`, err)
-      // Update local state — Realtime should also fire but this is a fallback
-      setJobs(prev => prev.map(j =>
-        j.id === jobId
-          ? { ...j, status: 'error', error: err instanceof Error ? err.message : 'Failed' }
-          : j
-      ))
-    }
+    } catch { /* Realtime will update the status */ }
+    setIsGenerating(false)
   }
 
-  // ── Generate ─────────────────────────────────────────────────────────────
+  // ── Generate ──────────────────────────────────────────────────────────────
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return
     setIsGenerating(true)
     setJobs([])
 
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Upload reference images if any
+      // Upload reference images first if any
       let referencePaths: string[] = []
       if (refImages.length > 0) {
         setUploadingRefs(true)
-        // We need a temp session ID for uploading before we have the real one
         const tempId = crypto.randomUUID()
         referencePaths = await uploadRefImages(tempId)
         setUploadingRefs(false)
       }
 
-      // Create all jobs in Supabase
+      // Create jobs + trigger background processing
       const res = await fetch('/api/generate-campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          userId: user?.id,
-          referencePaths,
-        }),
+        body: JSON.stringify({ prompt, userId: user?.id, referencePaths }),
       })
 
-      let data: { sessionId: string; jobs: Job[] }
-      try { data = await res.json() } catch {
-        throw new Error(`Server error (${res.status})`)
-      }
-      if (!res.ok) throw new Error((data as { error?: string }).error || `Error ${res.status}`)
+      let data: { sessionId: string; jobs: Job[]; error?: string }
+      try { data = await res.json() } catch { throw new Error(`Server error (${res.status})`) }
+      if (!res.ok) throw new Error(data.error ?? `Error ${res.status}`)
 
-      const { sessionId: sid, jobs: newJobs } = data
-      setSessionId(sid)
-      setJobs(newJobs.map(j => ({ ...j, status: 'pending' as const })))
+      setSessionId(data.sessionId)
+      setJobs(data.jobs.map(j => ({ ...j, status: 'pending' as const })))
 
-      // Subscribe to Realtime before firing jobs
-      subscribeToSession(sid)
-
-      // Fire all process-job calls in parallel — each is its own Vercel function invocation
-      await Promise.allSettled(newJobs.map(j => processJob(j.id)))
+      // Subscribe to Realtime — images will pop in as jobs complete
+      subscribeToSession(data.sessionId)
 
     } catch (err) {
-      console.error('[create] handleGenerate error:', err)
+      console.error('[create] generate error:', err)
     } finally {
       setIsGenerating(false)
     }
   }
 
-  // ── Retry a single job ────────────────────────────────────────────────────
-  async function handleRetry(job: Job) {
-    if (isGenerating) return
-    setIsGenerating(true)
-    setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: 'pending', error: undefined } : j))
-    await processJob(job.id)
-    setIsGenerating(false)
-  }
-
-  // ── Download single ───────────────────────────────────────────────────────
+  // ── Download ──────────────────────────────────────────────────────────────
   async function handleDownload(job: Job) {
     if (!job.image_url) return
-    const res  = await fetch(job.image_url)
-    const blob = await res.blob()
+    const blob = await fetch(job.image_url).then(r => r.blob())
     const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url
-    a.download = `image-${String(job.asset_number).padStart(2, '0')}.png`
-    a.click()
-    URL.revokeObjectURL(url)
+    const a    = Object.assign(document.createElement('a'), {
+      href: url, download: `image-${String(job.asset_number).padStart(2, '0')}.png`,
+    })
+    a.click(); URL.revokeObjectURL(url)
   }
 
-  // ── Download ZIP ──────────────────────────────────────────────────────────
   async function handleDownloadZip() {
     const done = jobs.filter(j => j.status === 'complete' && j.image_url)
     if (!done.length) return
     const zip = new JSZip()
     await Promise.all(done.map(async j => {
-      const res  = await fetch(j.image_url!)
-      const buf  = await res.arrayBuffer()
+      const buf = await fetch(j.image_url!).then(r => r.arrayBuffer())
       zip.file(`image-${String(j.asset_number).padStart(2, '0')}.png`, buf)
     }))
-    const blob = await zip.generateAsync({ type: 'blob' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url
-    a.download = 'campaign-images.zip'
-    a.click()
+    const url = URL.createObjectURL(await zip.generateAsync({ type: 'blob' }))
+    Object.assign(document.createElement('a'), { href: url, download: 'campaign-images.zip' }).click()
     URL.revokeObjectURL(url)
   }
 
   const doneCount  = jobs.filter(j => j.status === 'complete').length
   const errorCount = jobs.filter(j => j.status === 'error').length
-  const detectedN  = prompt.trim() ? parseCount(prompt) : 9
   const isActive   = jobs.some(j => j.status === 'pending' || j.status === 'processing')
+  const detectedN  = prompt.trim() ? parseCount(prompt) : 9
 
   return (
     <div className="min-h-screen" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
-      {/* Header */}
       <div className="mb-8">
-        <h1
-          className="text-white flex items-center gap-2"
-          style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.9rem', letterSpacing: '0.06em' }}
-        >
+        <h1 className="text-white flex items-center gap-2"
+          style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.9rem', letterSpacing: '0.06em' }}>
           <Sparkles size={22} className="text-[#FF3B1A]" />
           AI Campaign Creator
         </h1>
         <p className="text-white/30 text-sm mt-0.5">
-          Upload references → write your brief → images generate live via Supabase Realtime
+          Upload references → write your brief → images appear live via Supabase Realtime
         </p>
       </div>
 
       <div className="flex gap-6 items-start">
 
-        {/* ── Left: Inputs ───────────────────────────────────────────────── */}
+        {/* ── Left: Inputs ─────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 space-y-4">
 
           {/* Upload zone */}
@@ -399,9 +308,7 @@ export default function CreatePage() {
             onDrop={e => { e.preventDefault(); if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files) }}
             onClick={() => !refImages.length && fileInputRef.current?.click()}
             className={`bg-[#0a0a0a] border border-dashed rounded-xl transition-colors ${
-              refImages.length
-                ? 'border-white/10 p-4'
-                : 'border-white/10 hover:border-[#FF3B1A]/30 cursor-pointer p-8'
+              refImages.length ? 'border-white/10 p-4' : 'border-white/10 hover:border-[#FF3B1A]/30 cursor-pointer p-8'
             }`}
           >
             {refImages.length === 0 ? (
@@ -416,9 +323,7 @@ export default function CreatePage() {
                 <button
                   onClick={e => { e.stopPropagation(); fileInputRef.current?.click() }}
                   className="px-4 py-2 bg-white/8 hover:bg-white/12 text-white/50 hover:text-white text-xs rounded-lg transition"
-                >
-                  Browse files
-                </button>
+                >Browse files</button>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -428,34 +333,24 @@ export default function CreatePage() {
                     <button
                       onClick={e => { e.stopPropagation(); removeImage(i) }}
                       className="absolute top-0.5 right-0.5 bg-black/70 hover:bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/img:opacity-100 transition"
-                    >
-                      <X size={10} />
-                    </button>
+                    ><X size={10} /></button>
                   </div>
                 ))}
                 <button
                   onClick={e => { e.stopPropagation(); fileInputRef.current?.click() }}
                   className="w-20 h-20 rounded-lg border border-dashed border-white/10 hover:border-[#FF3B1A]/30 flex items-center justify-center flex-shrink-0 transition"
-                >
-                  <Upload size={16} className="text-white/20" />
-                </button>
+                ><Upload size={16} className="text-white/20" /></button>
               </div>
             )}
           </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = '' }}
-          />
+          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+            onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = '' }} />
 
           {/* Prompt */}
           <div className="relative">
             <textarea
-              className="w-full bg-[#0a0a0a] border border-white/8 rounded-xl px-4 py-4 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#FF3B1A]/40 focus:bg-[#0d0d0d] transition resize-none"
+              className="w-full bg-[#0a0a0a] border border-white/8 rounded-xl px-4 py-4 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#FF3B1A]/40 transition resize-none"
               rows={9}
               placeholder={`Write your campaign brief. Mention how many images you want.\n\nExamples:\n• "Generate 12 images of a luxury sneaker campaign, cinematic lighting"\n• "Create 5 posters for a skincare brand, minimal white aesthetic"\n• "Make 9 product shots of perfume bottles on marble"\n\nDefault: 9 images`}
               value={prompt}
@@ -481,23 +376,20 @@ export default function CreatePage() {
             >
               {uploadingRefs
                 ? <><Loader2 size={18} className="animate-spin" /> Uploading References…</>
-                : isActive
-                  ? <><Loader2 size={18} className="animate-spin" /> Generating {doneCount}/{jobs.length}…</>
-                  : isGenerating
-                    ? <><Loader2 size={18} className="animate-spin" /> Starting…</>
-                    : <><Sparkles size={18} /> Generate Campaign</>
+                : isGenerating && jobs.length === 0
+                  ? <><Loader2 size={18} className="animate-spin" /> Starting…</>
+                  : <><Sparkles size={18} /> Generate Campaign</>
               }
             </button>
 
             {jobs.length > 0 && (
-              <div className="flex gap-2 text-xs text-white/30 justify-between items-center px-1">
-                <div className="flex gap-3">
-                  {doneCount > 0 && <span className="text-green-400">{doneCount} done</span>}
+              <div className="flex items-center justify-between px-1 text-xs">
+                <div className="flex gap-3 text-white/30">
+                  {doneCount > 0  && <span className="text-green-400">{doneCount} done</span>}
                   {errorCount > 0 && <span className="text-red-400">{errorCount} failed</span>}
                   {isActive && (
                     <span className="text-[#FF3B1A] flex items-center gap-1">
-                      <Loader2 size={10} className="animate-spin" />
-                      Live via Realtime
+                      <Loader2 size={10} className="animate-spin" /> Live via Realtime
                     </span>
                   )}
                 </div>
@@ -505,37 +397,23 @@ export default function CreatePage() {
                   <button
                     onClick={handleDownloadZip}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-lg transition"
-                  >
-                    <Archive size={12} /> Download ZIP
-                  </button>
+                  ><Archive size={12} /> Download ZIP</button>
                 )}
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Right: Image grid ───────────────────────────────────────────── */}
+        {/* ── Right: Live image grid ────────────────────────────────────── */}
         {jobs.length > 0 && (
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-white/40 text-xs font-semibold uppercase tracking-widest">
-                Generated Images
-              </p>
-              {sessionId && (
-                <span className="text-white/15 text-[10px] font-mono truncate max-w-[140px]">
-                  {sessionId.slice(0, 8)}…
-                </span>
-              )}
+              <p className="text-white/40 text-xs font-semibold uppercase tracking-widest">Generated Images</p>
+              <span className="text-white/15 text-[10px] font-mono">{doneCount}/{jobs.length} ready</span>
             </div>
             <div className={`grid ${gridCols(jobs.length)} gap-2`}>
               {jobs.map(job => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  onDownload={handleDownload}
-                  onRetry={handleRetry}
-                  disabled={isGenerating}
-                />
+                <JobCard key={job.id} job={job} onDownload={handleDownload} onRetry={handleRetry} disabled={isGenerating} />
               ))}
             </div>
           </div>

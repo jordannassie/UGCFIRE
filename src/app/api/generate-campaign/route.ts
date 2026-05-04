@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 
@@ -41,18 +41,19 @@ export async function POST(req: NextRequest) {
     }
 
     const sessionId = randomUUID()
-    const count = parseCount(prompt)
-    const size = detectSize(prompt)
+    const count     = parseCount(prompt)
+    const size      = detectSize(prompt)
+    const baseUrl   = new URL(req.url).origin
 
     const jobs = Array.from({ length: count }, (_, i) => ({
-      user_id: userId || null,
-      session_id: sessionId,
+      user_id:          userId || null,
+      session_id:       sessionId,
       prompt,
-      asset_number: i + 1,
-      asset_label: `Image ${i + 1}`,
+      asset_number:     i + 1,
+      asset_label:      `Image ${i + 1}`,
       size,
-      status: 'pending',
-      reference_paths: referencePaths,
+      status:           'pending',
+      reference_paths:  referencePaths,
     }))
 
     const { data, error } = await supabase
@@ -66,6 +67,21 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`[generate-campaign] Created ${data.length} jobs for session ${sessionId}`)
+
+    // Fire process-job for each after the response is sent — each becomes
+    // its own independent function invocation on Netlify/Vercel.
+    after(() =>
+      Promise.allSettled(
+        data.map((job: { id: string }) =>
+          fetch(`${baseUrl}/api/process-job`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ jobId: job.id }),
+          }).catch(e => console.error('[generate-campaign] trigger failed:', e))
+        )
+      )
+    )
+
     return NextResponse.json({ sessionId, jobs: data })
 
   } catch (err) {
