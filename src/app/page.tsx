@@ -1083,69 +1083,35 @@ export default function Home() {
       </section>
 
       {/* ── Video + Product Image Showcase ── */}
-      <section style={{ background: "#f2f1ee", padding: "96px 2rem" }}>
+      <section style={{ background: "#f2f1ee", padding: "48px 2rem" }}>
         <style>{`
           .showcase-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
+            gap: 20px;
           }
           @media (max-width: 768px) {
-            .showcase-grid {
-              grid-template-columns: 1fr;
-            }
+            .showcase-grid { grid-template-columns: 1fr; }
           }
         `}</style>
 
-        {/* Heading */}
-        <div style={{ textAlign: "center", marginBottom: 56, maxWidth: 680, margin: "0 auto 56px" }}>
-          <div style={{
-            fontSize: 11,
-            letterSpacing: "0.18em",
-            color: "#FF3B1A",
-            textTransform: "uppercase",
-            fontWeight: 700,
-            marginBottom: 14,
-          }}>
-            Video + Imagery That Converts
-          </div>
-          <h2 style={{
-            fontFamily: "var(--font-bebas)",
-            fontSize: "clamp(44px, 5vw, 68px)",
-            letterSpacing: "0.02em",
-            color: "#111",
-            lineHeight: 1,
-            marginBottom: 16,
-          }}>
-            Showcase Your Brand in Action
-          </h2>
-          <p style={{ fontSize: 17, color: "rgba(0,0,0,0.5)", lineHeight: 1.7, maxWidth: 520, margin: "0 auto" }}>
-            High-performing UGC video commercials and lifestyle imagery crafted to drive trust, engagement, and results.
-          </p>
-        </div>
-
-        {/* Two-column container */}
         <div style={{
           maxWidth: 1160,
           margin: "0 auto",
           background: "#fff",
           borderRadius: 28,
-          padding: 20,
+          padding: 16,
           boxShadow: "0 8px 48px rgba(0,0,0,0.10)",
         }}>
           <div className="showcase-grid">
 
             {/* Left — Video */}
-            <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "#0a0a0a", minHeight: 480 }}>
-              {/* Badge */}
+            <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "#0a0a0a", minHeight: 520 }}>
               <div style={{
                 position: "absolute", top: 14, left: 14, zIndex: 10,
-                background: "rgba(0,0,0,0.72)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 999,
-                padding: "5px 14px",
-                display: "flex", alignItems: "center", gap: 7,
+                background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.15)", borderRadius: 999,
+                padding: "5px 14px", display: "flex", alignItems: "center", gap: 7,
               }}>
                 <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#FF3B1A", flexShrink: 0, display: "inline-block" }} />
                 <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#fff", textTransform: "uppercase" }}>
@@ -1153,48 +1119,91 @@ export default function Home() {
                 </span>
               </div>
               <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                controls
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", minHeight: 480 }}
+                autoPlay muted loop playsInline controls
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", minHeight: 520 }}
                 src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/hf_20260429_020651_1d9ae862-a0c1-498e-9296-651fb43dc88c.mp4"
               />
             </div>
 
-            {/* Right — Product image */}
-            <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "#f7f5f2", minHeight: 480 }}>
-              {/* Badge */}
-              <div style={{
-                position: "absolute", top: 14, left: 14, zIndex: 10,
-                background: "rgba(0,0,0,0.72)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: 999,
-                padding: "5px 14px",
-                display: "flex", alignItems: "center", gap: 7,
-              }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#FF3B1A", flexShrink: 0, display: "inline-block" }} />
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#fff", textTransform: "uppercase" }}>
-                  Product in Action
-                </span>
-              </div>
+            {/* Right — Product image with floating product circles */}
+            <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "#f7f5f2", minHeight: 520 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/e285ae04-724a-43a6-9cc7-759f8fa80ac3.png"
                 alt="UGC Fire products in action"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  minHeight: 480,
-                  objectFit: "cover",
-                  objectPosition: "center top",
-                  display: "block",
-                }}
+                style={{ width: "100%", height: "100%", minHeight: 520, objectFit: "cover", objectPosition: "center top", display: "block" }}
               />
-            </div>
 
+              {/* Product circle 1 — bottom left */}
+              <div style={{
+                position: "absolute", bottom: 28, left: 24, zIndex: 10,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+              }}>
+                {/* Connector dot + line */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+                  <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.6)" }} />
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />
+                </div>
+                <div style={{
+                  width: 88, height: 88, borderRadius: "50%",
+                  background: "#fff",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
+                  border: "3px solid #fff",
+                  overflow: "hidden",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/e285ae04-724a-43a6-9cc7-759f8fa80ac3.png"
+                    alt="Product 1"
+                    style={{ width: "160%", height: "160%", objectFit: "cover", objectPosition: "60% 80%", marginLeft: "30%", marginTop: "40%" }}
+                  />
+                </div>
+                <div style={{
+                  background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)",
+                  borderRadius: 999, padding: "4px 12px",
+                  fontSize: 10, fontWeight: 700, color: "#fff",
+                  letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap",
+                }}>
+                  Product 1
+                </div>
+              </div>
+
+              {/* Product circle 2 — bottom right */}
+              <div style={{
+                position: "absolute", bottom: 28, right: 24, zIndex: 10,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+              }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.6)" }} />
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />
+                </div>
+                <div style={{
+                  width: 88, height: 88, borderRadius: "50%",
+                  background: "#fff",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
+                  border: "3px solid #fff",
+                  overflow: "hidden",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/e285ae04-724a-43a6-9cc7-759f8fa80ac3.png"
+                    alt="Product 2"
+                    style={{ width: "160%", height: "160%", objectFit: "cover", objectPosition: "40% 80%", marginLeft: "-20%", marginTop: "40%" }}
+                  />
+                </div>
+                <div style={{
+                  background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)",
+                  borderRadius: 999, padding: "4px 12px",
+                  fontSize: 10, fontWeight: 700, color: "#fff",
+                  letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap",
+                }}>
+                  Product 2
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </section>
