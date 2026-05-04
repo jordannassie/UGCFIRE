@@ -183,8 +183,13 @@ export default function CreatePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+      let data: Record<string, unknown> = {}
+      try {
+        data = await res.json()
+      } catch {
+        throw new Error(res.status === 504 ? 'Timed out — image took too long. Try again.' : `Server error (${res.status})`)
+      }
+      if (!res.ok) throw new Error((data.error as string) ?? `HTTP ${res.status}`)
 
       setImages(prev => prev.map(img =>
         img.index === index ? { ...img, status: 'done', b64: data.b64 } : img
@@ -207,7 +212,9 @@ export default function CreatePage() {
     }))
     setImages(slots)
     setIsGenerating(true)
-    await Promise.allSettled(slots.map(s => generateOne(s.index, prompt, refImages)))
+    for (const s of slots) {
+      await generateOne(s.index, prompt, refImages)
+    }
     setIsGenerating(false)
   }
 
