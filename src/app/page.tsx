@@ -1038,27 +1038,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section style={{
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        padding: "20px 0",
-        overflow: "hidden",
-        background: "rgba(255,255,255,0.015)",
-      }}>
-        <div className="brand-scroll">
-          {[...BRANDS, ...BRANDS].map((b, i) => (
-            <span key={i} style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 700,
-              fontSize: 14,
-              letterSpacing: "0.08em",
-              color: "rgba(255,255,255,0.25)",
-              textTransform: "uppercase",
-              whiteSpace: "nowrap",
-            }}>{b}</span>
-          ))}
-        </div>
-      </section>
 
 
       <section id="results" className="sec-v" style={{ padding: "100px 0", overflow: "hidden" }}>
@@ -1103,53 +1082,121 @@ export default function Home() {
         </div>
       </section>
 
-      {/* UGCFire — Brand Video Showcase Section */}
-      <section
-        className="ugcfire-video-section"
-        style={{
-          position: "relative",
-          width: "100%",
-          minHeight: "700px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundImage: "url('https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/images/Fire%20background.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          overflow: "hidden",
-        }}
-      >
-        {/* Subtle dark overlay so video pops */}
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.30)", zIndex: 1 }} />
-
-        {/* Centered video */}
-        <div style={{ position: "relative", zIndex: 2, width: "90%", maxWidth: 900 }}>
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            style={{
-              width: "100%",
-              borderRadius: 20,
-              boxShadow: "0 32px 80px rgba(0,0,0,0.55)",
-              display: "block",
-            }}
-          >
-            <source
-              src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/hf_20260429_020651_1d9ae862-a0c1-498e-9296-651fb43dc88c.mp4"
-              type="video/mp4"
-            />
-          </video>
-        </div>
-
-        {/* Mobile: lower min-height */}
+      {/* ── Video + Product Image Showcase ── */}
+      <section style={{ background: "#f2f1ee", padding: "96px 2rem" }}>
         <style>{`
-          @media (max-width: 640px) {
-            .ugcfire-video-section { min-height: 520px !important; }
+          .showcase-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+          }
+          @media (max-width: 768px) {
+            .showcase-grid {
+              grid-template-columns: 1fr;
+            }
           }
         `}</style>
+
+        {/* Heading */}
+        <div style={{ textAlign: "center", marginBottom: 56, maxWidth: 680, margin: "0 auto 56px" }}>
+          <div style={{
+            fontSize: 11,
+            letterSpacing: "0.18em",
+            color: "#FF3B1A",
+            textTransform: "uppercase",
+            fontWeight: 700,
+            marginBottom: 14,
+          }}>
+            Video + Imagery That Converts
+          </div>
+          <h2 style={{
+            fontFamily: "var(--font-bebas)",
+            fontSize: "clamp(44px, 5vw, 68px)",
+            letterSpacing: "0.02em",
+            color: "#111",
+            lineHeight: 1,
+            marginBottom: 16,
+          }}>
+            Showcase Your Brand in Action
+          </h2>
+          <p style={{ fontSize: 17, color: "rgba(0,0,0,0.5)", lineHeight: 1.7, maxWidth: 520, margin: "0 auto" }}>
+            High-performing UGC video commercials and lifestyle imagery crafted to drive trust, engagement, and results.
+          </p>
+        </div>
+
+        {/* Two-column container */}
+        <div style={{
+          maxWidth: 1160,
+          margin: "0 auto",
+          background: "#fff",
+          borderRadius: 28,
+          padding: 20,
+          boxShadow: "0 8px 48px rgba(0,0,0,0.10)",
+        }}>
+          <div className="showcase-grid">
+
+            {/* Left — Video */}
+            <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "#0a0a0a", minHeight: 480 }}>
+              {/* Badge */}
+              <div style={{
+                position: "absolute", top: 14, left: 14, zIndex: 10,
+                background: "rgba(0,0,0,0.72)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 999,
+                padding: "5px 14px",
+                display: "flex", alignItems: "center", gap: 7,
+              }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#FF3B1A", flexShrink: 0, display: "inline-block" }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#fff", textTransform: "uppercase" }}>
+                  Watch the Commercial
+                </span>
+              </div>
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", minHeight: 480 }}
+                src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/video/hf_20260429_020651_1d9ae862-a0c1-498e-9296-651fb43dc88c.mp4"
+              />
+            </div>
+
+            {/* Right — Product image */}
+            <div style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "#f7f5f2", minHeight: 480 }}>
+              {/* Badge */}
+              <div style={{
+                position: "absolute", top: 14, left: 14, zIndex: 10,
+                background: "rgba(0,0,0,0.72)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 999,
+                padding: "5px 14px",
+                display: "flex", alignItems: "center", gap: 7,
+              }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#FF3B1A", flexShrink: 0, display: "inline-block" }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#fff", textTransform: "uppercase" }}>
+                  Product in Action
+                </span>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/e285ae04-724a-43a6-9cc7-759f8fa80ac3.png"
+                alt="UGC Fire products in action"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  minHeight: 480,
+                  objectFit: "cover",
+                  objectPosition: "center top",
+                  display: "block",
+                }}
+              />
+            </div>
+
+          </div>
+        </div>
       </section>
 
       {/* ── HOW IT WORKS (merged) ── */}
