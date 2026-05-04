@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
-import { saveBrandDNA, getBrandDir, listSavedBrands, loadBrandDNA } from '@/lib/brandDna'
+import { saveBrandDNA, getBrandDir, listSavedBrands, loadBrandDNA } from '@/lib/brandDnaServer'
 import type { BrandDNA } from '@/lib/brandDna'
 
 interface SaveRequest {
