@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, getDemoRole, exitDemoMode, DEMO_EMAIL_KEY } from '@/lib/demoData'
 import {
-  LayoutDashboard, Clapperboard, Users, CreditCard, FileText, Activity, Settings, Menu, LogOut, UserCircle, Target, Eye,
+  LayoutDashboard, Clapperboard, Users, CreditCard, FileText, Activity, Settings, Menu, LogOut, UserCircle, Target, Eye, Sparkles,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +19,7 @@ const NAV = [
   { label: 'Billing',        href: '/admin/billing',      icon: CreditCard },
   { label: 'Agreements',     href: '/admin/agreements',   icon: FileText },
   { label: 'Activity',       href: '/admin/activity',     icon: Activity },
+  { label: 'Create',         href: '/admin/create',       icon: Sparkles },
   { label: 'Demo Tools',     href: '/admin/demo',         icon: Settings },
   { label: 'Profile',        href: '/admin/profile',      icon: UserCircle },
 ]
