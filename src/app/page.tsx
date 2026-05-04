@@ -1145,7 +1145,7 @@ export default function Home() {
                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />
                 </div>
                 <div style={{
-                  width: 88, height: 88, borderRadius: "50%",
+                  width: 100, height: 100, borderRadius: "50%",
                   background: "#fff",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
                   border: "3px solid #fff",
@@ -1156,7 +1156,7 @@ export default function Home() {
                   <img
                     src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/3c6a9dc3-024e-4fa3-9760-4be5f53ac0ec.png"
                     alt="Fire Serum Dropper"
-                    style={{ width: "85%", height: "85%", objectFit: "contain" }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center" }}
                   />
                 </div>
                 <div style={{
@@ -1179,7 +1179,7 @@ export default function Home() {
                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />
                 </div>
                 <div style={{
-                  width: 88, height: 88, borderRadius: "50%",
+                  width: 100, height: 100, borderRadius: "50%",
                   background: "#fff",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.22)",
                   border: "3px solid #fff",
@@ -1190,7 +1190,7 @@ export default function Home() {
                   <img
                     src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/fcf24658-8edb-45a6-ad4f-29a2c1e46c6a.png"
                     alt="Fire Gloss Tube"
-                    style={{ width: "85%", height: "85%", objectFit: "contain" }}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center" }}
                   />
                 </div>
                 <div style={{
