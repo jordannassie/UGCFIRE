@@ -29,7 +29,7 @@ function clampBase64(raw: string): string {
 
 function toImageFile(raw: string, i: number): File {
   const buf = Buffer.from(clampBase64(raw), 'base64')
-  return new File([buf], `ref-${i}.jpg`, { type: 'image/jpeg' })
+  return new File([buf], `ref-${i}.png`, { type: 'image/png' })
 }
 
 async function generateWithRefs(prompt: string, size: SupportedSize, refs: string[]): Promise<string> {
@@ -98,7 +98,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ b64, index })
 
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    let message = err instanceof Error ? err.message : String(err)
+    // Surface OpenAI API error details if available
+    if (err && typeof err === 'object' && 'error' in err) {
+      const apiErr = (err as { error?: { message?: string } }).error
+      if (apiErr?.message) message = apiErr.message
+    }
     console.error('[generate-image] unhandled error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
