@@ -1154,9 +1154,9 @@ export default function Home() {
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/e285ae04-724a-43a6-9cc7-759f8fa80ac3.png"
-                    alt="Product 1"
-                    style={{ width: "160%", height: "160%", objectFit: "cover", objectPosition: "60% 80%", marginLeft: "30%", marginTop: "40%" }}
+                    src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/3c6a9dc3-024e-4fa3-9760-4be5f53ac0ec.png"
+                    alt="Fire Serum Dropper"
+                    style={{ width: "85%", height: "85%", objectFit: "contain" }}
                   />
                 </div>
                 <div style={{
@@ -1188,9 +1188,9 @@ export default function Home() {
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/e285ae04-724a-43a6-9cc7-759f8fa80ac3.png"
-                    alt="Product 2"
-                    style={{ width: "160%", height: "160%", objectFit: "cover", objectPosition: "40% 80%", marginLeft: "-20%", marginTop: "40%" }}
+                    src="https://yawgvntvhpgittvntihx.supabase.co/storage/v1/object/public/UGC%20Fire/brands/Makeup%201/fcf24658-8edb-45a6-ad4f-29a2c1e46c6a.png"
+                    alt="Fire Gloss Tube"
+                    style={{ width: "85%", height: "85%", objectFit: "contain" }}
                   />
                 </div>
                 <div style={{
