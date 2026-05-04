@@ -61,9 +61,9 @@ export function buildPrompt(assetId: string, ctx: PromptContext): string {
 
 export function getSizeForAspectRatio(
   aspectRatio: '9:16' | '1:1' | '16:9',
-): '1024x1792' | '1024x1024' | '1792x1024' {
-  if (aspectRatio === '9:16') return '1024x1792'
-  if (aspectRatio === '16:9') return '1792x1024'
+): '1024x1536' | '1024x1024' | '1536x1024' {
+  if (aspectRatio === '9:16') return '1024x1536'
+  if (aspectRatio === '16:9') return '1536x1024'
   return '1024x1024'
 }
 
