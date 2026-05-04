@@ -3,8 +3,6 @@ import OpenAI from 'openai'
 
 export const maxDuration = 60
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 const MAX_IMAGE_BYTES = 1 * 1024 * 1024
 
 type SupportedSize = '1024x1024' | '1024x1536' | '1536x1024'
@@ -32,7 +30,7 @@ function toImageFile(raw: string, i: number): File {
   return new File([buf], `ref-${i}.png`, { type: 'image/png' })
 }
 
-async function generateWithRefs(prompt: string, size: SupportedSize, refs: string[]): Promise<string> {
+async function generateWithRefs(openai: OpenAI, prompt: string, size: SupportedSize, refs: string[]): Promise<string> {
   const files = refs.map(toImageFile)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const res = await (openai.images.edit as any)({
@@ -47,7 +45,7 @@ async function generateWithRefs(prompt: string, size: SupportedSize, refs: strin
   return b64
 }
 
-async function generateTextOnly(prompt: string, size: SupportedSize): Promise<string> {
+async function generateTextOnly(openai: OpenAI, prompt: string, size: SupportedSize): Promise<string> {
   const res = await openai.images.generate({ model: 'gpt-image-2', prompt, size })
   const b64 = res.data[0]?.b64_json
   if (!b64) throw new Error('No image data in generate response')
@@ -59,6 +57,8 @@ export async function POST(req: NextRequest) {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 })
     }
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
     let body: GenerateRequest
     try {
@@ -82,16 +82,16 @@ export async function POST(req: NextRequest) {
 
     if (referenceImages?.length) {
       try {
-        b64 = await generateWithRefs(prompt, size, referenceImages)
+        b64 = await generateWithRefs(openai, prompt, size, referenceImages)
         console.log(`[generate-image] #${index + 1} — edit mode OK`)
       } catch (editErr) {
         const reason = editErr instanceof Error ? editErr.message : String(editErr)
         console.error(`[generate-image] #${index + 1} — edit failed (${reason}), falling back to text-only`)
-        b64 = await generateTextOnly(prompt, size)
+        b64 = await generateTextOnly(openai, prompt, size)
         console.log(`[generate-image] #${index + 1} — text-only fallback OK`)
       }
     } else {
-      b64 = await generateTextOnly(prompt, size)
+      b64 = await generateTextOnly(openai, prompt, size)
       console.log(`[generate-image] #${index + 1} — text-only OK`)
     }
 
@@ -99,7 +99,6 @@ export async function POST(req: NextRequest) {
 
   } catch (err) {
     let message = err instanceof Error ? err.message : String(err)
-    // Surface OpenAI API error details if available
     if (err && typeof err === 'object' && 'error' in err) {
       const apiErr = (err as { error?: { message?: string } }).error
       if (apiErr?.message) message = apiErr.message
