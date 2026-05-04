@@ -1,70 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { getSizeForAspectRatio } from '@/lib/prompts'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-const MAX_IMAGE_BYTES = 1 * 1024 * 1024 // 1 MB
+const MAX_IMAGE_BYTES = 1 * 1024 * 1024 // 1 MB per reference image
+
+type SupportedSize = '1024x1024' | '1024x1536' | '1536x1024'
 
 interface GenerateRequest {
-  assetId: string
-  aspectRatio: '9:16' | '1:1' | '16:9'
-  assetLabel: string
+  index: number
   userPrompt: string
-  referenceImages?: string[]  // base64 strings, no data-URL prefix
+  referenceImages?: string[]  // base64, no data-URL prefix
 }
 
-// Truncate a base64 string so the decoded bytes fit within MAX_IMAGE_BYTES.
-// base64 overhead is ~4/3, so max base64 chars ≈ MAX_IMAGE_BYTES * 4 / 3.
+// Pick a size based on keywords found in the prompt.
+function detectSize(prompt: string): SupportedSize {
+  const p = prompt.toLowerCase()
+  if (/\b(portrait|vertical|9[\s:\/]16|tall|story|reel|poster)\b/.test(p)) return '1024x1536'
+  if (/\b(landscape|horizontal|16[\s:\/]9|wide|banner|cover|hero)\b/.test(p)) return '1536x1024'
+  return '1024x1024'
+}
+
+// Trim base64 so decoded bytes stay within MAX_IMAGE_BYTES.
 function clampBase64(raw: string): string {
   const maxChars = Math.floor(MAX_IMAGE_BYTES * 4 / 3)
   return raw.length > maxChars ? raw.slice(0, maxChars) : raw
 }
 
-function toImageFile(raw: string, index: number): File {
-  const clamped = clampBase64(raw)
-  const buf = Buffer.from(clamped, 'base64')
-  return new File([buf], `ref-${index}.jpg`, { type: 'image/jpeg' })
+function toImageFile(raw: string, i: number): File {
+  const buf = Buffer.from(clampBase64(raw), 'base64')
+  return new File([buf], `ref-${i}.jpg`, { type: 'image/jpeg' })
 }
 
-async function generateWithRefs(
-  prompt: string,
-  size: ReturnType<typeof getSizeForAspectRatio>,
-  referenceImages: string[],
-): Promise<string> {
-  const imageFiles = referenceImages.map(toImageFile)
-
+async function generateWithRefs(prompt: string, size: SupportedSize, refs: string[]): Promise<string> {
+  const files = refs.map(toImageFile)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await (openai.images.edit as any)({
+  const res = await (openai.images.edit as any)({
     model: 'gpt-image-1',
-    image: imageFiles.length === 1 ? imageFiles[0] : imageFiles,
+    image: files.length === 1 ? files[0] : files,
     prompt,
     size,
   })
-
-  const item = (response.data ?? response)[0]
+  const item = (res.data ?? res)[0]
   const b64  = item?.b64_json ?? item?.url
-  if (!b64) throw new Error('No image data returned from edit endpoint')
+  if (!b64) throw new Error('No image data in edit response')
   return b64
 }
 
-async function generateTextOnly(
-  prompt: string,
-  size: ReturnType<typeof getSizeForAspectRatio>,
-): Promise<string> {
-  const response = await openai.images.generate({
-    model: 'gpt-image-1',
-    prompt,
-    size,
-  })
-
-  const b64 = response.data[0]?.b64_json
-  if (!b64) throw new Error('No image data returned from generate endpoint')
+async function generateTextOnly(prompt: string, size: SupportedSize): Promise<string> {
+  const res = await openai.images.generate({ model: 'gpt-image-1', prompt, size })
+  const b64 = res.data[0]?.b64_json
+  if (!b64) throw new Error('No image data in generate response')
   return b64
 }
 
 export async function POST(req: NextRequest) {
-  // Always return JSON — never let an unhandled error produce an HTML response.
   try {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 })
@@ -73,45 +63,43 @@ export async function POST(req: NextRequest) {
     let body: GenerateRequest
     try {
       body = await req.json() as GenerateRequest
-    } catch (parseErr) {
-      console.error('[generate-image] failed to parse request body:', parseErr)
-      return NextResponse.json({ error: 'Invalid request body — expected JSON' }, { status: 400 })
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
     }
 
-    const { assetId, aspectRatio, assetLabel, userPrompt, referenceImages } = body
+    const { index, userPrompt, referenceImages } = body
 
-    if (!assetId || !aspectRatio || !userPrompt) {
-      return NextResponse.json({ error: 'Missing required fields: assetId, aspectRatio, userPrompt' }, { status: 400 })
+    if (index === undefined || !userPrompt) {
+      return NextResponse.json({ error: 'Missing required fields: index, userPrompt' }, { status: 400 })
     }
 
-    const size   = getSizeForAspectRatio(aspectRatio)
-    const prompt = `${userPrompt}\n\nAsset type: ${assetLabel}. Aspect ratio: ${aspectRatio}. Ultra high-quality, photorealistic, professional campaign photography.`
+    const size   = detectSize(userPrompt)
+    const prompt = `${userPrompt}\n\nUltra high-quality, photorealistic, professional photography.`
 
-    console.log(`[generate-image] ${assetId} | size=${size} | refs=${referenceImages?.length ?? 0}`)
+    console.log(`[generate-image] #${index + 1} | size=${size} | refs=${referenceImages?.length ?? 0}`)
 
     let b64: string
 
     if (referenceImages?.length) {
       try {
         b64 = await generateWithRefs(prompt, size, referenceImages)
-        console.log(`[generate-image] ${assetId} — edit mode succeeded`)
+        console.log(`[generate-image] #${index + 1} — edit mode OK`)
       } catch (editErr) {
-        // Fall back to text-only if reference image mode fails
         const reason = editErr instanceof Error ? editErr.message : String(editErr)
-        console.error(`[generate-image] ${assetId} — edit mode failed (${reason}), falling back to text-only`)
+        console.error(`[generate-image] #${index + 1} — edit failed (${reason}), falling back to text-only`)
         b64 = await generateTextOnly(prompt, size)
-        console.log(`[generate-image] ${assetId} — text-only fallback succeeded`)
+        console.log(`[generate-image] #${index + 1} — text-only fallback OK`)
       }
     } else {
       b64 = await generateTextOnly(prompt, size)
-      console.log(`[generate-image] ${assetId} — text-only succeeded`)
+      console.log(`[generate-image] #${index + 1} — text-only OK`)
     }
 
-    return NextResponse.json({ b64, assetId })
+    return NextResponse.json({ b64, index })
 
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error('[generate-image] unhandled error:', message, err)
+    console.error('[generate-image] unhandled error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

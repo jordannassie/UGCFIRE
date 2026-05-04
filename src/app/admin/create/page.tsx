@@ -1,12 +1,7 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
 import JSZip from 'jszip'
-import {
-  Sparkles, Upload, X, Download, RefreshCw, Loader2, AlertCircle,
-  Archive, Image as ImageIcon,
-} from 'lucide-react'
-import { DEFAULT_ASSETS } from '@/lib/brandDna'
-import type { GeneratedAsset } from '@/lib/brandDna'
+import { Sparkles, Upload, X, Download, RefreshCw, Loader2, AlertCircle, Archive } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,7 +11,12 @@ interface RefImage {
   b64: string
 }
 
-type AssetState = GeneratedAsset
+interface GenImage {
+  index: number
+  status: 'generating' | 'done' | 'error'
+  b64?: string
+  error?: string
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -29,61 +29,70 @@ function fileToBase64(file: File): Promise<string> {
   })
 }
 
-function freshAssets(): AssetState[] {
-  return DEFAULT_ASSETS.map(a => ({ ...a, status: 'idle' as const }))
+function parseCount(prompt: string): number {
+  const patterns = [
+    /\b(\d+)\s+(?:image|photo|poster|version|asset|variation|design|concept|visual|render|shot|frame|card)s?\b/i,
+    /\b(?:generate|create|make|produce|give\s+me|show\s+me)\s+(\d+)\b/i,
+    /\b(\d+)\s+(?:of\s+)?(?:them|those|these|result|output)s?\b/i,
+  ]
+  for (const re of patterns) {
+    const m = prompt.match(re)
+    if (m) {
+      const n = parseInt(m[1], 10)
+      if (n >= 1 && n <= 50) return n
+    }
+  }
+  return 9
 }
 
-// ─── Asset Card ───────────────────────────────────────────────────────────────
+function gridCols(count: number): string {
+  if (count === 1) return 'grid-cols-1'
+  if (count <= 4)  return 'grid-cols-2'
+  if (count <= 9)  return 'grid-cols-3'
+  return 'grid-cols-4'
+}
 
-function AssetCard({
-  asset, onDownload, onRegenerate, disabled,
+// ─── Image Card ───────────────────────────────────────────────────────────────
+
+function ImageCard({
+  img, onDownload, onRetry, disabled,
 }: {
-  asset: AssetState
-  onDownload: (a: AssetState) => void
-  onRegenerate: (id: string) => void
+  img: GenImage
+  onDownload: (img: GenImage) => void
+  onRetry: (index: number) => void
   disabled: boolean
 }) {
-  const aspectClass =
-    asset.aspectRatio === '9:16' ? 'aspect-[9/16]'
-    : asset.aspectRatio === '16:9' ? 'aspect-[16/9]'
-    : 'aspect-square'
-
   return (
-    <div className="group relative bg-[#0d0d0d] border border-white/5 rounded-xl overflow-hidden flex flex-col">
-      <div className={`relative w-full ${aspectClass} bg-[#111] overflow-hidden`}>
+    <div className="group relative bg-[#0d0d0d] border border-white/5 rounded-xl overflow-hidden">
+      <div className="aspect-square relative bg-[#111]">
 
-        {asset.status === 'idle' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-            <ImageIcon size={18} className="text-white/10" />
-            <span className="text-white/15 text-[10px]">{asset.spec}</span>
-          </div>
-        )}
-
-        {asset.status === 'generating' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#0d0d0d]">
+        {img.status === 'generating' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <Loader2 size={22} className="text-[#FF3B1A] animate-spin" />
-            <span className="text-white/30 text-[10px]">Generating…</span>
+            <span className="text-white/25 text-[10px]">#{img.index + 1}</span>
           </div>
         )}
 
-        {asset.status === 'done' && asset.b64 && (
+        {img.status === 'done' && img.b64 && (
           <>
             <img
-              src={`data:image/png;base64,${asset.b64}`}
-              alt={asset.label}
+              src={`data:image/png;base64,${img.b64}`}
+              alt={`Image ${img.index + 1}`}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button
-                onClick={() => onDownload(asset)}
+                onClick={() => onDownload(img)}
                 className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg transition"
+                title="Download"
               >
                 <Download size={14} />
               </button>
               {!disabled && (
                 <button
-                  onClick={() => onRegenerate(asset.id)}
+                  onClick={() => onRetry(img.index)}
                   className="bg-white/10 hover:bg-[#FF3B1A]/30 text-white p-2 rounded-lg transition"
+                  title="Regenerate"
                 >
                   <RefreshCw size={14} />
                 </button>
@@ -92,13 +101,15 @@ function AssetCard({
           </>
         )}
 
-        {asset.status === 'error' && (
+        {img.status === 'error' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3">
             <AlertCircle size={18} className="text-red-400" />
-            <p className="text-red-400/60 text-[10px] text-center leading-tight">{asset.error ?? 'Failed'}</p>
+            <p className="text-red-400/60 text-[10px] text-center leading-tight line-clamp-3">
+              {img.error ?? 'Failed'}
+            </p>
             {!disabled && (
               <button
-                onClick={() => onRegenerate(asset.id)}
+                onClick={() => onRetry(img.index)}
                 className="text-[10px] text-[#FF3B1A] hover:underline flex items-center gap-1 mt-1"
               >
                 <RefreshCw size={10} /> Retry
@@ -108,31 +119,18 @@ function AssetCard({
         )}
       </div>
 
-      <div className="px-2.5 py-2 flex items-center justify-between gap-1">
-        <p className="text-white/60 text-[11px] font-medium truncate">{asset.label}</p>
-        <span className="flex-shrink-0 text-[9px] font-bold text-white/20 bg-white/5 px-1.5 py-0.5 rounded uppercase tracking-wide">
-          {asset.spec}
-        </span>
-      </div>
-
-      {asset.status === 'done' && (
-        <div className="px-2.5 pb-2 -mt-0.5 flex gap-1">
+      {/* Index label + download strip */}
+      <div className="px-2.5 py-2 flex items-center justify-between gap-2">
+        <span className="text-white/30 text-[11px] tabular-nums">#{img.index + 1}</span>
+        {img.status === 'done' && (
           <button
-            onClick={() => onDownload(asset)}
-            className="flex-1 text-[10px] text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg py-1 flex items-center justify-center gap-1 transition"
+            onClick={() => onDownload(img)}
+            className="text-[10px] text-white/30 hover:text-white flex items-center gap-1 transition"
           >
             <Download size={10} /> PNG
           </button>
-          {!disabled && (
-            <button
-              onClick={() => onRegenerate(asset.id)}
-              className="text-[10px] text-white/40 hover:text-[#FF3B1A] bg-white/5 hover:bg-[#FF3B1A]/10 rounded-lg py-1 px-2 transition"
-            >
-              <RefreshCw size={10} />
-            </button>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
@@ -140,14 +138,13 @@ function AssetCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CreatePage() {
-  const [prompt, setPrompt]       = useState('')
-  const [refImages, setRefImages] = useState<RefImage[]>([])
-  const [assets, setAssets]       = useState<AssetState[]>(freshAssets)
+  const [prompt, setPrompt]         = useState('')
+  const [refImages, setRefImages]   = useState<RefImage[]>([])
+  const [images, setImages]         = useState<GenImage[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const dropRef      = useRef<HTMLDivElement>(null)
 
-  // ── Image upload ─────────────────────────────────────────────────────────────
+  // ── Uploads ───────────────────────────────────────────────────────────────────
   async function addFiles(files: FileList | File[]) {
     const arr = Array.from(files).filter(f => f.type.startsWith('image/'))
     const next: RefImage[] = await Promise.all(
@@ -167,26 +164,19 @@ export default function CreatePage() {
     })
   }
 
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault()
-    if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files)
-  }
-
-  // ── Generate single ───────────────────────────────────────────────────────────
-  const generateOne = useCallback(async (assetId: string, userPrompt: string, images: RefImage[]) => {
-    const assetDef = DEFAULT_ASSETS.find(a => a.id === assetId)
-    if (!assetDef) return
-
-    setAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'generating' } : a))
+  // ── Generate one image ────────────────────────────────────────────────────────
+  const generateOne = useCallback(async (
+    index: number,
+    userPrompt: string,
+    refs: RefImage[],
+  ) => {
+    setImages(prev => prev.map(img =>
+      img.index === index ? { ...img, status: 'generating' } : img
+    ))
 
     try {
-      const body: Record<string, unknown> = {
-        assetId,
-        aspectRatio: assetDef.aspectRatio,
-        assetLabel: assetDef.label,
-        userPrompt,
-      }
-      if (images.length) body.referenceImages = images.map(i => i.b64)
+      const body: Record<string, unknown> = { index, userPrompt }
+      if (refs.length) body.referenceImages = refs.map(r => r.b64)
 
       const res  = await fetch('/api/generate-image', {
         method: 'POST',
@@ -194,80 +184,86 @@ export default function CreatePage() {
         body: JSON.stringify(body),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
 
-      setAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'done', b64: data.b64 } : a))
+      setImages(prev => prev.map(img =>
+        img.index === index ? { ...img, status: 'done', b64: data.b64 } : img
+      ))
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Generation failed'
-      setAssets(prev => prev.map(a => a.id === assetId ? { ...a, status: 'error', error } : a))
+      setImages(prev => prev.map(img =>
+        img.index === index ? { ...img, status: 'error', error } : img
+      ))
     }
   }, [])
 
   // ── Generate all ──────────────────────────────────────────────────────────────
   async function handleGenerate() {
     if (!prompt.trim() || isGenerating) return
+    const count = parseCount(prompt)
+    const slots: GenImage[] = Array.from({ length: count }, (_, i) => ({
+      index: i,
+      status: 'generating',
+    }))
+    setImages(slots)
     setIsGenerating(true)
-    setAssets(freshAssets)
-    await Promise.allSettled(DEFAULT_ASSETS.map(a => generateOne(a.id, prompt, refImages)))
+    await Promise.allSettled(slots.map(s => generateOne(s.index, prompt, refImages)))
     setIsGenerating(false)
   }
 
-  // ── Regenerate one ────────────────────────────────────────────────────────────
-  async function handleRegenerate(assetId: string) {
+  // ── Retry one ─────────────────────────────────────────────────────────────────
+  async function handleRetry(index: number) {
     if (isGenerating) return
     setIsGenerating(true)
-    await generateOne(assetId, prompt, refImages)
+    await generateOne(index, prompt, refImages)
     setIsGenerating(false)
   }
 
   // ── Download ──────────────────────────────────────────────────────────────────
-  function handleDownload(asset: AssetState) {
-    if (!asset.b64) return
+  function handleDownload(img: GenImage) {
+    if (!img.b64) return
     const a = document.createElement('a')
-    a.href = `data:image/png;base64,${asset.b64}`
-    a.download = asset.fileName
+    a.href = `data:image/png;base64,${img.b64}`
+    a.download = `image-${String(img.index + 1).padStart(2, '0')}.png`
     a.click()
   }
 
   async function handleDownloadZip() {
-    const done = assets.filter(a => a.status === 'done' && a.b64)
+    const done = images.filter(img => img.status === 'done' && img.b64)
     if (!done.length) return
     const zip = new JSZip()
-    done.forEach(a => zip.file(a.fileName, a.b64!, { base64: true }))
+    done.forEach(img => {
+      zip.file(`image-${String(img.index + 1).padStart(2, '0')}.png`, img.b64!, { base64: true })
+    })
     const blob = await zip.generateAsync({ type: 'blob' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href = url
-    a.download = 'campaign-assets.zip'
+    a.download = 'campaign-images.zip'
     a.click()
     URL.revokeObjectURL(url)
   }
 
-  const doneCount  = assets.filter(a => a.status === 'done').length
-  const totalDone  = assets.filter(a => a.status === 'done' || a.status === 'error').length
-  const progress   = Math.round((totalDone / 9) * 100)
+  const doneCount  = images.filter(i => i.status === 'done').length
+  const totalDone  = images.filter(i => i.status === 'done' || i.status === 'error').length
+  const progress   = images.length ? Math.round((totalDone / images.length) * 100) : 0
+  const detectedN  = prompt.trim() ? parseCount(prompt) : 9
 
   return (
     <div className="min-h-screen" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-white font-bold flex items-center gap-2"
-            style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.9rem', letterSpacing: '0.06em' }}>
-            <Sparkles size={22} className="text-[#FF3B1A]" />
-            AI Campaign Creator
-          </h1>
-          <p className="text-white/30 text-sm mt-0.5">Upload references → write your brief → generate 9 assets</p>
-        </div>
-        {doneCount > 0 && (
-          <button
-            onClick={handleDownloadZip}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#FF3B1A]/15 hover:bg-[#FF3B1A]/25 text-[#FF3B1A] text-sm font-medium rounded-xl border border-[#FF3B1A]/20 transition"
-          >
-            <Archive size={14} /> Download All ({doneCount})
-          </button>
-        )}
+      <div className="mb-8">
+        <h1
+          className="text-white flex items-center gap-2"
+          style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.9rem', letterSpacing: '0.06em' }}
+        >
+          <Sparkles size={22} className="text-[#FF3B1A]" />
+          AI Campaign Creator
+        </h1>
+        <p className="text-white/30 text-sm mt-0.5">
+          Upload references → write your brief → generate any number of images
+        </p>
       </div>
 
       <div className="flex gap-6 items-start">
@@ -277,12 +273,13 @@ export default function CreatePage() {
 
           {/* Upload zone */}
           <div
-            ref={dropRef}
             onDragOver={e => e.preventDefault()}
-            onDrop={handleDrop}
+            onDrop={e => { e.preventDefault(); if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files) }}
             onClick={() => !refImages.length && fileInputRef.current?.click()}
             className={`bg-[#0a0a0a] border border-dashed rounded-xl transition-colors ${
-              refImages.length ? 'border-white/10 p-4' : 'border-white/10 hover:border-[#FF3B1A]/30 cursor-pointer p-8'
+              refImages.length
+                ? 'border-white/10 p-4'
+                : 'border-white/10 hover:border-[#FF3B1A]/30 cursor-pointer p-8'
             }`}
           >
             {refImages.length === 0 ? (
@@ -292,7 +289,7 @@ export default function CreatePage() {
                 </div>
                 <div>
                   <p className="text-white/50 text-sm font-medium">Drop reference images here</p>
-                  <p className="text-white/25 text-xs mt-0.5">Person photos, product shots, moodboards — any images</p>
+                  <p className="text-white/25 text-xs mt-0.5">Person, product, moodboard — any number of images</p>
                 </div>
                 <button
                   onClick={e => { e.stopPropagation(); fileInputRef.current?.click() }}
@@ -334,15 +331,24 @@ export default function CreatePage() {
           />
 
           {/* Prompt */}
-          <textarea
-            className="w-full bg-[#0a0a0a] border border-white/8 rounded-xl px-4 py-4 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#FF3B1A]/40 focus:bg-[#0d0d0d] transition resize-none"
-            rows={10}
-            placeholder={`Describe your full campaign brief…\n\nExample:\nLuxury sneaker brand called STRYD. Product is the Vertex Pro runner in white/chrome colorway. Target audience: 25-35 year old athletes. Vibe: editorial, minimal, premium. Primary color #0a0a0a with silver accents. Feature a fit male model in an urban setting at night under streetlights. High contrast, cinematic feel.`}
-            value={prompt}
-            onChange={e => setPrompt(e.target.value)}
-          />
+          <div className="relative">
+            <textarea
+              className="w-full bg-[#0a0a0a] border border-white/8 rounded-xl px-4 py-4 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#FF3B1A]/40 focus:bg-[#0d0d0d] transition resize-none"
+              rows={10}
+              placeholder={`Write your campaign brief. Mention how many images you want.\n\nExamples:\n• "Generate 12 images of a luxury sneaker campaign featuring a female athlete at night, cinematic lighting, dark editorial vibe"\n• "Create 5 posters for a skincare brand, minimal white aesthetic"\n• "Make 20 product shots of perfume bottles on marble"\n\nIf you don't specify a number, 9 images will be generated.`}
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+            />
+            {prompt.trim() && (
+              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-[#0a0a0a] px-2 py-1 rounded-lg border border-white/8">
+                <span className="text-white/25 text-[10px]">will generate</span>
+                <span className="text-[#FF3B1A] text-[11px] font-semibold tabular-nums">{detectedN}</span>
+                <span className="text-white/25 text-[10px]">image{detectedN !== 1 ? 's' : ''}</span>
+              </div>
+            )}
+          </div>
 
-          {/* Generate button + progress */}
+          {/* Generate */}
           <div className="space-y-3">
             <button
               onClick={handleGenerate}
@@ -351,8 +357,8 @@ export default function CreatePage() {
               style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.1rem', letterSpacing: '0.08em' }}
             >
               {isGenerating
-                ? <><Loader2 size={18} className="animate-spin" /> Generating {totalDone} / 9…</>
-                : <><Sparkles size={18} /> Generate All 9 Assets</>
+                ? <><Loader2 size={18} className="animate-spin" /> Generating {totalDone} / {images.length}…</>
+                : <><Sparkles size={18} /> Generate {detectedN} Image{detectedN !== 1 ? 's' : ''}</>
               }
             </button>
 
@@ -370,37 +376,44 @@ export default function CreatePage() {
           </div>
         </div>
 
-        {/* ── Right: 3×3 asset grid ─────────────────────────────────────────── */}
-        <div className="w-[400px] flex-shrink-0">
+        {/* ── Right: dynamic image grid ────────────────────────────────────────── */}
+        <div className="w-[440px] flex-shrink-0">
+
+          {/* Download All — always at top */}
           <div className="flex items-center justify-between mb-4">
-            <p className="text-white/40 text-[11px] font-semibold uppercase tracking-widest">Assets</p>
-            <div className="flex items-center gap-2 text-xs">
-              {doneCount > 0 && <span className="text-green-400">{doneCount} done</span>}
-              {assets.some(a => a.status === 'error') && (
-                <span className="text-red-400">{assets.filter(a => a.status === 'error').length} failed</span>
-              )}
+            <p className="text-white/40 text-[11px] font-semibold uppercase tracking-widest">
+              {images.length ? `${doneCount} / ${images.length} ready` : 'Images'}
+            </p>
+            {doneCount > 0 && (
+              <button
+                onClick={handleDownloadZip}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FF3B1A]/15 hover:bg-[#FF3B1A]/25 text-[#FF3B1A] text-xs font-medium rounded-lg border border-[#FF3B1A]/20 transition"
+              >
+                <Archive size={12} /> Download All ({doneCount})
+              </button>
+            )}
+          </div>
+
+          {images.length === 0 ? (
+            <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-12 flex flex-col items-center justify-center gap-3 text-center">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                <Sparkles size={18} className="text-white/15" />
+              </div>
+              <p className="text-white/20 text-sm">Generated images appear here</p>
+              <p className="text-white/12 text-xs">Write a brief and click Generate</p>
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {assets.map(asset => (
-              <AssetCard
-                key={asset.id}
-                asset={asset}
-                onDownload={handleDownload}
-                onRegenerate={handleRegenerate}
-                disabled={isGenerating}
-              />
-            ))}
-          </div>
-
-          {doneCount > 0 && !isGenerating && (
-            <button
-              onClick={handleDownloadZip}
-              className="w-full mt-3 flex items-center justify-center gap-2 py-3 bg-[#FF3B1A]/15 hover:bg-[#FF3B1A]/25 text-[#FF3B1A] rounded-xl text-sm font-medium transition border border-[#FF3B1A]/20"
-            >
-              <Archive size={14} /> Download ZIP
-            </button>
+          ) : (
+            <div className={`grid ${gridCols(images.length)} gap-2`}>
+              {images.map(img => (
+                <ImageCard
+                  key={img.index}
+                  img={img}
+                  onDownload={handleDownload}
+                  onRetry={handleRetry}
+                  disabled={isGenerating}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
